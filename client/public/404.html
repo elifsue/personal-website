@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Elifsu Ateş — UI/UX Designer</title>
+    <script>
+      // GitHub Pages SPA redirect trick for custom domain (root path).
+      // Encodes the full path into the query string and redirects to /
+      // so index.html can restore the route via sessionStorage.
+      var l = window.location;
+      sessionStorage.redirect = l.pathname + l.search + l.hash;
+      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/');
+    </script>
+  </head>
+  <body></body>
+</html>
