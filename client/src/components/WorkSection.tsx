@@ -9,6 +9,7 @@ import { useRef } from "react";
 import { useLocation } from "wouter";
 
 const KIDDIWEAR_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/WbmkfKudAvPBKcWy.png";
+const WP_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png";
 
 const projects = [
   {
@@ -26,10 +27,29 @@ const projects = [
     link: "/kiddiwear",
     github: "https://github.com/elifsue/kiddiwear",
     links: [
-      { label: "Interactive Prototype", url: "https://elifsue.github.io/kiddiwear/" },
-      { label: "Behance", url: "https://www.behance.net/gallery/250957329/Childrens-Clothing-Marketplace-Website-Design-UXUI" },
-      { label: "Figma", url: "https://www.figma.com/design/IQmFfsL8KwUqPk3PiW7dMH/Kiddiwear?node-id=3082-18790&t=mBVyGv0HCP6J71tN-1" },
-      { label: "GitHub", url: "https://github.com/elifsue/kiddiwear" },
+      { label: "Interactive Prototype", url: "https://elifsue.github.io/kiddiwear/", style: { background: "#BF5836", color: "#FAF7F2" } },
+      { label: "Behance", url: "https://www.behance.net/gallery/250957329/Childrens-Clothing-Marketplace-Website-Design-UXUI", style: { background: "#4A6FA5", color: "#FFFFFF" } },
+      { label: "Figma", url: "https://www.figma.com/design/IQmFfsL8KwUqPk3PiW7dMH/Kiddiwear?node-id=3082-18790&t=mBVyGv0HCP6J71tN-1", style: { background: "#7B5EA7", color: "#FFFFFF" } },
+      { label: "GitHub", url: "https://github.com/elifsue/kiddiwear", style: { background: "#1C1917", color: "#FAF7F2" } },
+    ],
+  },
+  {
+    id: "02",
+    title: "Wireframe Prototyper Skill",
+    subtitle: "Claude Code Custom Skill",
+    tags: ["Claude Code", "Prototyping", "Automation"],
+    year: "2026",
+    description:
+      "A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.",
+    outcome: "Open source · Prompt-driven · Rapid prototyping",
+    image: WP_IMG,
+    color: "#BF5836",
+    bgColor: "#F5EDE6",
+    link: "/wireframe-prototyper",
+    github: "https://github.com/elifsue/wireframe-prototyper-skill",
+    links: [
+      { label: "Medium", url: "https://medium.com/@elifsue", style: { background: "#FFFFFF", color: "#1C1917", border: "1px solid #1C1917" } },
+      { label: "GitHub", url: "https://github.com/elifsue/wireframe-prototyper-skill", style: { background: "#1C1917", color: "#FAF7F2" } },
     ],
   },
 ];
@@ -136,64 +156,50 @@ function ProjectCard({
 
         {/* External links */}
         <div className="flex flex-wrap gap-2 mt-5">
-          <a
-            href="https://elifsue.github.io/kiddiwear/"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full font-mono-dm text-xs tracking-wide transition-all duration-300 hover:scale-105"
-            style={{ background: "#BF5836", color: "#FAF7F2" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-              <polyline points="15 3 21 3 21 9" />
-              <line x1="10" y1="14" x2="21" y2="3" />
-            </svg>
-            Interactive Prototype
-          </a>
-          <a
-            href="https://www.behance.net/gallery/250957329/Childrens-Clothing-Marketplace-Website-Design-UXUI"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full font-mono-dm text-xs tracking-wide transition-all duration-300 hover:scale-105"
-            style={{ background: "#4A6FA5", color: "#FFFFFF" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 3.211 3.483 3.312 4.588 2.029h3.168zm-7.686-4h4.965c-.105-1.547-1.136-2.219-2.477-2.219-1.466 0-2.277.768-2.488 2.219zm-9.574 6.988H0V5.021h6.953c5.476.081 5.58 5.444 2.72 6.906 3.461 1.26 3.577 8.061-3.207 8.061zM3 11h3.584c2.508 0 2.906-3-.312-3H3v3zm3.391 3H3v3.016h3.341c3.055 0 2.868-3.016.05-3.016z"/>
-            </svg>
-            Behance
-          </a>
-          <a
-            href="https://www.figma.com/design/IQmFfsL8KwUqPk3PiW7dMH/Kiddiwear?node-id=3082-18790&t=mBVyGv0HCP6J71tN-1"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full font-mono-dm text-xs tracking-wide transition-all duration-300 hover:scale-105"
-            style={{ background: "#7B5EA7", color: "#FFFFFF" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 38 57" fill="currentColor">
-              <path d="M19 28.5C19 23.2533 23.2533 19 28.5 19C33.7467 19 38 23.2533 38 28.5C38 33.7467 33.7467 38 28.5 38C23.2533 38 19 33.7467 19 28.5Z"/>
-              <path d="M0 47.5C0 42.2533 4.25329 38 9.5 38H19V47.5C19 52.7467 14.7467 57 9.5 57C4.25329 57 0 52.7467 0 47.5Z"/>
-              <path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z"/>
-              <path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z"/>
-              <path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z"/>
-            </svg>
-            Figma
-          </a>
-          <a
-            href="https://github.com/elifsue/kiddiwear"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full font-mono-dm text-xs tracking-wide transition-all duration-300 hover:scale-105"
-            style={{ background: "#1C1917", color: "#FAF7F2" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-            </svg>
-            GitHub
-          </a>
+          {project.links.map((link) => (
+            <a
+              key={link.label}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full font-mono-dm text-xs tracking-wide transition-all duration-300 hover:scale-105"
+              style={link.style}
+            >
+              {link.label === "Medium" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13.54 12a6.8 6.8 0 01-6.77 6.82A6.8 6.8 0 010 12a6.8 6.8 0 016.77-6.82A6.8 6.8 0 0113.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/>
+                </svg>
+              )}
+              {link.label === "GitHub" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                </svg>
+              )}
+              {link.label === "Interactive Prototype" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              )}
+              {link.label === "Behance" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 3.211 3.483 3.312 4.588 2.029h3.168zm-7.686-4h4.965c-.105-1.547-1.136-2.219-2.477-2.219-1.466 0-2.277.768-2.488 2.219zm-9.574 6.988H0V5.021h6.953c5.476.081 5.58 5.444 2.72 6.906 3.461 1.26 3.577 8.061-3.207 8.061zM3 11h3.584c2.508 0 2.906-3-.312-3H3v3zm3.391 3H3v3.016h3.341c3.055 0 2.868-3.016.05-3.016z"/>
+                </svg>
+              )}
+              {link.label === "Figma" && (
+                <svg width="14" height="14" viewBox="0 0 38 57" fill="currentColor">
+                  <path d="M19 28.5C19 23.2533 23.2533 19 28.5 19C33.7467 19 38 23.2533 38 28.5C38 33.7467 33.7467 38 28.5 38C23.2533 38 19 33.7467 19 28.5Z"/>
+                  <path d="M0 47.5C0 42.2533 4.25329 38 9.5 38H19V47.5C19 52.7467 14.7467 57 9.5 57C4.25329 57 0 52.7467 0 47.5Z"/>
+                  <path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z"/>
+                  <path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z"/>
+                  <path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z"/>
+                </svg>
+              )}
+              {link.label}
+            </a>
+          ))}
         </div>
       </div>
     </motion.article>

@@ -5,6 +5,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Kiddiwear from "./pages/Kiddiwear";
+import WireframePrototyper from "./pages/WireframePrototyper";
 import NotFound from "./pages/NotFound";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/kiddiwear" component={Kiddiwear} />
+        <Route path="/wireframe-prototyper" component={WireframePrototyper} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
