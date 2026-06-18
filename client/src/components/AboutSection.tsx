@@ -14,11 +14,26 @@ const ABOUT_BG = `${import.meta.env.BASE_URL}elifsu_ates.webp`;
 
 const timeline = [
   {
-    year: "2025",
+    role: "UI/UX Designer Intern",
+    company: "X\u2013Ray Home",
+    period: "Jan 2026 \u2013 Apr 2026",
+    location: "London, UK",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/OvhGUPBrdnBwjvNW.jpg",
+    bullets: [
+      "Ran a usability test, uncovering 19 accessibility and usability issues, translating findings into targeted design improvements that elevated the overall user experience across the website.",
+      "Built a design system with 26 structured components, variants, and color tokens, aligning the product\u2019s visual language across the website and enabling scalable reuse.",
+      "Led the end-to-end redesign of the homepage, property listings, and property detail pages, applying the design system to ensure consistent accessibility compliance and visual coherence at scale.",
+    ],
+  },
+  {
     role: "B.Sc. in Computer Science",
     company: "University of Greenwich",
-    desc: "Graduated with First Class Honours.",
-    color: "#1C1917",
+    period: "2021 \u2013 2025",
+    location: "London, UK",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/NDWdJlakijYomCxq.jpg",
+    bullets: [
+      "Graduated with First Class Honours.",
+    ],
   },
 ];
 
@@ -37,41 +52,61 @@ function TimelineItem({
       ref={ref}
       initial={{ opacity: 0, x: 30 }}
       animate={inView ? { opacity: 1, x: 0 } : {}}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      className="flex gap-5 group"
+      transition={{ duration: 0.6, delay: index * 0.15 }}
+      className="flex gap-5 group relative"
     >
-      {/* Year + line */}
-      <div className="flex flex-col items-center shrink-0 w-12">
-        <span
-          className="font-mono-dm text-xs tracking-wider mt-1"
-          style={{ color: item.color }}
-        >
-          {item.year}
-        </span>
+      {/* Timeline line + logo */}
+      <div className="flex flex-col items-center shrink-0">
+        {/* Logo — aligned to top of position text */}
         <div
-          className="w-px flex-1 mt-2 min-h-[2rem]"
-          style={{ background: `${item.color}30` }}
+          className="w-11 h-11 rounded-xl overflow-hidden"
+        >
+          <img
+            src={item.logo}
+            alt={`${item.company} logo`}
+            className="w-full h-full object-contain p-1.5"
+          />
+        </div>
+        {/* Line below logo with margin for equal spacing */}
+        <div
+          className="w-px flex-1 mt-3 mb-3 min-h-[1.5rem]"
+          style={{ background: "rgba(196,98,45,0.2)" }}
         />
       </div>
+
       {/* Content */}
-      <div className="pb-8 flex-1">
-        <div className="flex flex-wrap items-baseline gap-2 mb-1">
+      <div className="pb-10 flex-1">
+        <div className="flex flex-wrap items-baseline gap-2 mb-0.5">
           <span
-            className="font-display text-xl font-medium"
+            className="font-display text-lg font-medium"
             style={{ color: "#1C1917" }}
           >
             {item.role}
           </span>
           <span
             className="font-mono-dm text-xs tracking-wide px-2 py-0.5 rounded-full"
-            style={{ background: `${item.color}15`, color: item.color }}
+            style={{ background: "rgba(28,25,23,0.06)", color: "#1C1917" }}
           >
             {item.company}
           </span>
         </div>
-        <p className="text-sm leading-relaxed" style={{ color: "#6B6560" }}>
-          {item.desc}
-        </p>
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="font-mono-dm text-xs tracking-wide" style={{ color: "#C4622D" }}>
+            {item.period}
+          </span>
+          <span className="font-mono-dm text-[10px]" style={{ color: "#9C9590" }}>•</span>
+          <span className="font-mono-dm text-xs" style={{ color: "#9C9590" }}>
+            {item.location}
+          </span>
+        </div>
+        <ul className="space-y-2">
+          {item.bullets.map((bullet, i) => (
+            <li key={i} className="flex gap-2.5 text-sm leading-relaxed" style={{ color: "#6B6560" }}>
+              <span className="shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full" style={{ background: "#C4622D" }} />
+              <span>{bullet}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </motion.div>
   );
@@ -106,8 +141,28 @@ export default function AboutSection() {
         </motion.div>
       </div>
 
+      {/* Full-width headline */}
+      <div className="px-8 lg:px-32 mb-16">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="font-display leading-tight"
+          style={{
+            fontSize: "clamp(2rem, 4vw, 3.5rem)",
+            color: "#1C1917",
+            fontWeight: 300,
+          }}
+        >
+          A designer who{" "}
+          <em style={{ color: "#C4622D", fontStyle: "italic" }}>thinks in systems</em>{" "}
+          and feels in pixels.
+        </motion.h2>
+      </div>
+
       <div className="px-8 lg:px-32 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
-        {/* Left: Abstract art */}
+        {/* Left: Photo */}
         <motion.div
           ref={ref}
           initial={{ opacity: 0, x: -40 }}
@@ -179,25 +234,6 @@ export default function AboutSection() {
 
         {/* Right: Bio + Timeline */}
         <div>
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="font-display mb-6 leading-tight"
-            style={{
-              fontSize: "clamp(2rem, 4vw, 3.5rem)",
-              color: "#1C1917",
-              fontWeight: 300,
-            }}
-          >
-            A designer who
-            <br />
-            <em style={{ color: "#C4622D" }}>thinks in systems</em>
-            <br />
-            and feels in pixels.
-          </motion.h2>
-
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -235,7 +271,7 @@ export default function AboutSection() {
               Experience & Education
             </div>
             {timeline.map((item, i) => (
-              <TimelineItem key={item.year + item.role} item={item} index={i} />
+              <TimelineItem key={item.company + item.role} item={item} index={i} />
             ))}
           </div>
         </div>
