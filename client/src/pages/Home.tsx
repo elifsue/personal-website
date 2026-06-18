@@ -16,6 +16,7 @@ import SkillsSection from "@/components/SkillsSection";
 import CertificationsSection from "@/components/CertificationsSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
+import WritingVideosSection from "@/components/WritingVideosSection";
 import CustomCursor from "@/components/CustomCursor";
 
 function LoadingScreen({ onDone }: { onDone: () => void }) {
@@ -109,6 +110,7 @@ export default function Home() {
         <AboutSection />
         <MarqueeStrip />
         <WorkSection />
+        <WritingVideosSection />
         <SkillsSection />
         <CertificationsSection />
         {/* Hidden for now — will be re-enabled later */}
