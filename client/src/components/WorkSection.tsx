@@ -48,7 +48,7 @@ const projects = [
     link: "/wireframe-prototyper",
     github: "https://github.com/elifsue/wireframe-prototyper-skill",
     links: [
-      { label: "Medium", url: "https://medium.com/@elifsue", style: { background: "#FFFFFF", color: "#1C1917", border: "1px solid #1C1917" } },
+      { label: "Medium", url: "https://medium.com/@elifsue/design-with-context-a-claude-skill-that-studies-competitors-and-builds-your-prototype-e4cdd8cb7519", style: { background: "#FFFFFF", color: "#1C1917", border: "1px solid #1C1917" } },
       { label: "GitHub", url: "https://github.com/elifsue/wireframe-prototyper-skill", style: { background: "#1C1917", color: "#FAF7F2" } },
     ],
   },
