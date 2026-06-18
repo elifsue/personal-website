@@ -113,7 +113,7 @@ export default function WritingVideosSection() {
           transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
           className="max-w-3xl"
         >
-          <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl" style={{ border: "1px solid rgba(196,98,45,0.2)" }}>
+          <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl video-iframe-wrapper" style={{ border: "1px solid rgba(196,98,45,0.2)" }}>
             <iframe
               src="https://www.youtube.com/embed/EIryl8x3PCI"
               title="Wireframe Prototyper Skill Demo"
