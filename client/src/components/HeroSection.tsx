@@ -12,7 +12,7 @@ const HERO_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663332337268/WbQQmPwVcwFPCnDRdrdZHR/hero-blob-bg-HVgkH9W2uPs5UfZMUKkgHH.webp";
 
 const RESUME_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663332337268/WbQQmPwVcwFPCnDRdrdZHR/ElifsuAtes_Resume_39925763.pdf";
+  "/ElifsuAtes_Resume.pdf";
 
 export default function HeroSection() {
   const blobRef = useRef<HTMLDivElement>(null);
@@ -145,8 +145,7 @@ export default function HeroSection() {
             >
               Get in Touch
             </button>
-            {/* Hidden for now — will be re-enabled later */}
-            {false && <a
+            <a
               href={RESUME_URL}
               download="Elifsu_Ates_Resume.pdf"
               target="_blank"
@@ -166,7 +165,7 @@ export default function HeroSection() {
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
               Download Resume
-            </a>}
+            </a>
           </motion.div>
         </div>
 
