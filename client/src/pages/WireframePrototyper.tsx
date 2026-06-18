@@ -310,7 +310,7 @@ export default function WireframePrototyper() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="https://medium.com/@elifsue"
+                href="https://medium.com/@elifsue/design-with-context-a-claude-skill-that-studies-competitors-and-builds-your-prototype-e4cdd8cb7519"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
@@ -391,13 +391,33 @@ export default function WireframePrototyper() {
             <h2 className="font-display text-2xl md:text-3xl mb-6" style={{ color: "#FAF7F2", fontWeight: 300 }}>
               Want to start working on your next project with me?
             </h2>
-            <a
-              href="mailto:hello@elifsuates.com"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
-              style={{ background: "#BF5836", color: "#FAF7F2" }}
-            >
-              Send a hello@elifsuates.com
-            </a>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <a
+                href="mailto:hello@elifsuates.com"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
+                style={{ background: "#BF5836", color: "#FAF7F2" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                Send a hello@elifsuates.com
+              </a>
+              <a
+                href="https://www.linkedin.com/in/elifsu-ates/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
+                style={{ background: "#0A66C2", color: "#FFFFFF" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                  <rect x="2" y="9" width="4" height="12"/>
+                  <circle cx="4" cy="4" r="2"/>
+                </svg>
+                Message on LinkedIn
+              </a>
+            </div>
           </Section>
         </div>
       </main>
