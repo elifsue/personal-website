@@ -105,6 +105,21 @@ export default function CustomCursor() {
       if (!el) return;
 
       const tag = el.tagName.toLowerCase();
+
+      // Hide custom cursor when over an iframe (e.g. YouTube embed)
+      const isIframe = tag === "iframe" || !!el.closest(".video-iframe-wrapper");
+      if (isIframe) {
+        if (dotRef.current) dotRef.current.style.opacity = "0";
+        if (ringRef.current) ringRef.current.style.opacity = "0";
+        if (ibeamRef.current) ibeamRef.current.style.opacity = "0";
+        mode = "default";
+        return;
+      } else if (mode === "default" && dotRef.current && dotRef.current.style.opacity === "0" && hasMoved) {
+        // Restore cursor when leaving iframe area
+        dotRef.current.style.opacity = "1";
+        if (ringRef.current) ringRef.current.style.opacity = "0.4";
+      }
+
       const isInput =
         tag === "input" ||
         tag === "textarea" ||
