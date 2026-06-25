@@ -242,9 +242,7 @@ export default function AboutSection() {
             className="text-base leading-relaxed mb-4"
             style={{ color: "#6B6560" }}
           >
-            I'm Elifsu Ateş, a UI/UX designer based in London with a passion for
-            creating digital products that feel effortless to use. My background in
-            Computer Science from the{" "}
+            I'm Elifsu Ateş, a UI/UX designer based in London with a passion for creating digital products people never have to think twice about. My background in Computer Science from the{" "}
             <strong style={{ color: "#4A6741" }}>University of Greenwich</strong> gives
             me a technical edge — I understand the code behind the canvas.
           </motion.p>
@@ -256,9 +254,7 @@ export default function AboutSection() {
             className="text-base leading-relaxed mb-12"
             style={{ color: "#6B6560" }}
           >
-            I specialise in product design, design systems, and user research. Whether
-            it's a fintech dashboard or a wellness app, I approach every project with
-            curiosity, empathy, and a relentless eye for detail.
+            What sets me apart is my fluency with AI tools. For me, AI isn't a shortcut, it's how I accelerate the entire design workflow without compromising craft. That craft lives in the details: research, wireframing, prototyping, and usability testing, all in service of digital products that feel effortless to use.
           </motion.p>
 
           {/* Timeline */}
