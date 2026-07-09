@@ -14,6 +14,17 @@ const ABOUT_BG = `${import.meta.env.BASE_URL}elifsu_ates.webp`;
 
 const timeline = [
   {
+    role: "UI/UX Designer (Freelance)",
+    company: "Character Pad",
+    period: "Jun 2026 \u2013 Jul 2026",
+    location: "Remote",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/QnydYChWLUsGdkzj.png",
+    bullets: [
+      "Redesigned the UI/UX of Character Pad (1.6M+ installs, 4.7 rating) in Figma, from wireframes to an interactive usability-tested prototype.",
+      "Scraped and analysed 625 actionable 1\u20134-star user reviews using Claude, identifying 12 key findings and translating them into design improvements that streamlined core workflows.",
+    ],
+  },
+  {
     role: "UI/UX Designer Intern",
     company: "X\u2013Ray Home",
     period: "Jan 2026 \u2013 Apr 2026",
@@ -58,13 +69,11 @@ function TimelineItem({
       {/* Timeline line + logo */}
       <div className="flex flex-col items-center shrink-0">
         {/* Logo — aligned to top of position text */}
-        <div
-          className="w-11 h-11 rounded-xl overflow-hidden"
-        >
+        <div className="w-11 h-11 overflow-hidden">
           <img
             src={item.logo}
             alt={`${item.company} logo`}
-            className="w-full h-full object-contain p-1.5"
+            className="w-full h-full object-contain"
           />
         </div>
         {/* Line below logo with margin for equal spacing */}
@@ -161,7 +170,7 @@ export default function AboutSection() {
         </motion.h2>
       </div>
 
-      <div className="px-8 lg:px-32 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+      <div className="px-8 lg:px-32 grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-12 lg:gap-16 items-start">
         {/* Left: Photo */}
         <motion.div
           ref={ref}
@@ -170,9 +179,9 @@ export default function AboutSection() {
           transition={{ duration: 0.9, ease: "easeOut" }}
           className="relative"
         >
-          <div className="relative">
+          <div className="relative px-8 lg:pl-0 lg:pr-8">
             <div
-              className="w-3/4 mx-auto aspect-[3/4] rounded-3xl overflow-hidden"
+              className="w-full aspect-[3/4] rounded-3xl overflow-hidden"
               style={{ background: "#E8DDD0" }}
             >
               <img
@@ -188,7 +197,7 @@ export default function AboutSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="absolute -bottom-6 right-10 lg:right-12 p-5 rounded-2xl shadow-xl"
+              className="absolute -bottom-6 right-0 p-5 rounded-2xl shadow-xl"
               style={{
                 background: "#FAF7F2",
                 border: "1px solid rgba(196,98,45,0.15)",
@@ -215,7 +224,7 @@ export default function AboutSection() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.7, duration: 0.5 }}
-              className="absolute top-4 right-10 lg:right-12 flex items-center gap-2 px-4 py-2 rounded-full shadow-lg"
+              className="absolute top-4 right-0 flex items-center gap-2 px-4 py-2 rounded-full shadow-lg"
               style={{ background: "#4A6741", color: "#FAF7F2" }}
             >
               <span className="w-2 h-2 rounded-full bg-green-300 animate-pulse" />
@@ -242,9 +251,7 @@ export default function AboutSection() {
             className="text-base leading-relaxed mb-4"
             style={{ color: "#6B6560" }}
           >
-            I'm Elifsu Ateş, a UI/UX designer based in London with a passion for creating digital products people never have to think twice about. My background in Computer Science from the{" "}
-            <strong style={{ color: "#4A6741" }}>University of Greenwich</strong> gives
-            me a technical edge — I understand the code behind the canvas.
+            I’m Elifsu Ateş, a UI/UX Designer based in London with a Computer Science background — which means I don’t just design digital products, I have the technical fluency to build them.
           </motion.p>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -254,7 +261,8 @@ export default function AboutSection() {
             className="text-base leading-relaxed mb-12"
             style={{ color: "#6B6560" }}
           >
-            What sets me apart is my fluency with AI tools. For me, AI isn't a shortcut, it's how I accelerate the entire design workflow without compromising craft. That craft lives in the details: research, wireframing, prototyping, and usability testing, all in service of digital products that feel effortless to use.
+            What sets me apart is my{" "}
+            <strong style={{ color: "#4A6741" }}>fluency with AI tools</strong>. For me, AI isn’t a shortcut — it’s how I accelerate the entire design workflow without compromising craft. That craft lives in the details: research, wireframing, prototyping, and usability testing, all in service of accessible products that feel effortless to use.
           </motion.p>
 
           {/* Timeline */}
