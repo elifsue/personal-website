@@ -8,15 +8,37 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { useLocation } from "wouter";
 
-const KIDDIWEAR_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/WbmkfKudAvPBKcWy.png";
+const CHARACTERPAD_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png";
+const KIDDIWEAR_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png";
 const WP_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png";
 
 const projects = [
   {
     id: "01",
+    title: "Character Pad",
+    subtitle: "Android Unicode Characters App",
+    tags: ["UI/UX Design", "Android", "App Redesign"],
+    year: "2026",
+    description:
+      "Character Pad is an Android utility app, designed to provide users with extensive access to Unicode characters, serving as a comprehensive tool for inserting special symbols, mathematical operators, emojis, etc. into their texts, emails, and documents.",
+    outcome: "1,600,000+ installs, 4.7 rating · User review analysis · Full redesign",
+    image: CHARACTERPAD_IMG,
+    color: "#E67E22",
+    bgColor: "#F5EDE6",
+    link: "/character-pad",
+    github: "",
+    links: [
+      { label: "Interactive Prototype", url: "https://www.figma.com/proto/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=824-17076&t=n1dLPf9xI0nHeUcA-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=824%3A17076&show-proto-sidebar=1", style: { background: "#BF5836", color: "#FAF7F2" } },
+      { label: "Behance", url: "https://www.behance.net/gallery/252476603/Character-Pad-Android-Unicode-App-Redesign-UIUX", style: { background: "#4A6FA5", color: "#FFFFFF" } },
+      { label: "Figma", url: "https://www.figma.com/design/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=263-9197&t=gMi30hWZphoUtKG5-1", style: { background: "#7B5EA7", color: "#FFFFFF" } },
+      { label: "Google Play", url: "https://play.google.com/store/apps/details?id=com.husseinelfeky.characterpad", style: { background: "#01875F", color: "#FFFFFF" } },
+    ],
+  },
+  {
+    id: "02",
     title: "Kiddiwear",
     subtitle: "Peer-to-peer Marketplace Website",
-    tags: ["UX/UI Design", "Marketplace", "Web Design"],
+    tags: ["UI/UX Design", "Marketplace", "Web Design"],
     year: "2026",
     description:
       "A dedicated UK marketplace for buying and selling pre-loved children's clothing. Developed as part of the Google UX Design Professional Certificate, this project follows the full Design Thinking methodology — from simulated user research to usability testing and iterative design.",
@@ -34,7 +56,7 @@ const projects = [
     ],
   },
   {
-    id: "02",
+    id: "03",
     title: "Wireframe Prototyper Skill",
     subtitle: "Claude Code Custom Skill",
     tags: ["Claude Code", "Prototyping", "Automation"],
@@ -43,8 +65,8 @@ const projects = [
       "A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.",
     outcome: "Open source · Prompt-driven · Rapid prototyping",
     image: WP_IMG,
-    color: "#BF5836",
-    bgColor: "#F5EDE6",
+    color: "#7B5EA7",
+    bgColor: "#F0ECF5",
     link: "/wireframe-prototyper",
     github: "https://github.com/elifsue/wireframe-prototyper-skill",
     links: [
@@ -201,6 +223,11 @@ function ProjectCard({
                   <path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z"/>
                   <path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z"/>
                   <path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z"/>
+                </svg>
+              )}
+              {link.label === "Google Play" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.3 2.3-8.636-8.632z"/>
                 </svg>
               )}
               {link.label}

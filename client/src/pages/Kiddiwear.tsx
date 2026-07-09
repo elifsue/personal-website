@@ -10,8 +10,9 @@ import { useRef, useState, useEffect } from "react";
 import { Link } from "wouter";
 import { AnimatePresence } from "framer-motion";
 import CustomCursor from "@/components/CustomCursor";
+import CaseStudyFooter from "@/components/CaseStudyFooter";
 
-const KIDDIWEAR_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/GmGAJQKDZlEBixBL.jpg";
+const KIDDIWEAR_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png";
 
 // Nav links specific to the Kiddiwear case study
 const navLinks = [
@@ -264,13 +265,13 @@ export default function Kiddiwear() {
       el.setAttribute("content", content);
     };
     setMeta("og:title", "Kiddiwear — Children's Clothing Marketplace");
-    setMeta("og:description", "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UX/UI Design by Elifsu Ateş.");
+    setMeta("og:description", "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UI/UX Design by Elifsu Ateş.");
     setMeta("og:image", KIDDIWEAR_OG_IMAGE);
     setMeta("og:image:width", "1200");
     setMeta("og:image:height", "960");
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", "Kiddiwear — Children's Clothing Marketplace");
-    setMeta("twitter:description", "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UX/UI Design by Elifsu Ateş.");
+    setMeta("twitter:description", "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UI/UX Design by Elifsu Ateş.");
     setMeta("twitter:image", KIDDIWEAR_OG_IMAGE);
     return () => {
       document.title = "Elifsu Ateş — UI/UX Designer";
@@ -301,7 +302,7 @@ export default function Kiddiwear() {
           <Section>
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#BF583620", color: "#BF5836" }}>
-                UX/UI Design
+                UI/UX Design
               </span>
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
                 2026
@@ -883,40 +884,7 @@ export default function Kiddiwear() {
         </div>
 
         {/* Footer CTA */}
-        <div className="px-8 lg:px-32 py-20 text-center" style={{ background: "#1C1917" }}>
-          <Section>
-            <h2 className="font-display text-2xl md:text-3xl mb-6" style={{ color: "#FAF7F2", fontWeight: 300 }}>
-              Want to start working on your next project with me?
-            </h2>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <a
-                href="mailto:hello@elifsuates.com"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
-                style={{ background: "#BF5836", color: "#FAF7F2" }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2"/>
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                </svg>
-                Send a hello@elifsuates.com
-              </a>
-              <a
-                href="https://www.linkedin.com/in/elifsu-ates/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
-                style={{ background: "#0A66C2", color: "#FFFFFF" }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                  <rect x="2" y="9" width="4" height="12"/>
-                  <circle cx="4" cy="4" r="2"/>
-                </svg>
-                Message on LinkedIn
-              </a>
-            </div>
-          </Section>
-        </div>
+        <CaseStudyFooter />
       </main>
     </div>
   );
