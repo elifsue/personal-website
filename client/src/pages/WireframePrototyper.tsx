@@ -9,6 +9,7 @@ import { useRef, useState, useEffect } from "react";
 import { Link } from "wouter";
 import { AnimatePresence } from "framer-motion";
 import CustomCursor from "@/components/CustomCursor";
+import CaseStudyFooter from "@/components/CaseStudyFooter";
 
 const WP_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png";
 
@@ -39,8 +40,8 @@ function Section({ children, className = "", id = "" }: { children: React.ReactN
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-px" style={{ background: "#BF5836" }} />
-      <span className="font-mono-dm text-xs tracking-[0.25em] uppercase" style={{ color: "#BF5836" }}>
+      <div className="w-8 h-px" style={{ background: "#7B5EA7" }} />
+      <span className="font-mono-dm text-xs tracking-[0.25em] uppercase" style={{ color: "#7B5EA7" }}>
         {label}
       </span>
     </div>
@@ -86,7 +87,7 @@ function ProjectNavbar() {
         {/* Logo mark — links back home */}
         <Link href="/" className="flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-110">
           <div className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ background: "#C4622D" }}>
+            style={{ background: "#7B5EA7" }}>
             <span className="font-display text-white font-semibold text-sm">EA</span>
           </div>
         </Link>
@@ -102,7 +103,7 @@ function ProjectNavbar() {
             >
               <span
                 className="font-mono-dm text-xs tracking-widest uppercase transition-colors duration-300"
-                style={{ color: active === link.label ? "#C4622D" : "#6B6560" }}
+                style={{ color: active === link.label ? "#7B5EA7" : "#6B6560" }}
               >
                 {link.label}
               </span>
@@ -115,7 +116,7 @@ function ProjectNavbar() {
                     exit={{ opacity: 0, scaleY: 0 }}
                     transition={{ type: "tween", ease: "easeInOut", duration: 0.25 }}
                     className="absolute -right-3 top-0 bottom-0 w-0.5 rounded-full origin-center"
-                    style={{ background: "#C4622D" }}
+                    style={{ background: "#7B5EA7" }}
                   />
                 )}
               </AnimatePresence>
@@ -168,7 +169,7 @@ function ProjectNavbar() {
         style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(12px)" }}
       >
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#C4622D" }}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#7B5EA7" }}>
             <span className="font-display text-white font-semibold text-xs">EA</span>
           </div>
           <span className="font-display text-lg font-medium" style={{ color: "#1C1917" }}>Elifsu Ateş</span>
@@ -220,7 +221,7 @@ function ProjectNavbar() {
                 transition={{ delay: i * 0.07 }}
                 onClick={() => handleNavClick(link.label, link.href)}
                 className="py-4 font-display text-4xl font-light transition-colors duration-200"
-                style={{ color: active === link.label ? "#C4622D" : "#1C1917" }}
+                style={{ color: active === link.label ? "#7B5EA7" : "#1C1917" }}
               >
                 {link.label}
               </motion.button>
@@ -295,7 +296,7 @@ export default function WireframePrototyper() {
         <header className="pt-24 pb-16 px-8 lg:px-32" id="overview">
           <Section>
             <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#BF583620", color: "#BF5836" }}>
+              <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#7B5EA720", color: "#7B5EA7" }}>
                 Claude Code Skill
               </span>
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
@@ -303,7 +304,7 @@ export default function WireframePrototyper() {
               </span>
             </div>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl mb-4" style={{ color: "#1C1917", fontWeight: 300 }}>
-              Wireframe Prototyper <em style={{ color: "#BF5836" }}>Skill</em>
+              Wireframe Prototyper <em style={{ color: "#7B5EA7" }}>Skill</em>
             </h1>
             <p className="text-xl leading-relaxed max-w-3xl mb-8" style={{ color: "#6B6560" }}>
               A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.
@@ -354,7 +355,7 @@ export default function WireframePrototyper() {
           <Section>
             <SectionLabel label="Overview" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
-              What is <em style={{ color: "#BF5836" }}>this?</em>
+              What is <em style={{ color: "#7B5EA7" }}>this?</em>
             </h2>
             <div className="max-w-3xl space-y-6">
               <p className="text-base leading-relaxed" style={{ color: "#6B6560" }}>
@@ -375,7 +376,7 @@ export default function WireframePrototyper() {
           <Section>
             <SectionLabel label="Features" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
-              Key <em style={{ color: "#BF5836" }}>Capabilities</em>
+              Key <em style={{ color: "#7B5EA7" }}>Capabilities</em>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
@@ -398,40 +399,7 @@ export default function WireframePrototyper() {
 
 
         {/* Footer CTA */}
-        <div className="px-8 lg:px-32 py-20 text-center" style={{ background: "#1C1917" }}>
-          <Section>
-            <h2 className="font-display text-2xl md:text-3xl mb-6" style={{ color: "#FAF7F2", fontWeight: 300 }}>
-              Want to start working on your next project with me?
-            </h2>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <a
-                href="mailto:hello@elifsuates.com"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
-                style={{ background: "#BF5836", color: "#FAF7F2" }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2"/>
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                </svg>
-                Send a hello@elifsuates.com
-              </a>
-              <a
-                href="https://www.linkedin.com/in/elifsu-ates/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
-                style={{ background: "#0A66C2", color: "#FFFFFF" }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                  <rect x="2" y="9" width="4" height="12"/>
-                  <circle cx="4" cy="4" r="2"/>
-                </svg>
-                Message on LinkedIn
-              </a>
-            </div>
-          </Section>
-        </div>
+        <CaseStudyFooter />
       </main>
     </div>
   );
