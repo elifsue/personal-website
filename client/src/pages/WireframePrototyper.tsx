@@ -1,13 +1,6 @@
-/* ============================================================
-   WIREFRAME PROTOTYPER SKILL PAGE — Organic Modernism
-   Simple project page with overview and GitHub link
-   Warm earthy tones matching the portfolio design
-   ============================================================ */
-
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { Link } from "wouter";
-import { AnimatePresence } from "framer-motion";
 import CustomCursor from "@/components/CustomCursor";
 import CaseStudyFooter from "@/components/CaseStudyFooter";
 import CaseStudyNav from "@/components/CaseStudyNav";
@@ -15,13 +8,11 @@ import ProjectSwitcher from "@/components/ProjectSwitcher";
 
 const WP_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png";
 
-// Nav links for this page
 const navLinks = [
   { label: "Overview", href: "#overview" },
   { label: "Features", href: "#features" },
 ];
 
-// Reusable section wrapper with scroll animation
 function Section({ children, className = "", id = "" }: { children: React.ReactNode; className?: string; id?: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
@@ -83,10 +74,8 @@ function ProjectNavbar() {
 
   return (
     <>
-      {/* Desktop: Fixed left vertical nav */}
       <nav className="hidden lg:flex fixed left-0 top-0 h-full w-20 flex-col items-center justify-between py-10 z-50"
         style={{ background: "rgba(250,247,242,0.85)", backdropFilter: "blur(12px)", borderRight: "1px solid rgba(196,98,45,0.12)" }}>
-        {/* Logo mark — links back home */}
         <Link href="/" className="flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-110">
           <div className="w-10 h-10 rounded-full flex items-center justify-center"
             style={{ background: "#7B5EA7" }}>
@@ -94,7 +83,6 @@ function ProjectNavbar() {
           </div>
         </Link>
 
-        {/* Nav links rotated */}
         <div className="flex flex-col items-center gap-8">
           {navLinks.map((link) => (
             <button
@@ -126,7 +114,6 @@ function ProjectNavbar() {
           ))}
         </div>
 
-        {/* Social links */}
         <div className="flex flex-col items-center gap-3">
           <a href="mailto:hello@elifsuates.com" className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
             style={{ color: "#6B6560" }}
@@ -165,7 +152,6 @@ function ProjectNavbar() {
         </div>
       </nav>
 
-      {/* Mobile: Top nav */}
       <nav
         className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-md" : ""}`}
         style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(12px)" }}
@@ -206,7 +192,6 @@ function ProjectNavbar() {
         </button>
       </nav>
 
-      {/* Mobile menu overlay */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -273,7 +258,6 @@ export default function WireframePrototyper() {
       <CustomCursor />
       <ProjectNavbar />
 
-      {/* Floating Back to Portfolio button */}
       <Link
         href="/"
         className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 px-4 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105 shadow-lg"
@@ -285,11 +269,9 @@ export default function WireframePrototyper() {
         Back to Portfolio
       </Link>
 
-      {/* Main content offset for desktop left nav */}
       <main className="lg:pl-20">
         <CaseStudyNav />
-        {/* Hero / Header */}
-        <header className="pt-24 pb-16 px-8 lg:px-32" id="overview">
+        <header className="pt-28 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
           <Section>
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#7B5EA720", color: "#7B5EA7" }}>
@@ -346,7 +328,6 @@ export default function WireframePrototyper() {
           </Section>
         </header>
 
-        {/* Overview */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Overview" />
@@ -367,7 +348,6 @@ export default function WireframePrototyper() {
           </Section>
         </div>
 
-        {/* Key Features */}
         <div className="px-8 lg:px-32 py-20" id="features">
           <Section>
             <SectionLabel label="Features" />
@@ -392,9 +372,6 @@ export default function WireframePrototyper() {
           </Section>
         </div>
 
-
-
-        {/* Footer CTA */}
         <CaseStudyFooter />
       </main>
     </div>

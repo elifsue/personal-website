@@ -116,7 +116,6 @@ function CaseStudyNavbar() {
 
   return (
     <>
-      {/* Desktop: Fixed left vertical nav */}
       <nav className="hidden lg:flex fixed left-0 top-0 h-full w-20 flex-col items-center justify-between py-10 z-50"
         style={{ background: "rgba(250,247,242,0.85)", backdropFilter: "blur(12px)", borderRight: "1px solid rgba(230,126,34,0.12)" }}>
         <Link href="/" className="flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-110">
@@ -169,7 +168,6 @@ function CaseStudyNavbar() {
         </div>
       </nav>
 
-      {/* Mobile: Top nav */}
       <nav
         className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-md" : ""}`}
         style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(12px)" }}
@@ -191,7 +189,6 @@ function CaseStudyNavbar() {
         </button>
       </nav>
 
-      {/* Mobile menu overlay */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -521,7 +518,6 @@ export default function CharacterPad() {
       <CustomCursor />
       <CaseStudyNavbar />
 
-      {/* Floating Back to Portfolio button */}
       <Link
         href="/"
         className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 px-4 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105 shadow-lg"
@@ -533,8 +529,7 @@ export default function CharacterPad() {
 
       <main className="lg:pl-20">
         <CaseStudyNav />
-        {/* Hero */}
-        <header className="pt-24 pb-16 px-8 lg:px-32" id="overview">
+        <header className="pt-28 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
           <Section>
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#E67E2220", color: "#E67E22" }}>
@@ -575,8 +570,7 @@ export default function CharacterPad() {
           </Section>
         </header>
 
-        {/* Overview */}
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Overview" />
             <h2 className="font-display text-3xl md:text-4xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -586,7 +580,6 @@ export default function CharacterPad() {
               Character Pad is an Android utility app, designed to provide users with extensive access to Unicode characters, serving as a comprehensive tool for inserting special symbols, mathematical operators, emojis, etc. into their texts, emails, and documents.
             </p>
 
-            {/* Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
               {[
                 { value: "1.6M+", label: "Installs" },
@@ -594,21 +587,20 @@ export default function CharacterPad() {
                 { value: "6.4K+", label: "Reviews" },
                 { value: "12", label: "Key Findings" },
               ].map((m) => (
-                <div key={m.label} className="p-5 rounded-2xl text-center" style={{ background: "#F5F0EA" }}>
+                <div key={m.label} className="p-5 rounded-2xl text-center" style={{ background: "#FAF7F2" }}>
                   <div className="font-display text-2xl md:text-3xl font-medium mb-1" style={{ color: "#E67E22" }}>{m.value}</div>
                   <div className="font-mono-dm text-xs tracking-wide uppercase" style={{ color: "#6B6560" }}>{m.label}</div>
                 </div>
               ))}
             </div>
 
-            {/* Tools */}
             <div className="flex flex-wrap gap-4">
               {[
                 { name: "Figma", logo: ASSETS.figmaLogo },
                 { name: "Claude Code", logo: ASSETS.claudeCodeLogo },
                 { name: "Notion", logo: ASSETS.notionLogo },
               ].map((tool) => (
-                <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#F5F0EA" }}>
+                <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#FAF7F2" }}>
                   <img src={tool.logo} alt={tool.name} className="w-6 h-6 object-contain" />
                   <span className="font-mono-dm text-xs tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
                 </div>
@@ -617,8 +609,7 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* Role */}
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
+        <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Role" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -630,8 +621,7 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* Design Process */}
-        <div className="px-8 lg:px-32 py-20" id="process">
+        <div className="px-8 lg:px-32 py-20" id="process" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Design Process" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -641,12 +631,11 @@ export default function CharacterPad() {
               I leveraged Claude Code to scrape and categorize the actionable 1-4 stars user reviews from Play Store, identifying key usability issues and design flaws to inform the redesign. After ranking them by severity and discussing priorities with the stakeholder, I translated the findings into user stories, developed wireframes, built an interactive prototype, and validated the solutions through usability testing.
             </p>
 
-            {/* Process Steps */}
             <div className="space-y-4">
               {processSteps.map((row, rowIdx) => (
                 <div key={rowIdx} className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {row.map((step, stepIdx) => (
-                    <div key={step} className="p-4 rounded-xl flex items-center gap-3" style={{ background: "#F5F0EA" }}>
+                    <div key={step} className="p-4 rounded-xl flex items-center gap-3" style={{ background: "#FAF7F2" }}>
                       <span className="font-mono-dm text-xs font-medium shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#E67E2220", color: "#E67E22" }}>
                         {rowIdx * 4 + stepIdx + 1}
                       </span>
@@ -659,8 +648,7 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* User Types */}
-        <div className="px-8 lg:px-32 py-20" id="research" style={{ background: "#F5F0EA" }}>
+        <div className="px-8 lg:px-32 py-20" id="research">
           <Section>
             <SectionLabel label="User Types" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -668,7 +656,7 @@ export default function CharacterPad() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {userTypes.map((ut) => (
-                <div key={ut.name} className="p-6 rounded-2xl" style={{ background: "#FAF7F2" }}>
+                <div key={ut.name} className="p-6 rounded-2xl" style={{ background: "#F5F0EA" }}>
                   <div className="flex items-center gap-3 mb-4">
                     <img src={ut.emoji} alt="" className="w-10 h-10" />
                     <h3 className="font-display text-lg font-medium" style={{ color: "#1C1917" }}>{ut.name}</h3>
@@ -681,8 +669,7 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* User Reviews Collage */}
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="User Reviews" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -694,8 +681,7 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* User Reviews Analysis */}
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
+        <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="User Reviews Analysis" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -741,7 +727,6 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* Solutions */}
         <div className="px-8 lg:px-32 py-20" id="solutions" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Solutions" />
@@ -770,7 +755,6 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* Design System: Color Palette */}
         <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Design System" />
@@ -813,7 +797,6 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* Typography */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Typography" />
@@ -839,7 +822,6 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* Iconography */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#3C3C3C" }}>
           <Section>
             <SectionLabel label="Iconography" />
@@ -852,7 +834,7 @@ export default function CharacterPad() {
                 { style: "Filled", img: ASSETS.iconsFilled },
                 { style: "Colored", img: ASSETS.iconsColored },
               ].map((icon) => (
-                <div key={icon.style} className="rounded-xl overflow-hidden" style={{ background: "#2A2A2A" }}>
+                <div key={icon.style} className="rounded-xl overflow-hidden" style={{ background: "#4A4A4A" }}>
                   <div className="p-4 pb-2">
                     <h3 className="font-display text-lg font-light" style={{ color: "#FFFFFF" }}>{icon.style}</h3>
                   </div>
@@ -865,7 +847,6 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        {/* App Redesign Sections */}
         <div className="py-20" id="redesign" style={{ background: "#3C3C3C" }}>
           <div className="px-8 lg:px-32 mb-16">
             <Section>
@@ -884,12 +865,10 @@ export default function CharacterPad() {
             </Section>
           </div>
 
-          {/* Redesign sections */}
           <div className="space-y-24">
             {redesignSections.map((section) => (
               <div key={section.num} className="px-8 lg:px-32">
                 <Section>
-                  {/* Header: category pill + titles + section number */}
                   <div className="flex items-start justify-between gap-6 mb-8">
                     <div className="flex-1">
                       <span
@@ -911,7 +890,6 @@ export default function CharacterPad() {
                     <RedesignSectionNumber num={section.num} />
                   </div>
 
-                  {/* Content blocks: paragraph + optional screenshots */}
                   {section.content.map((block, idx) => (
                     <div key={idx} className="mb-8">
                       <div className="flex items-start gap-4 max-w-3xl">
@@ -951,7 +929,6 @@ export default function CharacterPad() {
           </div>
         </div>
 
-        {/* Footer CTA */}
         <CaseStudyFooter />
       </main>
     </div>
