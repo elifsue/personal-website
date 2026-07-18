@@ -276,7 +276,7 @@ export default function Kiddiwear() {
 
       <main className="lg:pl-20">
         <CaseStudyNav />
-        <header className="pt-24 pb-16 px-8 lg:px-32" id="overview">
+        <header className="pt-28 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
           <Section>
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#BF583620", color: "#BF5836" }}>
@@ -359,7 +359,7 @@ export default function Kiddiwear() {
           </Section>
         </header>
 
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Overview" />
             <h2 className="font-display text-3xl md:text-4xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -376,7 +376,7 @@ export default function Kiddiwear() {
                 { name: "Claude Code", logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VikdDFbzmeIoqhaw.png" },
                 { name: "Manus", logo: "https://manus.im/favicon.ico" },
               ].map((tool) => (
-                <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#F5F0EA" }}>
+                <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#FAF7F2" }}>
                   <img src={tool.logo} alt={tool.name} className="w-6 h-6 object-contain" />
                   <span className="font-mono-dm text-xs tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
                 </div>
@@ -393,7 +393,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 pb-20">
+        <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Process" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -405,8 +405,8 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 pb-20" style={{ background: "#F5F0EA" }}>
-          <Section className="py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
+          <Section>
             <SectionLabel label="Workflow" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               Claude Code <span style={{ color: "#BF5836" }}>↔</span> Figma
@@ -476,7 +476,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 pb-20" id="solution">
+        <div className="px-8 lg:px-32 py-20" id="solution" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Solution" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -493,7 +493,7 @@ export default function Kiddiwear() {
                 { feature: "Integrated Delivery", icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/izdXwEEzOMXQKrTN.png" },
                 { feature: "Curated Experience", icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/IaJGWcWgLqXZnTmx.png" },
               ].map((item) => (
-                <div key={item.feature} className="p-5 rounded-2xl flex flex-col items-center gap-3" style={{ background: "#F5F0EA", border: "1px solid #BF583615" }}>
+                <div key={item.feature} className="p-5 rounded-2xl flex flex-col items-center gap-3" style={{ background: "#FAF7F2", border: "1px solid #BF583615" }}>
                   <img src={item.icon} alt={item.feature} className="w-10 h-10 object-contain" />
                   <span className="text-sm font-medium text-center" style={{ color: "#1C1917" }}>{item.feature}</span>
                 </div>
@@ -502,7 +502,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
+        <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Methodology" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -520,7 +520,7 @@ export default function Kiddiwear() {
                 { phase: "Design", items: ["Paper Wireframes", "Digital Wireframes", "Design System", "Prototype"] },
                 { phase: "Test", items: ["Usability Test", "Future Concepts"] },
               ].map((p, i) => (
-                <div key={p.phase} className="p-5 rounded-2xl" style={{ background: "#FAF7F2" }}>
+                <div key={p.phase} className="p-5 rounded-2xl" style={{ background: "#F5F0EA" }}>
                   <div className="font-mono-dm text-xs tracking-wide uppercase mb-3" style={{ color: "#BF5836" }}>
                     {String(i + 1).padStart(2, "0")} — {p.phase}
                   </div>
@@ -535,7 +535,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20" id="empathise">
+        <div className="px-8 lg:px-32 py-20" id="empathise" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Empathise" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -551,7 +551,7 @@ export default function Kiddiwear() {
                 "If there were a platform designed specifically for buying and selling children's clothing, what would matter most to you?",
                 "What would make you want to use it regularly?",
               ].map((q, i) => (
-                <div key={i} className="p-5 rounded-2xl" style={{ background: "#F5F0EA" }}>
+                <div key={i} className="p-5 rounded-2xl" style={{ background: "#FAF7F2" }}>
                   <p className="text-sm italic leading-relaxed" style={{ color: "#1C1917" }}>"{q}"</p>
                 </div>
               ))}
@@ -561,7 +561,7 @@ export default function Kiddiwear() {
               Key <em style={{ color: "#BF5836" }}>Findings</em>
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="p-6 rounded-2xl" style={{ background: "#F5F0EA" }}>
+              <div className="p-6 rounded-2xl" style={{ background: "#FAF7F2" }}>
                 <h4 className="font-mono-dm text-xs tracking-wide uppercase mb-4" style={{ color: "#BF5836" }}>Platform Features (n=20)</h4>
                 <img
                   src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/ZQpwCNdVqGZGFFVs.png"
@@ -569,7 +569,7 @@ export default function Kiddiwear() {
                   className="w-full h-auto"
                 />
               </div>
-              <div className="p-6 rounded-2xl" style={{ background: "#F5F0EA" }}>
+              <div className="p-6 rounded-2xl" style={{ background: "#FAF7F2" }}>
                 <h4 className="font-mono-dm text-xs tracking-wide uppercase mb-4" style={{ color: "#BF5836" }}>Barriers (n=20)</h4>
                 <img
                   src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/QybVSyIbRFfbnDWM.png"
@@ -581,7 +581,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 pb-20" id="define">
+        <div className="px-8 lg:px-32 py-20" id="define">
           <Section>
             <SectionLabel label="Define" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
