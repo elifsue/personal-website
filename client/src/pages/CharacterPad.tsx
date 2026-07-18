@@ -5,6 +5,8 @@ import { useRef, useState, useEffect } from "react";
 import { Link } from "wouter";
 import CustomCursor from "@/components/CustomCursor";
 import CaseStudyFooter from "@/components/CaseStudyFooter";
+import CaseStudyNav from "@/components/CaseStudyNav";
+import ProjectSwitcher from "@/components/ProjectSwitcher";
 
 const CHARACTERPAD_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/fWNxQURakNaOZpGt.png";
 
@@ -169,15 +171,17 @@ function CaseStudyNavbar() {
 
       {/* Mobile: Top nav */}
       <nav
-        className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-sm" : ""}`}
+        className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-md" : ""}`}
         style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(12px)" }}
       >
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#E67E22" }}>
-            <span className="font-display text-white font-semibold text-xs">EA</span>
-          </div>
-          <span className="font-display text-lg font-medium" style={{ color: "#1C1917" }}>Elifsu Ateş</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#E67E22" }}>
+              <span className="font-display text-white font-semibold text-xs">EA</span>
+            </div>
+          </Link>
+          <ProjectSwitcher />
+        </div>
         <button onClick={() => setMenuOpen(!menuOpen)} className="w-10 h-10 flex items-center justify-center" aria-label="Toggle menu">
           <span className="relative block w-6 h-4">
             <motion.span animate={menuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }} transition={{ duration: 0.3 }} className="absolute top-0 left-0 block w-6 h-0.5 rounded-full origin-center" style={{ background: "#1C1917" }} />
@@ -485,7 +489,7 @@ function getCategoryColor(area: string): string {
 
 export default function CharacterPad() {
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     document.title = "Character Pad — Elifsu Ateş";
     const setMeta = (property: string, content: string) => {
       let el = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
@@ -528,6 +532,7 @@ export default function CharacterPad() {
       </Link>
 
       <main className="lg:pl-20">
+        <CaseStudyNav />
         {/* Hero */}
         <header className="pt-24 pb-16 px-8 lg:px-32" id="overview">
           <Section>
