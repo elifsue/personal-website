@@ -1,20 +1,11 @@
-/* ============================================================
-   KIDDIWEAR CASE STUDY PAGE — Organic Modernism
-   Full case study with all sections from the PDF
-   Warm earthy tones matching the portfolio design
-   Uses the shared Navbar pattern with case-study-specific sections
-   ============================================================ */
-
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { Link } from "wouter";
-import { AnimatePresence } from "framer-motion";
 import CustomCursor from "@/components/CustomCursor";
 import CaseStudyFooter from "@/components/CaseStudyFooter";
 
 const KIDDIWEAR_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png";
 
-// Nav links specific to the Kiddiwear case study
 const navLinks = [
   { label: "Overview", href: "#overview" },
   { label: "Empathise", href: "#empathise" },
@@ -24,7 +15,6 @@ const navLinks = [
   { label: "Test", href: "#test" },
 ];
 
-// Reusable section wrapper with scroll animation
 function Section({ children, className = "", id = "" }: { children: React.ReactNode; className?: string; id?: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
@@ -86,10 +76,8 @@ function CaseStudyNavbar() {
 
   return (
     <>
-      {/* Desktop: Fixed left vertical nav */}
       <nav className="hidden lg:flex fixed left-0 top-0 h-full w-20 flex-col items-center justify-between py-10 z-50"
         style={{ background: "rgba(250,247,242,0.85)", backdropFilter: "blur(12px)", borderRight: "1px solid rgba(196,98,45,0.12)" }}>
-        {/* Logo mark — links back home */}
         <Link href="/" className="flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-110">
           <div className="w-10 h-10 rounded-full flex items-center justify-center"
             style={{ background: "#C4622D" }}>
@@ -97,7 +85,6 @@ function CaseStudyNavbar() {
           </div>
         </Link>
 
-        {/* Nav links rotated */}
         <div className="flex flex-col items-center gap-8">
           {navLinks.map((link) => (
             <button
@@ -129,7 +116,6 @@ function CaseStudyNavbar() {
           ))}
         </div>
 
-        {/* Social links */}
         <div className="flex flex-col items-center gap-3">
           <a href="mailto:hello@elifsuates.com" className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
             style={{ color: "#6B6560" }}
@@ -168,7 +154,6 @@ function CaseStudyNavbar() {
         </div>
       </nav>
 
-      {/* Mobile: Top nav */}
       <nav
         className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-sm" : ""}`}
         style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(12px)" }}
@@ -207,7 +192,6 @@ function CaseStudyNavbar() {
         </button>
       </nav>
 
-      {/* Mobile menu overlay */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -246,23 +230,20 @@ export default function Kiddiwear() {
     } else {
       window.scrollTo(0, 0);
     }
-  }, []);
 
-  // Set OG meta tags for link sharing
-  useEffect(() => {
     document.title = "Kiddiwear — Elifsu Ateş";
     const setMeta = (property: string, content: string) => {
-      let el = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
-      if (!el) {
-        el = document.createElement("meta");
+      let meta = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
+      if (!meta) {
+        meta = document.createElement("meta");
         if (property.startsWith("twitter:")) {
-          el.setAttribute("name", property);
+          meta.setAttribute("name", property);
         } else {
-          el.setAttribute("property", property);
+          meta.setAttribute("property", property);
         }
-        document.head.appendChild(el);
+        document.head.appendChild(meta);
       }
-      el.setAttribute("content", content);
+      meta.setAttribute("content", content);
     };
     setMeta("og:title", "Kiddiwear — Children's Clothing Marketplace");
     setMeta("og:description", "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UI/UX Design by Elifsu Ateş.");
@@ -273,6 +254,7 @@ export default function Kiddiwear() {
     setMeta("twitter:title", "Kiddiwear — Children's Clothing Marketplace");
     setMeta("twitter:description", "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UI/UX Design by Elifsu Ateş.");
     setMeta("twitter:image", KIDDIWEAR_OG_IMAGE);
+
     return () => {
       document.title = "Elifsu Ateş — UI/UX Designer";
     };
@@ -283,7 +265,6 @@ export default function Kiddiwear() {
       <CustomCursor />
       <CaseStudyNavbar />
 
-      {/* Floating Back to Portfolio button */}
       <Link
         href="/"
         className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 px-4 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105 shadow-lg"
@@ -295,14 +276,15 @@ export default function Kiddiwear() {
         Back to Portfolio
       </Link>
 
-      {/* Main content offset for desktop left nav */}
       <main className="lg:pl-20">
-        {/* Hero / Header */}
         <header className="pt-24 pb-16 px-8 lg:px-32" id="overview">
           <Section>
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#BF583620", color: "#BF5836" }}>
                 UI/UX Design
+              </span>
+              <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
+                Website
               </span>
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
                 2026
@@ -378,7 +360,40 @@ export default function Kiddiwear() {
           </Section>
         </header>
 
-        {/* Simulated Research, Real Design Process */}
+        <div className="px-8 lg:px-32 py-20">
+          <Section>
+            <SectionLabel label="Overview" />
+            <h2 className="font-display text-3xl md:text-4xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
+              About <em style={{ color: "#BF5836" }}>Kiddiwear</em>
+            </h2>
+            <p className="text-lg leading-relaxed mb-10 max-w-3xl" style={{ color: "#6B6560" }}>
+              Kiddiwear is a UI/UX design project developed as part of the Google UX Design Professional Certificate on Coursera, focused on creating a dedicated UK marketplace for buying and selling pre-loved children's clothing.
+            </p>
+
+            <div className="flex flex-wrap gap-4 mb-10">
+              {[
+                { name: "Figma", logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/JDWzeFRlBQpYRNXU.png" },
+                { name: "Lucidchart", logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/KpKsLwqHsDcFXtXs.png" },
+                { name: "Claude Code", logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VikdDFbzmeIoqhaw.png" },
+                { name: "Manus", logo: "https://manus.im/favicon.ico" },
+              ].map((tool) => (
+                <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#F5F0EA" }}>
+                  <img src={tool.logo} alt={tool.name} className="w-6 h-6 object-contain" />
+                  <span className="font-mono-dm text-xs tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {["UX Research", "Sketching", "Wireframing", "Rapid Prototyping", "Vibe Coding"].map((skill) => (
+                <span key={skill} className="px-3 py-1.5 rounded-full font-mono-dm text-xs tracking-wide" style={{ background: "#BF583615", color: "#BF5836" }}>
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </Section>
+        </div>
+
         <div className="px-8 lg:px-32 pb-20">
           <Section>
             <SectionLabel label="Process" />
@@ -391,7 +406,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Workflow: Claude Code ↔ Figma */}
         <div className="px-8 lg:px-32 pb-20" style={{ background: "#F5F0EA" }}>
           <Section className="py-20">
             <SectionLabel label="Workflow" />
@@ -410,7 +424,6 @@ export default function Kiddiwear() {
                   This back and forth process allowed me to refine both the prototype and the design system simultaneously across multiple iterations, while making the website UI code production-ready.
                 </p>
               </div>
-              {/* Workflow diagram */}
               <div className="flex flex-col items-center gap-6">
                 <div className="w-full max-w-sm p-6 rounded-2xl flex items-center gap-4" style={{ background: "#FAF7F2", border: "1px solid #BF583630" }}>
                   <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VikdDFbzmeIoqhaw.png" alt="Claude Code" className="w-10 h-10 object-contain" />
@@ -435,7 +448,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Problem Statement */}
         <div className="px-8 lg:px-32 py-20" id="problem">
           <Section>
             <SectionLabel label="Problem" />
@@ -446,7 +458,6 @@ export default function Kiddiwear() {
               Children's clothes are outgrown in months, leaving families with wardrobes of perfectly good items they no longer need, yet reselling them on existing platforms feels cluttered, untrustworthy, and not worth the effort while UK clothing waste and costs keep rising.
             </p>
 
-            {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 { num: "1", stat: "216 million", desc: "pieces of children's clothing sent to UK landfill yearly", source: "BusinessGreen, Nov 2025" },
@@ -466,7 +477,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Solution */}
         <div className="px-8 lg:px-32 pb-20" id="solution">
           <Section>
             <SectionLabel label="Solution" />
@@ -477,7 +487,6 @@ export default function Kiddiwear() {
               A dedicated peer-to-peer marketplace exclusively for children's clothing. Kiddiwear removes the barriers of trust, effort, and stigma by offering verified condition ratings, buyer protection, integrated delivery, and a curated shopping experience that makes second-hand feel premium.
             </p>
 
-            {/* Key Features */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { feature: "Buyer Protection", icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/MKXhkXcYCtrxzPtU.png" },
@@ -494,7 +503,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Design Thinking Methodology */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Methodology" />
@@ -505,7 +513,6 @@ export default function Kiddiwear() {
               This project follows the Design Thinking methodology, understanding user needs through research, defining key problems, generating ideas, building prototypes, and validating through real usability testing.
             </p>
 
-            {/* Phases */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {[
                 { phase: "Empathise", items: ["User Research", "Empathy Map"] },
@@ -529,7 +536,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* User Research */}
         <div className="px-8 lg:px-32 py-20" id="empathise">
           <Section>
             <SectionLabel label="Empathise" />
@@ -552,7 +558,6 @@ export default function Kiddiwear() {
               ))}
             </div>
 
-            {/* Research Findings - Pie Charts */}
             <h3 className="font-display text-2xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               Key <em style={{ color: "#BF5836" }}>Findings</em>
             </h3>
@@ -577,7 +582,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Personas */}
         <div className="px-8 lg:px-32 pb-20" id="define">
           <Section>
             <SectionLabel label="Define" />
@@ -586,7 +590,6 @@ export default function Kiddiwear() {
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Michael */}
               <div className="overflow-hidden">
                 <img
                   src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/isUvPiSWHZMiRkHQ.png"
@@ -595,7 +598,6 @@ export default function Kiddiwear() {
                 />
               </div>
 
-              {/* Amina */}
               <div className="overflow-hidden">
                 <img
                   src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/rmdghUpgqORpIaDf.png"
@@ -607,7 +609,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Information Architecture */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }} id="ideate">
           <Section>
             <SectionLabel label="Ideate" />
@@ -624,7 +625,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* User Flows */}
         <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="User Flows" />
@@ -633,7 +633,6 @@ export default function Kiddiwear() {
             </h2>
 
             <div className="space-y-10">
-              {/* Buy Item Flow */}
               <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
                 <div className="p-6 pb-0">
                   <h3 className="font-display text-xl mb-4" style={{ color: "#1C1917" }}>Buy Item</h3>
@@ -647,7 +646,6 @@ export default function Kiddiwear() {
                 </div>
               </div>
 
-              {/* Sell Item Flow */}
               <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
                 <div className="p-6 pb-0">
                   <h3 className="font-display text-xl mb-4" style={{ color: "#1C1917" }}>Sell Item</h3>
@@ -664,7 +662,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Paper Wireframes */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }} id="design">
           <Section>
             <SectionLabel label="Design" />
@@ -681,7 +678,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Digital Wireframes */}
         <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Design" />
@@ -698,7 +694,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Design System */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Design" />
@@ -706,7 +701,6 @@ export default function Kiddiwear() {
               Design <em style={{ color: "#BF5836" }}>System</em>
             </h2>
 
-            {/* Colors */}
             <div className="mb-12">
               <h3 className="font-mono-dm text-xs tracking-wide uppercase mb-4" style={{ color: "#8D5E3C" }}>Color Palette</h3>
               <div className="flex flex-wrap gap-4">
@@ -728,7 +722,6 @@ export default function Kiddiwear() {
               </div>
             </div>
 
-            {/* Typography */}
             <div>
               <h3 className="font-mono-dm text-xs tracking-wide uppercase mb-4" style={{ color: "#8D5E3C" }}>Typography</h3>
               <div className="p-6 rounded-2xl" style={{ background: "#FAF7F2" }}>
@@ -752,7 +745,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Final Design Pages */}
         <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Final Design" />
@@ -772,7 +764,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Usability Testing */}
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }} id="test">
           <Section>
             <SectionLabel label="Test" />
@@ -780,7 +771,6 @@ export default function Kiddiwear() {
               Usability <em style={{ color: "#BF5836" }}>Testing</em>
             </h2>
 
-            {/* Participant quotes */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
               {[
                 { quote: "How do I know which chat is for which?", participant: "A." },
@@ -794,7 +784,6 @@ export default function Kiddiwear() {
               ))}
             </div>
 
-            {/* Findings table */}
             <h3 className="font-display text-xl mb-4" style={{ color: "#1C1917" }}>Findings</h3>
             <div className="overflow-x-auto rounded-2xl" style={{ background: "#FAF7F2" }}>
               <table className="w-full text-sm">
@@ -829,7 +818,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Iterations After Testing */}
         <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Iterations" />
@@ -838,7 +826,6 @@ export default function Kiddiwear() {
             </h2>
 
             <div className="space-y-12">
-              {/* Iteration 1 */}
               <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
                 <div className="p-6 pb-0">
                   <div className="font-mono-dm text-xs tracking-wide uppercase mb-2" style={{ color: "#BF5836" }}>Iteration 01 — Category Selector</div>
@@ -852,7 +839,6 @@ export default function Kiddiwear() {
                 </div>
               </div>
 
-              {/* Iteration 2 */}
               <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
                 <div className="p-6 pb-0">
                   <div className="font-mono-dm text-xs tracking-wide uppercase mb-2" style={{ color: "#BF5836" }}>Iteration 02 — Messages with Product Card</div>
@@ -866,7 +852,6 @@ export default function Kiddiwear() {
                 </div>
               </div>
 
-              {/* Iteration 3 */}
               <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
                 <div className="p-6 pb-0">
                   <div className="font-mono-dm text-xs tracking-wide uppercase mb-2" style={{ color: "#BF5836" }}>Iteration 03 — Bundle Discount Visibility</div>
@@ -883,7 +868,6 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        {/* Footer CTA */}
         <CaseStudyFooter />
       </main>
     </div>
