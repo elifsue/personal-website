@@ -3,6 +3,8 @@ import { useRef, useState, useEffect } from "react";
 import { Link } from "wouter";
 import CustomCursor from "@/components/CustomCursor";
 import CaseStudyFooter from "@/components/CaseStudyFooter";
+import CaseStudyNav from "@/components/CaseStudyNav";
+import ProjectSwitcher from "@/components/ProjectSwitcher";
 
 const KIDDIWEAR_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png";
 
@@ -155,15 +157,17 @@ function CaseStudyNavbar() {
       </nav>
 
       <nav
-        className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-sm" : ""}`}
+        className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-md" : ""}`}
         style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(12px)" }}
       >
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#C4622D" }}>
-            <span className="font-display text-white font-semibold text-xs">EA</span>
-          </div>
-          <span className="font-display text-lg font-medium" style={{ color: "#1C1917" }}>Elifsu Ateş</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#C4622D" }}>
+              <span className="font-display text-white font-semibold text-xs">EA</span>
+            </div>
+          </Link>
+          <ProjectSwitcher />
+        </div>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="w-10 h-10 flex items-center justify-center"
@@ -224,13 +228,7 @@ function CaseStudyNavbar() {
 
 export default function Kiddiwear() {
   useEffect(() => {
-    const el = document.getElementById("overview");
-    if (el) {
-      el.scrollIntoView({ behavior: "instant" });
-    } else {
-      window.scrollTo(0, 0);
-    }
-
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     document.title = "Kiddiwear — Elifsu Ateş";
     const setMeta = (property: string, content: string) => {
       let meta = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
@@ -277,6 +275,7 @@ export default function Kiddiwear() {
       </Link>
 
       <main className="lg:pl-20">
+        <CaseStudyNav />
         <header className="pt-24 pb-16 px-8 lg:px-32" id="overview">
           <Section>
             <div className="flex flex-wrap items-center gap-3 mb-6">
