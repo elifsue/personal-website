@@ -113,8 +113,7 @@ export default function Home() {
         <WritingVideosSection />
         <SkillsSection />
         <CertificationsSection />
-        {/* Hidden for now — will be re-enabled later */}
-        {false && <TestimonialsSection />}
+        <TestimonialsSection />
         <ContactSection />
       </main>
     </div>
