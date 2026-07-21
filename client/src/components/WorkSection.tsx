@@ -51,7 +51,7 @@ const projects = [
     links: [
       { label: "Interactive Prototype", url: "https://elifsue.github.io/kiddiwear/", style: { background: "#BF5836", color: "#FAF7F2" } },
       { label: "Behance", url: "https://www.behance.net/gallery/250957329/Childrens-Clothing-Marketplace-Website-Design-UXUI", style: { background: "#4A6FA5", color: "#FFFFFF" } },
-      { label: "Figma", url: "https://www.figma.com/design/IQmFfsL8KwUqPk3PiW7dMH/Kiddiwear?node-id=3082-18790&t=mBVyGv0HCP6J71tN-1", style: { background: "#7B5EA7", color: "#FFFFFF" } },
+      { label: "Figma", url: "https://www.figma.com/design/IDK1e8n4xDMTt6FJ5zKidJ/Kiddiwear?node-id=3082-18790&t=I9EavRW2mVMJzCgM-1", style: { background: "#7B5EA7", color: "#FFFFFF" } },
       { label: "GitHub", url: "https://github.com/elifsue/kiddiwear", style: { background: "#1C1917", color: "#FAF7F2" } },
     ],
   },
