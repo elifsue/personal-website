@@ -327,7 +327,7 @@ export default function Kiddiwear() {
                 View on Behance
               </a>
               <a
-                href="https://www.figma.com/design/IQmFfsL8KwUqPk3PiW7dMH/Kiddiwear?node-id=3082-18790&t=mBVyGv0HCP6J71tN-1"
+                href="https://www.figma.com/design/IDK1e8n4xDMTt6FJ5zKidJ/Kiddiwear?node-id=3082-18790&t=I9EavRW2mVMJzCgM-1"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105"
@@ -515,7 +515,7 @@ export default function Kiddiwear() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {[
                 { phase: "Empathise", items: ["User Research", "Empathy Map"] },
-                { phase: "Define", items: ["Persona", "User Journeys", "User Stories"] },
+                { phase: "Define", items: ["User Persona", "User Journeys", "User Stories"] },
                 { phase: "Ideate", items: ["Brainstorm", "Information Architecture", "User Flows", "Competitive Audit"] },
                 { phase: "Design", items: ["Paper Wireframes", "Digital Wireframes", "Design System", "Prototype"] },
                 { phase: "Test", items: ["Usability Test", "Future Concepts"] },
@@ -585,7 +585,7 @@ export default function Kiddiwear() {
           <Section>
             <SectionLabel label="Define" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
-              <em style={{ color: "#BF5836" }}>Personas</em>
+              User <em style={{ color: "#BF5836" }}>Persona</em>
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -608,13 +608,29 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }} id="ideate">
+        <div className="px-8 lg:px-32 py-20" id="ideate" style={{ background: "#F5F0EA" }}>
+          <Section>
+            <SectionLabel label="Ideate" />
+            <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
+              Competitive <em style={{ color: "#BF5836" }}>Analysis</em>
+            </h2>
+            <div className="w-full overflow-x-auto">
+              <img
+                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/xUVTHysxHxWgANpn.png"
+                alt="SWOT Competitive Analysis — Vinted, thelittleloop, Second Snuggle"
+                className="w-full h-auto"
+              />
+            </div>
+          </Section>
+        </div>
+
+        <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Ideate" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               Information <em style={{ color: "#BF5836" }}>Architecture</em>
             </h2>
-            <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#FAF7F2" }}>
+            <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#F5F0EA" }}>
               <img
                 src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/xZyfVkGdCcBwxFKT.png"
                 alt="Kiddiwear Information Architecture Diagram"
@@ -624,7 +640,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="User Flows" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -632,7 +648,7 @@ export default function Kiddiwear() {
             </h2>
 
             <div className="space-y-10">
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FAF7F2" }}>
                 <div className="p-6 pb-0">
                   <h3 className="font-display text-xl mb-4" style={{ color: "#1C1917" }}>Buy Item</h3>
                 </div>
@@ -645,7 +661,7 @@ export default function Kiddiwear() {
                 </div>
               </div>
 
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FAF7F2" }}>
                 <div className="p-6 pb-0">
                   <h3 className="font-display text-xl mb-4" style={{ color: "#1C1917" }}>Sell Item</h3>
                 </div>
@@ -661,13 +677,13 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }} id="design">
+        <div className="px-8 lg:px-32 py-20" id="design">
           <Section>
             <SectionLabel label="Design" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               Paper <em style={{ color: "#BF5836" }}>Wireframes</em>
             </h2>
-            <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#FAF7F2" }}>
+            <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#F5F0EA" }}>
               <img
                 src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/SQfRvWrEbvlVJHjh.png"
                 alt="Paper Wireframes showing homepage design iterations from in-progress sketches to final design"
@@ -677,13 +693,13 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Design" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               Digital <em style={{ color: "#BF5836" }}>Wireframes</em>
             </h2>
-            <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#FAF7F2" }}>
+            <div className="w-full overflow-x-auto">
               <img
                 src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/WGKUaqQvgdbAszXa.png"
                 alt="Digital Wireframes showing Home Page, Products Listing, Product Detail, My Listings, Seller Reviews, Sell Item, Checkout, My Purchases, Messages, Track Order, How It Works, and Help Centre"
@@ -693,7 +709,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
+        <div className="px-8 lg:px-32 py-20">
           <Section>
             <SectionLabel label="Design" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -710,7 +726,7 @@ export default function Kiddiwear() {
                   { name: "Success", hex: "#1B873B" },
                   { name: "Error", hex: "#BA1A1A" },
                 ].map((color) => (
-                  <div key={color.name} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "#FAF7F2" }}>
+                  <div key={color.name} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "#F5F0EA" }}>
                     <div className="w-10 h-10 rounded-lg" style={{ background: color.hex }} />
                     <div>
                       <div className="text-sm font-medium" style={{ color: "#1C1917" }}>{color.name}</div>
@@ -723,7 +739,7 @@ export default function Kiddiwear() {
 
             <div>
               <h3 className="font-mono-dm text-xs tracking-wide uppercase mb-4" style={{ color: "#8D5E3C" }}>Typography</h3>
-              <div className="p-6 rounded-2xl" style={{ background: "#FAF7F2" }}>
+              <div className="p-6 rounded-2xl" style={{ background: "#F5F0EA" }}>
                 <div className="text-2xl mb-2" style={{ color: "#1C1917", fontFamily: "Inter, sans-serif" }}>Inter</div>
                 <p className="text-sm mb-4" style={{ color: "#6B6560" }}>Sans-serif typeface designed for screen readability</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -744,7 +760,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Final Design" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -753,7 +769,7 @@ export default function Kiddiwear() {
             <p className="text-base leading-relaxed mb-10 max-w-3xl" style={{ color: "#6B6560" }}>
               Key pages designed for the Kiddiwear marketplace:
             </p>
-            <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#FAF7F2" }}>
+            <div className="w-full overflow-x-auto">
               <img
                 src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/JfQxRHZTzyDzweGr.png"
                 alt="Final Designs showing all key pages of the Kiddiwear marketplace including Home Page, Products Listing, Product Detail, My Listings, Seller Reviews, Sell Item, Checkout, My Purchases, Messages, Track Order, How It Works, and Help Centre"
@@ -763,7 +779,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }} id="test">
+        <div className="px-8 lg:px-32 py-20" id="test">
           <Section>
             <SectionLabel label="Test" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -776,7 +792,7 @@ export default function Kiddiwear() {
                 { quote: "There are so many subcategories.", participant: "P." },
                 { quote: "I didn't know bundles were a thing.", participant: "S." },
               ].map((q) => (
-                <div key={q.participant} className="p-5 rounded-2xl" style={{ background: "#FAF7F2" }}>
+                <div key={q.participant} className="p-5 rounded-2xl" style={{ background: "#F5F0EA" }}>
                   <p className="text-sm italic leading-relaxed mb-3" style={{ color: "#1C1917" }}>"{q.quote}"</p>
                   <span className="font-mono-dm text-xs" style={{ color: "#BF5836" }}>— {q.participant}</span>
                 </div>
@@ -784,7 +800,7 @@ export default function Kiddiwear() {
             </div>
 
             <h3 className="font-display text-xl mb-4" style={{ color: "#1C1917" }}>Findings</h3>
-            <div className="overflow-x-auto rounded-2xl" style={{ background: "#FAF7F2" }}>
+            <div className="overflow-x-auto rounded-2xl" style={{ background: "#F5F0EA" }}>
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: "1px solid #BF583620" }}>
@@ -817,7 +833,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel label="Iterations" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -825,7 +841,7 @@ export default function Kiddiwear() {
             </h2>
 
             <div className="space-y-12">
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FAF7F2" }}>
                 <div className="p-6 pb-0">
                   <div className="font-mono-dm text-xs tracking-wide uppercase mb-2" style={{ color: "#BF5836" }}>Iteration 01 — Category Selector</div>
                 </div>
@@ -838,7 +854,7 @@ export default function Kiddiwear() {
                 </div>
               </div>
 
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FAF7F2" }}>
                 <div className="p-6 pb-0">
                   <div className="font-mono-dm text-xs tracking-wide uppercase mb-2" style={{ color: "#BF5836" }}>Iteration 02 — Messages with Product Card</div>
                 </div>
@@ -851,7 +867,7 @@ export default function Kiddiwear() {
                 </div>
               </div>
 
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#F5F0EA" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FAF7F2" }}>
                 <div className="p-6 pb-0">
                   <div className="font-mono-dm text-xs tracking-wide uppercase mb-2" style={{ color: "#BF5836" }}>Iteration 03 — Bundle Discount Visibility</div>
                 </div>
