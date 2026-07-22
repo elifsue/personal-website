@@ -372,7 +372,7 @@ export default function WireframePrototyper() {
           </Section>
         </div>
 
-        <CaseStudyFooter />
+        <CaseStudyFooter currentProject="wireframe-prototyper" />
       </main>
     </div>
   );
