@@ -883,7 +883,7 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
-        <CaseStudyFooter />
+        <CaseStudyFooter currentProject="kiddiwear" />
       </main>
     </div>
   );

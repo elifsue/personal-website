@@ -929,7 +929,7 @@ export default function CharacterPad() {
           </div>
         </div>
 
-        <CaseStudyFooter />
+        <CaseStudyFooter currentProject="character-pad" />
       </main>
     </div>
   );
