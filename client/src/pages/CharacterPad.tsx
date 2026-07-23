@@ -529,43 +529,68 @@ export default function CharacterPad() {
 
       <main className="lg:pl-20">
         <CaseStudyNav />
-        <header className="pt-28 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
+        {/* Mobile Thumbnail — full width, no rounded corners */}
+        <div className="lg:hidden mt-[72px]">
+          <img
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png"
+            alt="Character Pad project thumbnail"
+            className="w-full h-auto"
+          />
+        </div>
+
+        <header className="pt-12 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
           <Section>
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#E67E2220", color: "#E67E22" }}>
-                UI/UX Design
-              </span>
-              <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
-                Android
-              </span>
-              <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
-                2026
-              </span>
-            </div>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-4 flex items-center gap-4" style={{ color: "#1C1917" }}>
-              <img src={ASSETS.appLogo} alt="Character Pad logo" className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" />
-              Character Pad
-            </h1>
-            <p className="text-xl leading-relaxed max-w-2xl mb-8" style={{ color: "#6B6560" }}>
-              An Android utility app redesign — providing users with extensive access to Unicode characters for inserting special symbols, mathematical operators, emojis, and more.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <a href="https://www.figma.com/proto/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=824-17076&t=n1dLPf9xI0nHeUcA-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=824%3A17076&show-proto-sidebar=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#BF5836", color: "#FAF7F2" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-                View Interactive Prototype
-              </a>
-              <a href="https://www.behance.net/gallery/252476603/Character-Pad-Android-Unicode-App-Redesign-UIUX" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#4A6FA5", color: "#FFFFFF" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 3.211 3.483 3.312 4.588 2.029h3.168zm-7.686-4h4.965c-.105-1.547-1.136-2.219-2.477-2.219-1.466 0-2.277.768-2.488 2.219zm-9.574 6.988H0V5.021h6.953c5.476.081 5.58 5.444 2.72 6.906 3.461 1.26 3.577 8.061-3.207 8.061zM3 11h3.584c2.508 0 2.906-3-.312-3H3v3zm3.391 3H3v3.016h3.341c3.055 0 2.868-3.016.05-3.016z"/></svg>
-                View on Behance
-              </a>
-              <a href="https://www.figma.com/design/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=263-9197&t=gMi30hWZphoUtKG5-1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#7B5EA7", color: "#FFFFFF" }}>
-                <svg width="16" height="16" viewBox="0 0 38 57" fill="currentColor"><path d="M19 28.5C19 23.2533 23.2533 19 28.5 19C33.7467 19 38 23.2533 38 28.5C38 33.7467 33.7467 38 28.5 38C23.2533 38 19 33.7467 19 28.5Z"/><path d="M0 47.5C0 42.2533 4.25329 38 9.5 38H19V47.5C19 52.7467 14.7467 57 9.5 57C4.25329 57 0 52.7467 0 47.5Z"/><path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z"/><path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z"/><path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z"/></svg>
-                View on Figma
-              </a>
-              <a href="https://play.google.com/store/apps/details?id=com.husseinelfeky.characterpad" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#01875F", color: "#FFFFFF" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.3 2.3-8.636-8.632z"/></svg>
-                View on Google Play
-              </a>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Left: Hero content */}
+              <div>
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                  <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#E67E2220", color: "#E67E22" }}>
+                    UI/UX Design
+                  </span>
+                  <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
+                    Android
+                  </span>
+                  <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
+                    2026
+                  </span>
+                </div>
+                <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-light mb-4 flex items-center gap-4" style={{ color: "#1C1917" }}>
+                  <img src={ASSETS.appLogo} alt="Character Pad logo" className="w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16" />
+                  Character Pad
+                </h1>
+                <p className="text-xl leading-relaxed max-w-2xl mb-8" style={{ color: "#6B6560" }}>
+                  An Android utility app redesign — providing users with extensive access to Unicode characters for inserting special symbols, mathematical operators, emojis, and more.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <a href="https://www.figma.com/proto/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=824-17076&t=n1dLPf9xI0nHeUcA-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=824%3A17076&show-proto-sidebar=1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#BF5836", color: "#FAF7F2" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+                    View Interactive Prototype
+                  </a>
+                  <a href="https://www.behance.net/gallery/252476603/Character-Pad-Android-Unicode-App-Redesign-UIUX" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#4A6FA5", color: "#FFFFFF" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 3.211 3.483 3.312 4.588 2.029h3.168zm-7.686-4h4.965c-.105-1.547-1.136-2.219-2.477-2.219-1.466 0-2.277.768-2.488 2.219zm-9.574 6.988H0V5.021h6.953c5.476.081 5.58 5.444 2.72 6.906 3.461 1.26 3.577 8.061-3.207 8.061zM3 11h3.584c2.508 0 2.906-3-.312-3H3v3zm3.391 3H3v3.016h3.341c3.055 0 2.868-3.016.05-3.016z"/></svg>
+                    View on Behance
+                  </a>
+                  <a href="https://www.figma.com/design/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=263-9197&t=gMi30hWZphoUtKG5-1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#7B5EA7", color: "#FFFFFF" }}>
+                    <svg width="16" height="16" viewBox="0 0 38 57" fill="currentColor"><path d="M19 28.5C19 23.2533 23.2533 19 28.5 19C33.7467 19 38 23.2533 38 28.5C38 33.7467 33.7467 38 28.5 38C23.2533 38 19 33.7467 19 28.5Z"/><path d="M0 47.5C0 42.2533 4.25329 38 9.5 38H19V47.5C19 52.7467 14.7467 57 9.5 57C4.25329 57 0 52.7467 0 47.5Z"/><path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z"/><path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z"/><path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z"/></svg>
+                    View on Figma
+                  </a>
+                  <a href="https://play.google.com/store/apps/details?id=com.husseinelfeky.characterpad" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105" style={{ background: "#01875F", color: "#FFFFFF" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.3 2.3-8.636-8.632z"/></svg>
+                    View on Google Play
+                  </a>
+                </div>
+              </div>
+
+              {/* Right: Thumbnail (desktop only) */}
+              <div className="hidden lg:block">
+                <div className="rounded-2xl overflow-hidden">
+                  <img
+                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png"
+                    alt="Character Pad project thumbnail"
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
             </div>
           </Section>
         </header>
