@@ -271,8 +271,20 @@ export default function WireframePrototyper() {
 
       <main className="lg:pl-20">
         <CaseStudyNav />
-        <header className="pt-28 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
+        {/* Mobile Thumbnail — full width, no rounded corners */}
+        <div className="lg:hidden mt-[72px]">
+          <img
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png"
+            alt="Wireframe Prototyper project thumbnail"
+            className="w-full h-auto"
+          />
+        </div>
+
+        <header className="pt-12 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
           <Section>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              {/* Left: Hero content */}
+              <div>
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#7B5EA720", color: "#7B5EA7" }}>
                 Claude Code Skill
@@ -324,6 +336,19 @@ export default function WireframePrototyper() {
                 </svg>
                 View on GitHub
               </a>
+            </div>
+              </div>
+
+              {/* Right: Thumbnail (desktop only) */}
+              <div className="hidden lg:block">
+                <div className="rounded-2xl overflow-hidden">
+                  <img
+                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png"
+                    alt="Wireframe Prototyper project thumbnail"
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
             </div>
           </Section>
         </header>
