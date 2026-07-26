@@ -82,7 +82,7 @@ function CaseStudyNavbar() {
         style={{ background: "rgba(250,247,242,0.85)", backdropFilter: "blur(12px)", borderRight: "1px solid rgba(196,98,45,0.12)" }}>
         <Link href="/" className="flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-110">
           <div className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ background: "#C4622D" }}>
+            style={{ background: "#BF5836" }}>
             <span className="font-display text-white font-semibold text-sm">EA</span>
           </div>
         </Link>
@@ -97,7 +97,7 @@ function CaseStudyNavbar() {
             >
               <span
                 className="font-mono-dm text-xs tracking-widest uppercase transition-colors duration-300"
-                style={{ color: active === link.label ? "#C4622D" : "#6B6560" }}
+                style={{ color: active === link.label ? "#BF5836" : "#6B6560" }}
               >
                 {link.label}
               </span>
@@ -110,7 +110,7 @@ function CaseStudyNavbar() {
                     exit={{ opacity: 0, scaleY: 0 }}
                     transition={{ type: "tween", ease: "easeInOut", duration: 0.25 }}
                     className="absolute -right-3 top-0 bottom-0 w-0.5 rounded-full origin-center"
-                    style={{ background: "#C4622D" }}
+                    style={{ background: "#BF5836" }}
                   />
                 )}
               </AnimatePresence>
@@ -162,7 +162,7 @@ function CaseStudyNavbar() {
       >
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#C4622D" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#BF5836" }}>
               <span className="font-display text-white font-semibold text-xs">EA</span>
             </div>
           </Link>
@@ -214,7 +214,7 @@ function CaseStudyNavbar() {
                 transition={{ delay: i * 0.07 }}
                 onClick={() => handleNavClick(link.label, link.href)}
                 className="py-4 font-display text-4xl font-light transition-colors duration-200"
-                style={{ color: active === link.label ? "#C4622D" : "#1C1917" }}
+                style={{ color: active === link.label ? "#BF5836" : "#1C1917" }}
               >
                 {link.label}
               </motion.button>
