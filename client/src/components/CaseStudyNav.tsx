@@ -1,23 +1,12 @@
 import { Link, useLocation } from "wouter";
 import { useState, useEffect } from "react";
+import { projectConfigs } from "@/config/projects";
 
-const projects = [
-  {
-    slug: "/character-pad",
-    title: "Character Pad",
-    color: "#E67E22",
-  },
-  {
-    slug: "/kiddiwear",
-    title: "Kiddiwear",
-    color: "#BF5836",
-  },
-  {
-    slug: "/wireframe-prototyper",
-    title: "Wireframe Prototyper Skill",
-    color: "#7B5EA7",
-  },
-];
+const projects = projectConfigs.map((p) => ({
+  slug: p.slug,
+  title: p.name,
+  color: p.accentColor,
+}));
 
 export { projects };
 

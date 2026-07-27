@@ -1,14 +1,9 @@
 /* Character Pad Case Study — Android Unicode App Redesign */
 
-import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
-import { Link } from "wouter";
-import CustomCursor from "@/components/CustomCursor";
-import CaseStudyFooter from "@/components/CaseStudyFooter";
-import CaseStudyNav from "@/components/CaseStudyNav";
-import ProjectSwitcher from "@/components/ProjectSwitcher";
 
-const CHARACTERPAD_OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/fWNxQURakNaOZpGt.png";
+import { Section, SectionLabel, CaseStudyLayout } from "@/components/case-study";
+import { projectConfigs } from "@/config/projects";
+
 
 const ASSETS = {
   appLogo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/QnydYChWLUsGdkzj.png",
@@ -39,41 +34,10 @@ const ASSETS = {
   phoneScreenshot: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/xphPTUNvUZVhtJTU.png",
 };
 
-const navLinks = [
-  { label: "Overview", href: "#overview" },
-  { label: "Process", href: "#process" },
-  { label: "Research", href: "#research" },
-  { label: "Solutions", href: "#solutions" },
-  { label: "Redesign", href: "#redesign" },
-];
 
-function Section({ children, className = "", id = "" }: { children: React.ReactNode; className?: string; id?: string }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-  return (
-    <motion.section
-      ref={ref}
-      id={id}
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, ease: "easeOut" }}
-      className={className}
-    >
-      {children}
-    </motion.section>
-  );
-}
 
-function SectionLabel({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-8 h-px" style={{ background: "#E67E22" }} />
-      <span className="font-mono-dm text-xs tracking-[0.25em] uppercase" style={{ color: "#E67E22" }}>
-        {label}
-      </span>
-    </div>
-  );
-}
+
+
 
 function RedesignSectionNumber({ num }: { num: string }) {
   return (
@@ -83,141 +47,6 @@ function RedesignSectionNumber({ num }: { num: string }) {
   );
 }
 
-function CaseStudyNavbar() {
-  const [active, setActive] = useState("Overview");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-
-      const sections = navLinks.map((l) => l.href.replace("#", ""));
-      for (const id of [...sections].reverse()) {
-        const el = document.getElementById(id);
-        if (el && window.scrollY >= el.offsetTop - 120) {
-          const link = navLinks.find((l) => l.href === `#${id}`);
-          if (link) setActive(link.label);
-          break;
-        }
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const handleNavClick = (label: string, href: string) => {
-    setActive(label);
-    setMenuOpen(false);
-    const id = href.replace("#", "");
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
-  return (
-    <>
-      <nav className="hidden lg:flex fixed left-0 top-0 h-full w-20 flex-col items-center justify-between py-10 z-50"
-        style={{ background: "rgba(250,247,242,0.85)", backdropFilter: "blur(12px)", borderRight: "1px solid rgba(230,126,34,0.12)" }}>
-        <Link href="/" className="flex flex-col items-center gap-1 transition-transform duration-300 hover:scale-110">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#E67E22" }}>
-            <span className="font-display text-white font-semibold text-sm">EA</span>
-          </div>
-        </Link>
-
-        <div className="flex flex-col items-center gap-8">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              onClick={() => handleNavClick(link.label, link.href)}
-              className="relative group flex items-center gap-2"
-              style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-            >
-              <span
-                className="font-mono-dm text-xs tracking-widest uppercase transition-colors duration-300"
-                style={{ color: active === link.label ? "#E67E22" : "#6B6560" }}
-              >
-                {link.label}
-              </span>
-              <AnimatePresence>
-                {active === link.label && (
-                  <motion.div
-                    key={link.label}
-                    initial={{ opacity: 0, scaleY: 0 }}
-                    animate={{ opacity: 1, scaleY: 1 }}
-                    exit={{ opacity: 0, scaleY: 0 }}
-                    transition={{ type: "tween", ease: "easeInOut", duration: 0.25 }}
-                    className="absolute -right-3 top-0 bottom-0 w-0.5 rounded-full origin-center"
-                    style={{ background: "#E67E22" }}
-                  />
-                )}
-              </AnimatePresence>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-col items-center gap-3">
-          <a href="mailto:hello@elifsuates.com" className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110" style={{ color: "#6B6560" }} title="hello@elifsuates.com">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
-          </a>
-          <a href="https://www.linkedin.com/in/elifsu-ates/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110" style={{ color: "#6B6560" }} title="LinkedIn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-          </a>
-          <a href="https://behance.net/elifsuates" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110" style={{ color: "#6B6560" }} title="Behance">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 7h-7V5h7v2zm1.726 10c-.442 1.297-2.029 3-5.101 3-3.074 0-5.564-1.729-5.564-5.675 0-3.91 2.325-5.92 5.466-5.92 3.082 0 4.964 1.782 5.375 4.426.078.506.109 1.188.095 2.14H15.97c.13 3.211 3.483 3.312 4.588 2.029h3.168zm-7.686-4h4.965c-.105-1.547-1.136-2.219-2.477-2.219-1.466 0-2.277.768-2.488 2.219zm-9.574 6.988H0V5.021h6.953c5.476.081 5.58 5.444 2.72 6.906 3.461 1.26 3.577 8.061-3.207 8.061zM3 11h3.584c2.508 0 2.906-3-.312-3H3v3zm3.391 3H3v3.016h3.341c3.055 0 2.868-3.016.05-3.016z"/></svg>
-          </a>
-        </div>
-      </nav>
-
-      <nav
-        className={`lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300 ${scrolled ? "shadow-md" : ""}`}
-        style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(12px)" }}
-      >
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#E67E22" }}>
-              <span className="font-display text-white font-semibold text-xs">EA</span>
-            </div>
-          </Link>
-          <ProjectSwitcher />
-        </div>
-        <button onClick={() => setMenuOpen(!menuOpen)} className="w-10 h-10 flex items-center justify-center" aria-label="Toggle menu">
-          <span className="relative block w-6 h-4">
-            <motion.span animate={menuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }} transition={{ duration: 0.3 }} className="absolute top-0 left-0 block w-6 h-0.5 rounded-full origin-center" style={{ background: "#1C1917" }} />
-            <motion.span animate={menuOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }} transition={{ duration: 0.2 }} className="absolute top-1/2 left-0 -translate-y-1/2 block w-6 h-0.5 rounded-full origin-center" style={{ background: "#1C1917" }} />
-            <motion.span animate={menuOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }} transition={{ duration: 0.3 }} className="absolute bottom-0 left-0 block w-6 h-0.5 rounded-full origin-center" style={{ background: "#1C1917" }} />
-          </span>
-        </button>
-      </nav>
-
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="lg:hidden fixed inset-0 z-40 flex flex-col items-center justify-center"
-            style={{ background: "rgba(250,247,242,0.97)", backdropFilter: "blur(20px)" }}
-          >
-            {navLinks.map((link, i) => (
-              <motion.button
-                key={link.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-                onClick={() => handleNavClick(link.label, link.href)}
-                className="py-4 font-display text-4xl font-light transition-colors duration-200"
-                style={{ color: active === link.label ? "#E67E22" : "#1C1917" }}
-              >
-                {link.label}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
 
 const userReviews = [
   { id: 1, finding: "Hard to Find Specific Characters / Symbols", severity: "High", complaints: 94, upvotes: 422, area: "Search" },
@@ -484,65 +313,11 @@ function getCategoryColor(area: string): string {
   return CATEGORY_COLORS[area] || "#E67E22";
 }
 
+const config = projectConfigs.find((p) => p.slug === "/character-pad")!;
+
 export default function CharacterPad() {
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    document.title = "Character Pad — Elifsu Ateş";
-    const setMeta = (property: string, content: string) => {
-      let el = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
-      if (!el) {
-        el = document.createElement("meta");
-        if (property.startsWith("twitter:")) {
-          el.setAttribute("name", property);
-        } else {
-          el.setAttribute("property", property);
-        }
-        document.head.appendChild(el);
-      }
-      el.setAttribute("content", content);
-    };
-    setMeta("og:title", "Character Pad — Android Unicode Characters App");
-    setMeta("og:description", "An Android utility app providing extensive access to Unicode characters. UI/UX Design by Elifsu Ateş.");
-    setMeta("og:image", CHARACTERPAD_OG_IMAGE);
-    setMeta("og:image:width", "1200");
-    setMeta("og:image:height", "960");
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", "Character Pad — Android Unicode Characters App");
-    setMeta("twitter:description", "An Android utility app providing extensive access to Unicode characters. UI/UX Design by Elifsu Ateş.");
-    setMeta("twitter:image", CHARACTERPAD_OG_IMAGE);
-    return () => { document.title = "Elifsu Ateş — UI/UX Designer"; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return (
-    <div className="min-h-screen" style={{ background: "#FAF7F2" }}>
-      <CustomCursor />
-      <CaseStudyNavbar />
-
-      <Link
-        href="/"
-        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 px-4 py-2.5 rounded-full font-mono-dm text-sm tracking-wide transition-all duration-300 hover:scale-105 shadow-lg"
-        style={{ background: "#1C1917", color: "#FAF7F2" }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-        Back to Portfolio
-      </Link>
-
-      <main className="lg:pl-20">
-        <CaseStudyNav />
-        {/* Mobile Thumbnail — full width, no rounded corners */}
-        <div className="lg:hidden mt-[72px]">
-          <img
-            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png"
-            alt="Character Pad project thumbnail"
-            className="w-full h-auto"
-          />
-        </div>
-
-        <header className="pt-12 pb-20 px-8 lg:py-20 lg:px-32" id="overview">
-          <Section>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              {/* Left: Hero content */}
-              <div>
+  const heroContent = (
+    <>
                 <div className="flex flex-wrap items-center gap-3 mb-6">
                   <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#E67E2220", color: "#E67E22" }}>
                     UI/UX Design
@@ -579,25 +354,15 @@ export default function CharacterPad() {
                     View on Google Play
                   </a>
                 </div>
-              </div>
+    </>
+  );
 
-              {/* Right: Thumbnail (desktop only) */}
-              <div className="hidden lg:block">
-                <div className="rounded-2xl overflow-hidden">
-                  <img
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png"
-                    alt="Character Pad project thumbnail"
-                    className="w-full h-auto"
-                  />
-                </div>
-              </div>
-            </div>
-          </Section>
-        </header>
+  return (
+    <CaseStudyLayout config={config} heroContent={heroContent}>
 
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
-            <SectionLabel label="Overview" />
+            <SectionLabel color="#E67E22" label="Overview" />
             <h2 className="font-display text-3xl md:text-4xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
               About <em style={{ color: "#E67E22" }}>Character Pad</em>
             </h2>
@@ -636,7 +401,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20">
           <Section>
-            <SectionLabel label="Role" />
+            <SectionLabel color="#E67E22" label="Role" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               My <em style={{ color: "#E67E22" }}>Contribution</em>
             </h2>
@@ -648,7 +413,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20" id="process" style={{ background: "#F5F0EA" }}>
           <Section>
-            <SectionLabel label="Design Process" />
+            <SectionLabel color="#E67E22" label="Design Process" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
               How I <em style={{ color: "#E67E22" }}>Approached</em> It
             </h2>
@@ -675,7 +440,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20" id="research">
           <Section>
-            <SectionLabel label="User Types" />
+            <SectionLabel color="#E67E22" label="User Types" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
               Who Uses <em style={{ color: "#E67E22" }}>Character Pad</em>?
             </h2>
@@ -696,7 +461,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
-            <SectionLabel label="User Reviews" />
+            <SectionLabel color="#E67E22" label="User Reviews" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               What Users <em style={{ color: "#E67E22" }}>Say</em>
             </h2>
@@ -708,7 +473,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20">
           <Section>
-            <SectionLabel label="User Reviews Analysis" />
+            <SectionLabel color="#E67E22" label="User Reviews Analysis" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               Key <em style={{ color: "#E67E22" }}>Findings</em>
             </h2>
@@ -754,7 +519,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20" id="solutions" style={{ background: "#F5F0EA" }}>
           <Section>
-            <SectionLabel label="Solutions" />
+            <SectionLabel color="#E67E22" label="Solutions" />
             <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
               Proposed <em style={{ color: "#E67E22" }}>Solutions</em>
             </h2>
@@ -782,7 +547,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20">
           <Section>
-            <SectionLabel label="Design System" />
+            <SectionLabel color="#E67E22" label="Design System" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
               Color <em style={{ color: "#E67E22" }}>Palette</em>
             </h2>
@@ -824,7 +589,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
-            <SectionLabel label="Typography" />
+            <SectionLabel color="#E67E22" label="Typography" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
               <em style={{ color: "#E67E22" }}>Roboto</em>
             </h2>
@@ -849,7 +614,7 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20" style={{ background: "#3C3C3C" }}>
           <Section>
-            <SectionLabel label="Iconography" />
+            <SectionLabel color="#E67E22" label="Iconography" />
             <h2 className="font-display text-3xl mb-6" style={{ color: "#FFFFFF", fontWeight: 300 }}>
               Icon <em style={{ color: "#E67E22" }}>System</em>
             </h2>
@@ -954,8 +719,6 @@ export default function CharacterPad() {
           </div>
         </div>
 
-        <CaseStudyFooter currentProject="character-pad" />
-      </main>
-    </div>
+    </CaseStudyLayout>
   );
 }
