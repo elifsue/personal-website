@@ -3,63 +3,33 @@
    Shows other projects as entry points + contact information
    ============================================================ */
 
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { Link } from "wouter";
+import { Section } from "@/components/case-study";
+import { projectConfigs } from "@/config/projects";
 
-const CHARACTERPAD_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png";
-const KIDDIWEAR_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png";
-const WP_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png";
-
-const allProjects = [
-  {
-    slug: "character-pad",
-    title: "Character Pad",
-    subtitle: "Android Unicode Characters App",
-    image: CHARACTERPAD_IMG,
-    link: "/character-pad",
-    color: "#E67E22",
-  },
-  {
-    slug: "kiddiwear",
-    title: "Kiddiwear",
-    subtitle: "Peer-to-peer Marketplace Website",
-    image: KIDDIWEAR_IMG,
-    link: "/kiddiwear",
-    color: "#BF5836",
-  },
-  {
-    slug: "wireframe-prototyper",
-    title: "Wireframe Prototyper Skill",
-    subtitle: "Claude Code Custom Skill",
-    image: WP_IMG,
-    link: "/wireframe-prototyper",
-    color: "#7B5EA7",
-  },
-];
-
-function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-  return (
-    <motion.section
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, ease: "easeOut" }}
-      className={className}
-    >
-      {children}
-    </motion.section>
-  );
-}
+/** Subtitle mapping for footer cards */
+const subtitles: Record<string, string> = {
+  "/character-pad": "Android Unicode Characters App",
+  "/kiddiwear": "Peer-to-peer Marketplace Website",
+  "/wireframe-prototyper": "Claude Code Custom Skill",
+};
 
 interface CaseStudyFooterProps {
-  currentProject: "character-pad" | "kiddiwear" | "wireframe-prototyper";
+  currentProject: string;
 }
 
 export default function CaseStudyFooter({ currentProject }: CaseStudyFooterProps) {
-  const otherProjects = allProjects.filter((p) => p.slug !== currentProject);
+  const otherProjects = projectConfigs
+    .filter((p) => p.slug.replace("/", "") !== currentProject)
+    .map((p) => ({
+      slug: p.slug.replace("/", ""),
+      title: p.name,
+      subtitle: subtitles[p.slug] || "",
+      image: p.thumbnailUrl,
+      link: p.slug,
+      color: p.accentColor,
+    }));
 
   return (
     <div className="px-8 lg:px-32 py-20" style={{ background: "#1C1917" }}>
