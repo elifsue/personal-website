@@ -8,9 +8,9 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { useLocation } from "wouter";
 
-const CHARACTERPAD_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png";
-const KIDDIWEAR_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png";
-const WP_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png";
+const CHARACTERPAD_IMG = `${import.meta.env.BASE_URL}images/character-pad-thumbnail.png`;
+const KIDDIWEAR_IMG = `${import.meta.env.BASE_URL}images/kiddiwear-thumbnail.png`;
+const WP_IMG = `${import.meta.env.BASE_URL}images/wireframe-prototyper-thumbnail.png`;
 
 const projects = [
   {

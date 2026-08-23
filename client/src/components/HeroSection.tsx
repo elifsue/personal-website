@@ -8,8 +8,8 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 // ─── Constants ───────────────────────────────────────────────
-const HERO_PHOTO = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/FkisWkFImnUGEYen.jpeg";
-const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663332337268/WbQQmPwVcwFPCnDRdrdZHR/hero-blob-bg-HVgkH9W2uPs5UfZMUKkgHH.webp";
+const HERO_PHOTO = `${import.meta.env.BASE_URL}images/elifsu-portrait.jpg`;
+const HERO_BG = `${import.meta.env.BASE_URL}images/blob-bg.webp`;
 const RESUME_URL = "/ElifsuAtes_Resume.pdf";
 const CARD_ROTATIONS = [-3, 2, -1.5, 3];
 const SPACER_COUNT = 4;
