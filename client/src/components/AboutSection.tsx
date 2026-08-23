@@ -10,7 +10,7 @@ import { useRef } from "react";
 
 // Use Vite's BASE_URL so the path resolves correctly both locally (/)
 // and on GitHub Pages (/personal-website/)
-const ABOUT_BG = `${import.meta.env.BASE_URL}elifsu_ates.webp`;
+const ABOUT_BG = `${import.meta.env.BASE_URL}images/elifsu-ates.webp`;
 
 const timeline = [
   {
@@ -18,7 +18,7 @@ const timeline = [
     company: "Character Pad",
     period: "Jun 2026 \u2013 Jul 2026",
     location: "Remote",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/QnydYChWLUsGdkzj.png",
+    logo: `${import.meta.env.BASE_URL}images/character-pad-logo.png`,
     bullets: [
       "Redesigned the UI/UX of Character Pad (1.6M+ installs, 4.7 rating) in Figma, from wireframes to an interactive usability-tested prototype.",
       "Scraped and analysed 625 actionable 1\u20134-star user reviews using Claude, identifying 12 key findings and translating them into design improvements that streamlined core workflows.",
@@ -29,7 +29,7 @@ const timeline = [
     company: "X\u2013Ray Home",
     period: "Jan 2026 \u2013 Apr 2026",
     location: "London, UK",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/OvhGUPBrdnBwjvNW.jpg",
+    logo: `${import.meta.env.BASE_URL}images/xray-home-logo.png`,
     bullets: [
       "Ran a usability test, uncovering 19 accessibility and usability issues, translating findings into targeted design improvements that elevated the overall user experience across the website.",
       "Built a design system with 26 structured components, variants, and color tokens, aligning the product\u2019s visual language across the website and enabling scalable reuse.",
@@ -41,7 +41,7 @@ const timeline = [
     company: "University of Greenwich",
     period: "2021 \u2013 2025",
     location: "London, UK",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/NDWdJlakijYomCxq.jpg",
+    logo: `${import.meta.env.BASE_URL}images/university-of-greenwich-logo.jpg`,
     bullets: [
       "Graduated with First Class Honours.",
     ],
