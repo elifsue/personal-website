@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="512.57098"
+   height="601.71381"
+   viewBox="0 0 512.57099 601.7138"
+   fill="none"
+   version="1.1"
+   id="svg18"
+   sodipodi:docname="Lucidchart icon.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs18" />
+  <sodipodi:namedview
+     id="namedview18"
+     pagecolor="#ffffff"
+     bordercolor="#111111"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.875625"
+     inkscape:cx="567.02355"
+     inkscape:cy="300.92791"
+     inkscape:window-width="1920"
+     inkscape:window-height="991"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg18" />
+  <path
+     d="M 0,150.5372 V 451.39453 L 256.28551,601.71382 V 526.66226 L 64.071378,413.65151 V 188.06297 Z"
+     fill="#f96b13"
+     id="path11"
+     style="stroke-width:22.2857" />
+  <path
+     d="M 448.49963,188.06297 V 488.9192 L 512.571,451.39453 V 150.5372 Z"
+     fill="#cc4e00"
+     id="path12"
+     style="stroke-width:22.2857" />
+  <path
+     d="M 192.21413,37.52577 448.49963,188.06275 512.571,150.53698 256.28551,0 Z"
+     fill="#ffca73"
+     id="path13"
+     style="stroke-width:22.2857" />
+  <path
+     d="M 0,150.53676 64.071378,188.06275 128.14276,150.53676 64.071378,112.79415 Z"
+     fill="#ffca73"
+     id="path14"
+     style="stroke-width:22.2857" />
+  <path
+     d="m 64.071378,188.06297 v 225.58854 l 64.071382,-37.5269 V 150.5372 Z"
+     fill="#cc4e00"
+     id="path15"
+     style="stroke-width:22.2857" />
+  <path
+     d="m 256.28551,526.66226 v 75.05156 l 64.07138,-37.52466 V 488.9192 Z"
+     fill="#cc4e00"
+     id="path16"
+     style="stroke-width:22.2857" />
+  <path
+     d="M 64.071378,413.65151 256.28551,526.66226 320.35689,488.9192 128.14276,376.12461 Z"
+     fill="#ffca73"
+     id="path17"
+     style="stroke-width:22.2857" />
+  <path
+     d="m 192.21413,37.525547 v 75.268373 l 192.21413,112.79527 v 225.80534 l 64.07137,37.52467 V 188.06231 Z"
+     fill="#f96b13"
+     id="path18"
+     style="stroke-width:22.2857" />
+</svg>
