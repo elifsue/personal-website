@@ -63,7 +63,7 @@ export default function WritingVideosSection() {
           >
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 group-hover:shadow-[0_0_40px_rgba(196,98,45,0.4)]" style={{ border: "1px solid rgba(196,98,45,0.2)" }}>
               <img 
-                src="/medium_thumbnail.png" 
+                src="/images/medium-thumbnail.png"
                 alt="Design with Context Thumbnail" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
