@@ -1,6 +1,34 @@
 import { Section, SectionLabel, CaseStudyLayout } from "@/components/case-study";
 import { projectConfigs } from "@/config/projects";
 
+const IMG = `${import.meta.env.BASE_URL}images/kiddiwear`;
+
+const ASSETS = {
+  kiddiwearLogo: `${IMG}/kiddiwear-logo.png`,
+  figmaLogo: `${IMG}/figma-logo.png`,
+  lucidchartLogo: `${IMG}/lucidchart-logo.svg`,
+  claudeCodeLogo: `${IMG}/claude-code-logo.png`,
+  manusLogo: `${IMG}/manus-logo.svg`,
+  buyerProtection: `${IMG}/buyer-protection.png`,
+  conditionRatings: `${IMG}/condition-ratings.png`,
+  integratedDelivery: `${IMG}/integrated-delivery.png`,
+  curatedExperience: `${IMG}/curated-experience.png`,
+  platformFeaturesChart: `${IMG}/platform-features-pie-chart.png`,
+  barriersChart: `${IMG}/barriers-pie-chart.png`,
+  personaMichael: `${IMG}/persona-michael.png`,
+  personaAmina: `${IMG}/persona-amina.png`,
+  competitiveAnalysis: `${IMG}/competitive-analysis-swot.png`,
+  informationArchitecture: `${IMG}/information-architecture-diagram.png`,
+  buyItemUserFlow: `${IMG}/buy-item-user-flow.png`,
+  sellItemUserFlow: `${IMG}/sell-item-user-flow.png`,
+  paperWireframes: `${IMG}/paper-wireframes.png`,
+  digitalWireframes: `${IMG}/digital-wireframes.png`,
+  finalDesigns: `${IMG}/final-designs.png`,
+  iteration1: `${IMG}/iteration-1.png`,
+  iteration2: `${IMG}/iteration-2.png`,
+  iteration3: `${IMG}/iteration-3.png`,
+};
+
 const config = projectConfigs.find((p) => p.slug === "/kiddiwear")!;
 
 export default function Kiddiwear() {
@@ -19,7 +47,7 @@ export default function Kiddiwear() {
             </div>
             <h1 className="mb-4">
               <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vQxJHiCfXBepUltv.png"
+                src={ASSETS.kiddiwearLogo}
                 alt="Kiddiwear"
                 className="h-16 md:h-20 lg:h-24 w-auto"
               />
@@ -102,10 +130,10 @@ export default function Kiddiwear() {
 
             <div className="flex flex-wrap gap-4 mb-10">
               {[
-                { name: "Figma", logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/JDWzeFRlBQpYRNXU.png" },
-                { name: "Lucidchart", logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/KpKsLwqHsDcFXtXs.png" },
-                { name: "Claude Code", logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VikdDFbzmeIoqhaw.png" },
-                { name: "Manus", logo: "https://manus.im/favicon.ico" },
+                { name: "Figma", logo: ASSETS.figmaLogo },
+                { name: "Lucidchart", logo: ASSETS.lucidchartLogo },
+                { name: "Claude Code", logo: ASSETS.claudeCodeLogo },
+                { name: "Manus", logo: ASSETS.manusLogo },
               ].map((tool) => (
                 <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#FAF7F2" }}>
                   <img src={tool.logo} alt={tool.name} className="w-6 h-6 object-contain" />
@@ -156,7 +184,7 @@ export default function Kiddiwear() {
               </div>
               <div className="flex flex-col items-center gap-6">
                 <div className="w-full max-w-sm p-6 rounded-2xl flex items-center gap-4" style={{ background: "#FAF7F2", border: "1px solid #BF583630" }}>
-                  <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VikdDFbzmeIoqhaw.png" alt="Claude Code" className="w-10 h-10 object-contain" />
+                  <img src={ASSETS.claudeCodeLogo} alt="Claude Code" className="w-10 h-10 object-contain" />
                   <div>
                     <div className="font-mono-dm text-xs tracking-wide uppercase mb-1" style={{ color: "#BF5836" }}>Claude Code</div>
                     <div className="text-sm" style={{ color: "#6B6560" }}>Vibe coding & implementation</div>
@@ -167,7 +195,7 @@ export default function Kiddiwear() {
                   <span className="font-mono-dm text-xs" style={{ color: "#8D5E3C" }}>↑ Figma MCP</span>
                 </div>
                 <div className="w-full max-w-sm p-6 rounded-2xl flex items-center gap-4" style={{ background: "#FAF7F2", border: "1px solid #8D5E3C30" }}>
-                  <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/JDWzeFRlBQpYRNXU.png" alt="Figma" className="w-10 h-10 object-contain" />
+                  <img src={ASSETS.figmaLogo} alt="Figma" className="w-10 h-10 object-contain" />
                   <div>
                     <div className="font-mono-dm text-xs tracking-wide uppercase mb-1" style={{ color: "#8D5E3C" }}>Figma</div>
                     <div className="text-sm" style={{ color: "#6B6560" }}>Component library & design system</div>
@@ -219,10 +247,10 @@ export default function Kiddiwear() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { feature: "Buyer Protection", icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/MKXhkXcYCtrxzPtU.png" },
-                { feature: "Condition Ratings", icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/dsviDQipgNUMGyhm.png" },
-                { feature: "Integrated Delivery", icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/izdXwEEzOMXQKrTN.png" },
-                { feature: "Curated Experience", icon: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/IaJGWcWgLqXZnTmx.png" },
+                { feature: "Buyer Protection", icon: ASSETS.buyerProtection },
+                { feature: "Condition Ratings", icon: ASSETS.conditionRatings },
+                { feature: "Integrated Delivery", icon: ASSETS.integratedDelivery },
+                { feature: "Curated Experience", icon: ASSETS.curatedExperience },
               ].map((item) => (
                 <div key={item.feature} className="p-5 rounded-2xl flex flex-col items-center gap-3" style={{ background: "#FAF7F2", border: "1px solid #BF583615" }}>
                   <img src={item.icon} alt={item.feature} className="w-10 h-10 object-contain" />
@@ -295,7 +323,7 @@ export default function Kiddiwear() {
               <div className="p-6 rounded-2xl" style={{ background: "#FAF7F2" }}>
                 <h4 className="font-mono-dm text-xs tracking-wide uppercase mb-4" style={{ color: "#BF5836" }}>Platform Features (n=20)</h4>
                 <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/ZQpwCNdVqGZGFFVs.png"
+                  src={ASSETS.platformFeaturesChart}
                   alt="Platform Features Pie Chart showing Trust & Quality Assurance as the top requested feature"
                   className="w-full h-auto"
                 />
@@ -303,7 +331,7 @@ export default function Kiddiwear() {
               <div className="p-6 rounded-2xl" style={{ background: "#FAF7F2" }}>
                 <h4 className="font-mono-dm text-xs tracking-wide uppercase mb-4" style={{ color: "#BF5836" }}>Barriers (n=20)</h4>
                 <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/QybVSyIbRFfbnDWM.png"
+                  src={ASSETS.barriersChart}
                   alt="Barriers Pie Chart showing Uncertainty about quality/condition as the top barrier"
                   className="w-full h-auto"
                 />
@@ -322,7 +350,7 @@ export default function Kiddiwear() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="overflow-hidden">
                 <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/isUvPiSWHZMiRkHQ.png"
+                  src={ASSETS.personaMichael}
                   alt="Michael T. — Age 44, Edinburgh, Marketing manager, father of 2"
                   className="w-full h-auto"
                 />
@@ -330,7 +358,7 @@ export default function Kiddiwear() {
 
               <div className="overflow-hidden">
                 <img
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/rmdghUpgqORpIaDf.png"
+                  src={ASSETS.personaAmina}
                   alt="Amina H. — Age 26, Leeds, Stay at home mother of 3"
                   className="w-full h-auto"
                 />
@@ -347,7 +375,7 @@ export default function Kiddiwear() {
             </h2>
             <div className="w-full overflow-x-auto">
               <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/xUVTHysxHxWgANpn.png"
+                src={ASSETS.competitiveAnalysis}
                 alt="SWOT Competitive Analysis — Vinted, thelittleloop, Second Snuggle"
                 className="w-full h-auto"
               />
@@ -363,7 +391,7 @@ export default function Kiddiwear() {
             </h2>
             <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#F5F0EA" }}>
               <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/xZyfVkGdCcBwxFKT.png"
+                src={ASSETS.informationArchitecture}
                 alt="Kiddiwear Information Architecture Diagram"
                 className="w-full h-auto min-w-[800px]"
               />
@@ -385,7 +413,7 @@ export default function Kiddiwear() {
                 </div>
                 <div className="w-full overflow-x-auto p-6">
                   <img
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/BuiYybtJTygWWHAw.png"
+                    src={ASSETS.buyItemUserFlow}
                     alt="Buy Item User Flow"
                     className="w-full h-auto min-w-[700px]"
                   />
@@ -398,7 +426,7 @@ export default function Kiddiwear() {
                 </div>
                 <div className="w-full overflow-x-auto p-6">
                   <img
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/YyfsRIAZGUsFphlw.png"
+                    src={ASSETS.sellItemUserFlow}
                     alt="Sell Item User Flow"
                     className="w-full h-auto min-w-[700px]"
                   />
@@ -416,7 +444,7 @@ export default function Kiddiwear() {
             </h2>
             <div className="w-full overflow-x-auto rounded-2xl p-4" style={{ background: "#F5F0EA" }}>
               <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/SQfRvWrEbvlVJHjh.png"
+                src={ASSETS.paperWireframes}
                 alt="Paper Wireframes showing homepage design iterations from in-progress sketches to final design"
                 className="w-full h-auto min-w-[800px]"
               />
@@ -432,7 +460,7 @@ export default function Kiddiwear() {
             </h2>
             <div className="w-full overflow-x-auto">
               <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/WGKUaqQvgdbAszXa.png"
+                src={ASSETS.digitalWireframes}
                 alt="Digital Wireframes showing Home Page, Products Listing, Product Detail, My Listings, Seller Reviews, Sell Item, Checkout, My Purchases, Messages, Track Order, How It Works, and Help Centre"
                 className="w-full h-auto min-w-[800px]"
               />
@@ -502,7 +530,7 @@ export default function Kiddiwear() {
             </p>
             <div className="w-full overflow-x-auto">
               <img
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/JfQxRHZTzyDzweGr.png"
+                src={ASSETS.finalDesigns}
                 alt="Final Designs showing all key pages of the Kiddiwear marketplace including Home Page, Products Listing, Product Detail, My Listings, Seller Reviews, Sell Item, Checkout, My Purchases, Messages, Track Order, How It Works, and Help Centre"
                 className="w-full h-auto min-w-[600px]"
               />
@@ -578,7 +606,7 @@ export default function Kiddiwear() {
                 </div>
                 <div className="w-full overflow-x-auto p-4">
                   <img
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/jXSjxUsmpIDXxDTA.png"
+                    src={ASSETS.iteration1}
                     alt="Iteration 1: Replaced subcategory drop-down with a simplified category selector"
                     className="w-full h-auto min-w-[700px]"
                   />
@@ -591,7 +619,7 @@ export default function Kiddiwear() {
                 </div>
                 <div className="w-full overflow-x-auto p-4">
                   <img
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/oVUSOXuIqzGVSlpn.png"
+                    src={ASSETS.iteration2}
                     alt="Iteration 2: Added inline product card and item reference to message threads"
                     className="w-full h-auto min-w-[700px]"
                   />
@@ -604,7 +632,7 @@ export default function Kiddiwear() {
                 </div>
                 <div className="w-full overflow-x-auto p-4">
                   <img
-                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/lcOUepQGMArPwAuq.png"
+                    src={ASSETS.iteration3}
                     alt="Iteration 3: Moved bundle discount section higher on the page"
                     className="w-full h-auto min-w-[700px]"
                   />

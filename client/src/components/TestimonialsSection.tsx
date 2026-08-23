@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-const META_LOGO = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/brscAyJvjmbRTolO.svg";
+const META_LOGO = `${import.meta.env.BASE_URL}images/meta-logo.svg`;
 
 export default function TestimonialsSection() {
   return (

@@ -5,33 +5,36 @@ import { Section, SectionLabel, CaseStudyLayout } from "@/components/case-study"
 import { projectConfigs } from "@/config/projects";
 
 
+const IMG = `${import.meta.env.BASE_URL}images/character-pad`;
+
 const ASSETS = {
-  appLogo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/QnydYChWLUsGdkzj.png",
-  figmaLogo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/IlUclpdWoWhbPOml.png",
-  claudeCodeLogo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/ZFnTPeXlDuqkxSCg.png",
-  notionLogo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/dnEzkcNCnXwHNYRc.png",
-  studentEmoji: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/YdRFFVRlCObXoOUB.png",
-  artistEmoji: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/ESmbmFfxldtJsxdW.png",
-  teacherEmoji: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/NcIsoflVLzFSutNM.png",
-  technologistEmoji: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/zKabvhxoblQwaglF.png",
-  userReviews: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/JHDeGirPJwmIdYMY.png",
-  iconsOutlined: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/TGOZqngnIwnXNnmF.png",
-  iconsFilled: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/dviGaqXZFyqtPBqV.png",
-  iconsColored: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/ahiZZRJeXMfLxxaX.png",
-  searchByDrawing: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/IqVssOygOXVUPBYR.png",
-  searchFeature: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/MSHwelsOYpgNLCwt.png",
-  onboardingTooltips: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/jEKzczsRqsskZTut.png",
-  onboardingTooltips2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/qoRnWpcbKqKNYgkM.png",
-  faqScreen: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/bOvXbLINlssgAXiJ.png",
-  scrollerBeforeAfter: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/LxWSeTxJWTcoGxKv.png",
-  clipboardWidget: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/IeeDWqOWjkkmmeXT.png",
-  gettingLostInBlocks: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/ZqcqOdInwnnkSfyN.png",
-  textComposer: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/BYfArbeEwfUewjIs.png",
-  characterSize: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/CSHDuaZRDlcSxkDW.png",
-  characterDialog: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/KevyHMfMFYmgshDw.png",
-  basicViewRedesign: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/sMbfoRIAcbIRzAZz.png",
-  rateAppDialog: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/UeJfEbLAjeOOQTdZ.png",
-  phoneScreenshot: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/xphPTUNvUZVhtJTU.png",
+  appLogo: `${import.meta.env.BASE_URL}images/character-pad-logo.png`,
+  figmaLogo: `${IMG}/figma-logo.png`,
+  claudeCodeLogo: `${IMG}/claude-code-logo.png`,
+  notionLogo: `${IMG}/notion-logo.png`,
+  studentEmoji: `${IMG}/student-emoji.png`,
+  artistEmoji: `${IMG}/artist-emoji.png`,
+  teacherEmoji: `${IMG}/teacher-emoji.png`,
+  technologistEmoji: `${IMG}/technologist-emoji.png`,
+  userReviews: `${IMG}/user-reviews.png`,
+  iconsOutlined: `${IMG}/icons-outlined.png`,
+  iconsFilled: `${IMG}/icons-filled.png`,
+  iconsColored: `${IMG}/icons-colored.png`,
+  searchByDrawing: `${IMG}/search-by-drawing.png`,
+  searchFeature: `${IMG}/search-feature.png`,
+  onboardingTooltips: `${IMG}/onboarding-tooltips.png`,
+  onboardingTooltips2: `${IMG}/onboarding-tooltips-2.png`,
+  faqScreen: `${IMG}/faq-screen.png`,
+  scrollerBeforeAfter: `${IMG}/scroller-before-after.png`,
+  clipboardWidget: `${IMG}/clipboard-widget.png`,
+  gettingLostInBlocks: `${IMG}/getting-lost-in-blocks.png`,
+  textComposer: `${IMG}/text-composer.png`,
+  characterSize: `${IMG}/character-size.png`,
+  characterDialog: `${IMG}/character-dialog.png`,
+  basicViewRedesign: `${IMG}/basic-view-redesign.png`,
+  rateAppDialog: `${IMG}/rate-app-dialog.png`,
+  phoneScreenshot: `${IMG}/phone-screenshot.png`,
+  newBadge: `${IMG}/new-badge.png`,
 };
 
 
@@ -528,7 +531,7 @@ export default function CharacterPad() {
                 <div key={s.title} className="relative p-6 rounded-2xl" style={{ background: "#FAF7F2", border: "1px solid #E67E2215" }}>
                   {s.isNew && (
                     <img
-                      src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/oUEwrRZIFOZFNgLR.png"
+                      src={ASSETS.newBadge}
                       alt="New"
                       className="absolute -top-3 -left-3 w-10 h-10"
                       style={{ transform: "rotate(-15deg)" }}

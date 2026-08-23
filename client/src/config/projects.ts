@@ -27,7 +27,7 @@ export const projectConfigs: ProjectConfig[] = [
     slug: "/character-pad",
     name: "Character Pad",
     accentColor: "#E67E22",
-    thumbnailUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/VsSbeosJoSORdPJI.png",
+    thumbnailUrl: `${import.meta.env.BASE_URL}images/character-pad-thumbnail.png`,
     thumbnailAlt: "Character Pad project thumbnail",
     navLinks: [
       { label: "Overview", href: "#overview" },
@@ -46,7 +46,7 @@ export const projectConfigs: ProjectConfig[] = [
     slug: "/kiddiwear",
     name: "Kiddiwear",
     accentColor: "#BF5836",
-    thumbnailUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png",
+    thumbnailUrl: `${import.meta.env.BASE_URL}images/kiddiwear-thumbnail.png`,
     thumbnailAlt: "Kiddiwear project thumbnail",
     navLinks: [
       { label: "Overview", href: "#overview" },
@@ -60,14 +60,14 @@ export const projectConfigs: ProjectConfig[] = [
       title: "Kiddiwear — Elifsu Ateş",
       ogTitle: "Kiddiwear — Children's Clothing Marketplace",
       ogDescription: "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UI/UX Design by Elifsu Ateş.",
-      ogImage: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/vteVhNcoduGcHcRE.png",
+      ogImage: "https://elifsuates.com/images/kiddiwear-thumbnail.png",
     },
   },
   {
     slug: "/wireframe-prototyper",
     name: "Wireframe Prototyper Skill",
     accentColor: "#7B5EA7",
-    thumbnailUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png",
+    thumbnailUrl: `${import.meta.env.BASE_URL}images/wireframe-prototyper-thumbnail.png`,
     thumbnailAlt: "Wireframe Prototyper project thumbnail",
     navLinks: [
       { label: "Overview", href: "#overview" },
@@ -77,7 +77,7 @@ export const projectConfigs: ProjectConfig[] = [
       title: "Wireframe Prototyper Skill — Elifsu Ateş",
       ogTitle: "Wireframe Prototyper Skill — Claude Code Skill",
       ogDescription: "A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.",
-      ogImage: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663332337268/kiaoSegjEvwENGTh.png",
+      ogImage: "https://elifsuates.com/images/wireframe-prototyper-thumbnail.png",
       ogImageWidth: "1400",
       ogImageHeight: "788",
     },
