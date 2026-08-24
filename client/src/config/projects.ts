@@ -72,6 +72,8 @@ export const projectConfigs: ProjectConfig[] = [
     navLinks: [
       { label: "Overview", href: "#overview" },
       { label: "Features", href: "#features" },
+      { label: "Demo", href: "#demo" },
+      { label: "Benefits", href: "#benefits" },
     ],
     meta: {
       title: "Wireframe Prototyper Skill — Elifsu Ateş",
