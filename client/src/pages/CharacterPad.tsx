@@ -17,9 +17,7 @@ const ASSETS = {
   teacherEmoji: `${IMG}/teacher-emoji.png`,
   technologistEmoji: `${IMG}/technologist-emoji.png`,
   userReviews: `${IMG}/user-reviews.png`,
-  iconsOutlined: `${IMG}/icons-outlined.png`,
-  iconsFilled: `${IMG}/icons-filled.png`,
-  iconsColored: `${IMG}/icons-colored.png`,
+  iconSystem: `${IMG}/icon-system.png`,
   searchByDrawing: `${IMG}/search-by-drawing.png`,
   searchFeature: `${IMG}/search-feature.png`,
   onboardingTooltips: `${IMG}/onboarding-tooltips.png`,
@@ -621,22 +619,11 @@ export default function CharacterPad() {
             <h2 className="font-display text-3xl mb-6" style={{ color: "#FFFFFF", fontWeight: 300 }}>
               Icon <em style={{ color: "#E67E22" }}>System</em>
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { style: "Outlined", img: ASSETS.iconsOutlined },
-                { style: "Filled", img: ASSETS.iconsFilled },
-                { style: "Colored", img: ASSETS.iconsColored },
-              ].map((icon) => (
-                <div key={icon.style} className="rounded-xl overflow-hidden" style={{ background: "#4A4A4A" }}>
-                  <div className="p-4 pb-2">
-                    <h3 className="font-display text-lg font-light" style={{ color: "#FFFFFF" }}>{icon.style}</h3>
-                  </div>
-                  <div className="px-4 pb-4">
-                    <img src={icon.img} alt={`${icon.style} icons`} className="w-full h-auto" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <img
+              src={ASSETS.iconSystem}
+              alt="Character Pad icon set — colour wheel, list, 3D box, text size, text cursor, preview, blocks, keypad, Q&A, tutorial, favourite and rate icons"
+              className="w-full h-auto"
+            />
           </Section>
         </div>
 
@@ -703,12 +690,11 @@ export default function CharacterPad() {
                       {block.images && block.images.length > 0 && (
                         <div className={`mt-6 ${block.images.length > 1 ? "space-y-6" : ""} flex flex-col items-center`}>
                           {block.images.map((img, imgIdx) => (
-                            <div key={imgIdx} className="overflow-x-auto w-full flex justify-center">
+                            <div key={imgIdx} className="w-full">
                               <img
                                 src={img}
                                 alt={`${section.titles[0]} - screenshot ${imgIdx + 1}`}
-                                className="h-auto"
-                                style={{ maxWidth: "100%" }}
+                                className="w-full h-auto block"
                               />
                             </div>
                           ))}
