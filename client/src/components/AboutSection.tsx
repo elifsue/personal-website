@@ -14,6 +14,14 @@ const ABOUT_BG = `${import.meta.env.BASE_URL}images/elifsu-ates.webp`;
 
 const timeline = [
   {
+    role: "M.A. in User Experience Design",
+    company: "University of the Arts London",
+    period: "Sep 2026 \u2013 Dec 2027",
+    location: "London, UK",
+    logo: `${import.meta.env.BASE_URL}images/ual-logo.jpeg`,
+    bullets: [] as string[],
+  },
+  {
     role: "UI/UX Designer (Freelance)",
     company: "Character Pad",
     period: "Jun 2026 \u2013 Jul 2026",
@@ -39,7 +47,7 @@ const timeline = [
   {
     role: "B.Sc. in Computer Science",
     company: "University of Greenwich",
-    period: "2021 \u2013 2025",
+    period: "Jan 2021 \u2013 Jun 2025",
     location: "London, UK",
     logo: `${import.meta.env.BASE_URL}images/university-of-greenwich-logo.jpg`,
     bullets: [
@@ -168,6 +176,28 @@ export default function AboutSection() {
           <em style={{ color: "#C4622D", fontStyle: "italic" }}>thinks in systems</em>{" "}
           and feels in pixels.
         </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="text-base leading-relaxed mt-8 mb-4 max-w-3xl"
+          style={{ color: "#6B6560" }}
+        >
+          I’m Elifsu Ateş, a UI/UX Designer based in London with a Computer Science background — which means I don’t just design digital products, I have the technical fluency to build them.
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.25 }}
+          className="text-base leading-relaxed max-w-3xl"
+          style={{ color: "#6B6560" }}
+        >
+          What sets me apart is my{" "}
+          <strong style={{ color: "#4A6741" }}>fluency with AI tools</strong>. For me, AI isn’t a shortcut — it’s how I accelerate the entire design workflow without compromising craft. That craft lives in the details: research, wireframing, prototyping, and usability testing, all in service of accessible products that feel effortless to use.
+        </motion.p>
       </div>
 
       <div className="px-8 lg:px-32 grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-12 lg:gap-16 items-start">
@@ -241,30 +271,8 @@ export default function AboutSection() {
           </div>
         </motion.div>
 
-        {/* Right: Bio + Timeline */}
+        {/* Right: Timeline */}
         <div>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-            className="text-base leading-relaxed mb-4"
-            style={{ color: "#6B6560" }}
-          >
-            I’m Elifsu Ateş, a UI/UX Designer based in London with a Computer Science background — which means I don’t just design digital products, I have the technical fluency to build them.
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-            className="text-base leading-relaxed mb-12"
-            style={{ color: "#6B6560" }}
-          >
-            What sets me apart is my{" "}
-            <strong style={{ color: "#4A6741" }}>fluency with AI tools</strong>. For me, AI isn’t a shortcut — it’s how I accelerate the entire design workflow without compromising craft. That craft lives in the details: research, wireframing, prototyping, and usability testing, all in service of accessible products that feel effortless to use.
-          </motion.p>
-
           {/* Timeline */}
           <div>
             <div
