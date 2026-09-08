@@ -315,10 +315,11 @@ export default function ContactSection() {
         <p className="font-mono-dm text-xs tracking-wider" style={{ color: "rgba(250,247,242,0.4)" }}>
           © {new Date().getFullYear()} · Designed & built with care
         </p>
-        <div className="flex items-center gap-1 font-mono-dm text-xs" style={{ color: "rgba(250,247,242,0.4)" }}>
-          <span>B.Sc. in Computer Science</span>
-          <span style={{ color: "#C4622D" }}>·</span>
-          <span>University of Greenwich</span>
+        {/* Stacks on small screens, where the full line no longer fits */}
+        <div className="flex flex-col sm:flex-row items-center gap-1 text-center font-mono-dm text-xs" style={{ color: "rgba(250,247,242,0.4)" }}>
+          <span>M.A. in User Experience Design</span>
+          <span className="hidden sm:inline" style={{ color: "#C4622D" }}>·</span>
+          <span>University of the Arts London</span>
         </div>
       </footer>
     </>
