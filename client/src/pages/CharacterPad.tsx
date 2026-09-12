@@ -19,17 +19,19 @@ const ASSETS = {
   userReviews: `${IMG}/user-reviews.png`,
   iconSystem: `${IMG}/icon-system.png`,
   searchByDrawing: `${IMG}/search-by-drawing.png`,
-  searchFeature: `${IMG}/search-feature.png`,
+  nameAliases: `${IMG}/name-aliases.png`,
+  recentSearches: `${IMG}/recent-searches.png`,
+  viewTypes: `${IMG}/view-types.png`,
+  onboardingFlow: `${IMG}/onboarding-flow.png`,
   onboardingTooltips: `${IMG}/onboarding-tooltips.png`,
-  onboardingTooltips2: `${IMG}/onboarding-tooltips-2.png`,
   faqScreen: `${IMG}/faq-screen.png`,
-  scrollerBeforeAfter: `${IMG}/scroller-before-after.png`,
+  fastScroller: `${IMG}/fast-scroller.png`,
   clipboardWidget: `${IMG}/clipboard-widget.png`,
   gettingLostInBlocks: `${IMG}/getting-lost-in-blocks.png`,
   textComposer: `${IMG}/text-composer.png`,
   characterSize: `${IMG}/character-size.png`,
   characterDialog: `${IMG}/character-dialog.png`,
-  basicViewRedesign: `${IMG}/basic-view-redesign.png`,
+  characterBlocks: `${IMG}/character-blocks.png`,
   rateAppDialog: `${IMG}/rate-app-dialog.png`,
   phoneScreenshot: `${IMG}/phone-screenshot.png`,
   newBadge: `${IMG}/new-badge.png`,
@@ -107,15 +109,17 @@ const redesignSections: RedesignSection[] = [
       {
         text: "<strong>A new \"Search by drawing\" feature is introduced</strong>, to allow the user to draw characters and look for the closest matches, solving the core discoverability issue for users who recognize a character visually but don\u2019t know its Unicode name, which is in English.",
         bulletNumber: 1,
+        images: [ASSETS.searchByDrawing],
       },
       {
-        text: "<strong>Name aliases for commonly used characters are added</strong>, to expand search accuracy by mapping informal names to characters (e.g., \"sigma\" for Σ), reducing failed searches for users who know what they want but not the exact Unicode name.",
+        text: "<strong>Name aliases for commonly used characters are added</strong>, to expand search accuracy by mapping informal names to characters (e.g., \"product\" for ×, \"sigma\" for Σ, etc.), reducing failed searches for users who know what they want but not the exact Unicode name.",
         bulletNumber: 2,
+        images: [ASSETS.nameAliases],
       },
       {
         text: "<strong>Recent searches are introduced</strong>, to provide quick access to previously searched terms, minimizing repetitive effort for returning users who frequently look up the same characters.",
         bulletNumber: 3,
-        images: [ASSETS.searchByDrawing],
+        images: [ASSETS.recentSearches],
       },
     ],
   },
@@ -129,15 +133,15 @@ const redesignSections: RedesignSection[] = [
     ],
     content: [
       {
-        text: "<strong>Reduced from 3 view types (Basic, Advanced, Continuous) to 2 (Basic and Advanced)</strong>, adding \"Continuous Mode\" as a setting under Advanced View.",
-        images: [ASSETS.searchFeature],
+        text: "<strong>Reduced from 3 view types (Basic, Advanced, Continuous) to 2 (Basic and Advanced)</strong>, adding \"Continuous Mode\" as a setting under Advanced View, and <strong>added visuals to the view types.</strong>",
+        images: [ASSETS.viewTypes],
       },
       {
         text: "While building a custom keyboard may seem appealing, it would require competing with established keyboard apps that offer a wide range of features users have come to expect and would likely miss.",
       },
       {
         text: "Instead, <strong>on first app launch, users are guided through the app\u2019s key features and navigation with a series of contextual tooltips</strong> that also highlight to the user that they can use the floating clipboard rather than expecting a custom keyboard.",
-        images: [ASSETS.onboardingTooltips2],
+        images: [ASSETS.onboardingTooltips],
       },
     ],
   },
@@ -152,7 +156,7 @@ const redesignSections: RedesignSection[] = [
     content: [
       {
         text: "<strong>The Onboarding UX is simplified</strong>, removing the technical jargon from the initial setup, making the app more inclusive and easier to understand for non-technical users.",
-        images: [ASSETS.onboardingTooltips],
+        images: [ASSETS.onboardingFlow],
       },
       {
         text: "<strong>A new FAQ screen is introduced</strong>, accessible from the device settings, to address recurring questions about creating custom characters, unsupported characters, and others, reducing frustration and negative reviews.",
@@ -170,7 +174,7 @@ const redesignSections: RedesignSection[] = [
     content: [
       {
         text: "The problematic always-visible fast scroller is now replaced with one that <strong>shows on scroll and auto-hides after 2 seconds</strong> on idle state, solving accidental trigger issues while maintaining navigation efficiency.",
-        images: [ASSETS.scrollerBeforeAfter],
+        images: [ASSETS.fastScroller],
       },
     ],
   },
@@ -268,7 +272,7 @@ const redesignSections: RedesignSection[] = [
     content: [
       {
         text: "<strong>The Character Blocks (Basic View) screen now includes more categories</strong>, making it easier to browse and find the characters users need.",
-        images: [ASSETS.basicViewRedesign],
+        images: [ASSETS.characterBlocks],
       },
     ],
   },
@@ -289,8 +293,8 @@ const redesignSections: RedesignSection[] = [
 ];
 
 const processSteps = [
-  ["User Persona", "User Review Scraping", "Review Categorization", "Severity Ranking"],
-  ["Problem Prioritization", "Stakeholder Discussion", "User Stories", "Low-Fidelity Wireframes"],
+  ["User Reviews Scraping", "Reviews Categorization", "Severity Ranking", "Problem Prioritization"],
+  ["User Types", "Stakeholder Discussion", "User Stories", "Low-Fidelity Wireframes"],
   ["Design System", "Prototyping", "Usability Testing", "Final Presentation"],
 ];
 
@@ -441,27 +445,6 @@ export default function CharacterPad() {
 
         <div className="px-8 lg:px-32 py-20" id="research">
           <Section>
-            <SectionLabel color="#E67E22" label="User Types" />
-            <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
-              Who Uses <em style={{ color: "#E67E22" }}>Character Pad</em>?
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {userTypes.map((ut) => (
-                <div key={ut.name} className="p-6 rounded-2xl" style={{ background: "#F5F0EA" }}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <img src={ut.emoji} alt="" className="w-10 h-10" />
-                    <h3 className="font-display text-lg font-medium" style={{ color: "#1C1917" }}>{ut.name}</h3>
-                  </div>
-                  <p className="text-sm leading-relaxed mb-4" style={{ color: "#6B6560" }}>{ut.desc}</p>
-                  <p className="text-sm leading-relaxed italic" style={{ color: "#8D5E3C" }}>{ut.reason}</p>
-                </div>
-              ))}
-            </div>
-          </Section>
-        </div>
-
-        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
-          <Section>
             <SectionLabel color="#E67E22" label="User Reviews" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
               What Users <em style={{ color: "#E67E22" }}>Say</em>
@@ -472,7 +455,7 @@ export default function CharacterPad() {
           </Section>
         </div>
 
-        <div className="px-8 lg:px-32 py-20">
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel color="#E67E22" label="User Reviews Analysis" />
             <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
@@ -514,6 +497,27 @@ export default function CharacterPad() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </Section>
+        </div>
+
+        <div className="px-8 lg:px-32 py-20">
+          <Section>
+            <SectionLabel color="#E67E22" label="User Types" />
+            <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
+              Who Uses <em style={{ color: "#E67E22" }}>Character Pad</em>?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {userTypes.map((ut) => (
+                <div key={ut.name} className="p-6 rounded-2xl" style={{ background: "#F5F0EA" }}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <img src={ut.emoji} alt="" className="w-10 h-10" />
+                    <h3 className="font-display text-lg font-medium" style={{ color: "#1C1917" }}>{ut.name}</h3>
+                  </div>
+                  <p className="text-sm leading-relaxed mb-4" style={{ color: "#6B6560" }}>{ut.desc}</p>
+                  <p className="text-sm leading-relaxed italic" style={{ color: "#8D5E3C" }}>{ut.reason}</p>
+                </div>
+              ))}
             </div>
           </Section>
         </div>
