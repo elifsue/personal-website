@@ -711,6 +711,30 @@ export default function CharacterPad() {
           </div>
         </div>
 
+        <div className="px-8 lg:px-32 py-20" id="prototype" style={{ background: "#3C3C3C" }}>
+          <Section>
+            <SectionLabel color="#E67E22" label="Prototype" />
+            <h2 className="font-display text-3xl mb-6" style={{ color: "#FFFFFF", fontWeight: 300 }}>
+              Try the <em style={{ color: "#E67E22" }}>Prototype</em>
+            </h2>
+            <p className="text-base leading-relaxed mb-10 max-w-3xl" style={{ color: "#CCCCCC" }}>
+              Explore the redesigned app below — navigate the views, search for characters, and try out the new features directly in the interactive prototype.
+            </p>
+            <div className="flex justify-center">
+              <iframe
+                src="https://embed.figma.com/proto/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=824-17076&p=f&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=824%3A17076&show-proto-sidebar=1&embed-host=share"
+                title="Character Pad interactive prototype"
+                width={1100}
+                height={800}
+                className="max-w-full rounded-2xl"
+                style={{ border: "1px solid rgba(255,255,255,0.12)" }}
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+          </Section>
+        </div>
+
     </CaseStudyLayout>
   );
 }
