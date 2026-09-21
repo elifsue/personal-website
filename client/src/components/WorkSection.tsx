@@ -29,6 +29,7 @@ const projects = [
     github: "",
     links: [
       { label: "Interactive Prototype", url: "https://www.figma.com/proto/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=824-17076&t=n1dLPf9xI0nHeUcA-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=824%3A17076&show-proto-sidebar=1", style: { background: "#BF5836", color: "#FAF7F2" } },
+      { label: "Slide Deck", url: "https://www.figma.com/deck/K5rKV0S4RaepBiuCfZKqAK", style: { background: "#2A9D8F", color: "#FFFFFF" } },
       { label: "Behance", url: "https://www.behance.net/gallery/252476603/Character-Pad-Android-Unicode-App-Redesign-UIUX", style: { background: "#4A6FA5", color: "#FFFFFF" } },
       { label: "Figma", url: "https://www.figma.com/design/ZOBLX9Vy0IDzFCSkESBEcr/Character-Pad?node-id=263-9197&t=gMi30hWZphoUtKG5-1", style: { background: "#7B5EA7", color: "#FFFFFF" } },
       { label: "Google Play", url: "https://play.google.com/store/apps/details?id=com.husseinelfeky.characterpad", style: { background: "#01875F", color: "#FFFFFF" } },
@@ -223,6 +224,13 @@ function ProjectCard({
                   <path d="M19 0V19H28.5C33.7467 19 38 14.7467 38 9.5C38 4.25329 33.7467 0 28.5 0H19Z"/>
                   <path d="M0 9.5C0 14.7467 4.25329 19 9.5 19H19V0H9.5C4.25329 0 0 4.25329 0 9.5Z"/>
                   <path d="M0 28.5C0 33.7467 4.25329 38 9.5 38H19V19H9.5C4.25329 19 0 23.2533 0 28.5Z"/>
+                </svg>
+              )}
+              {link.label === "Slide Deck" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="2" y="3" width="20" height="13" rx="2" />
+                  <line x1="12" y1="16" x2="12" y2="20" />
+                  <line x1="8" y1="20" x2="16" y2="20" />
                 </svg>
               )}
               {link.label === "Google Play" && (
