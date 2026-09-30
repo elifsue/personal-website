@@ -33,8 +33,8 @@ export const projectConfigs: ProjectConfig[] = [
       { label: "Overview", href: "#overview" },
       { label: "Research", href: "#research" },
       { label: "Solutions", href: "#solutions" },
-      { label: "Redesign", href: "#redesign" },
-      { label: "Prototype", href: "#prototype" },
+      { label: "Testing", href: "#testing" },
+      { label: "Design", href: "#design" },
     ],
     meta: {
       title: "Character Pad — Elifsu Ateş",
