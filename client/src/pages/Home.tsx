@@ -86,13 +86,13 @@ export default function Home() {
     };
     setMeta("og:title", "Elifsu Ateş — UI/UX Designer");
     setMeta("og:description", "Crafting human-first digital experiences. UI/UX Designer based in London.");
-    setMeta("og:image", "/images/elifsu-ates.webp");
-    setMeta("og:image:width", "1080");
-    setMeta("og:image:height", "1350");
+    setMeta("og:image", "/images/elifsu-portrait.jpg");
+    setMeta("og:image:width", "960");
+    setMeta("og:image:height", "1280");
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", "Elifsu Ateş — UI/UX Designer");
     setMeta("twitter:description", "Crafting human-first digital experiences. UI/UX Designer based in London.");
-    setMeta("twitter:image", "/images/elifsu-ates.webp");
+    setMeta("twitter:image", "/images/elifsu-portrait.jpg");
   }, []);
 
   return (
