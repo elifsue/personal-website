@@ -4,3 +4,4 @@ export { default as BackToPortfolio } from "./BackToPortfolio";
 export { default as CaseStudySidebar } from "./CaseStudySidebar";
 export { default as CaseStudyHeader } from "./CaseStudyHeader";
 export { default as CaseStudyLayout } from "./CaseStudyLayout";
+export { default as ProjectDetails } from "./ProjectDetails";
