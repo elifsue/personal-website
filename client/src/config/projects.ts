@@ -76,8 +76,10 @@ export const projectConfigs: ProjectConfig[] = [
     thumbnailAlt: "X-Ray Home project thumbnail",
     navLinks: [
       { label: "Overview", href: "#overview" },
-      { label: "Process", href: "#process" },
+      { label: "Research", href: "#research" },
+      { label: "Analysis", href: "#analysis" },
       { label: "Design", href: "#design" },
+      { label: "Testing", href: "#testing" },
     ],
     meta: {
       title: "X-Ray Home — Elifsu Ateş",
