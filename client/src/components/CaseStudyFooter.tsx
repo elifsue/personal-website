@@ -12,7 +12,7 @@ import { projectConfigs } from "@/config/projects";
 const subtitles: Record<string, string> = {
   "/character-pad": "Android Unicode Characters App",
   "/kiddiwear": "Peer-to-peer Marketplace Website",
-  "/wireframe-prototyper": "Claude Code Custom Skill",
+  "/wireframe-prototyper": "AI Custom Skill",
   "/xray-home": "Real Estate Website",
 };
 
