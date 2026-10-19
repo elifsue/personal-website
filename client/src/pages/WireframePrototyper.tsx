@@ -1,11 +1,19 @@
-import { Section, SectionLabel, CaseStudyLayout } from "@/components/case-study";
+import { Section, SectionLabel, CaseStudyLayout, ProjectDetails } from "@/components/case-study";
 import { projectConfigs } from "@/config/projects";
+import { tools } from "@/config/tools";
 
 const IMG = `${import.meta.env.BASE_URL}images/wireframe-prototyper`;
 
 const CODEX_DEMO = `${IMG}/skill-demo-on-codex.png`;
 const CODE_TO_CANVAS = `${IMG}/code-to-canvas-loop.png`;
 const SCRATCH_VS_SKILL = `${IMG}/from-scratch-vs-with-skill.png`;
+
+const ROLE = [
+  { label: "Role", value: "Designer & Developer" },
+  { label: "Timeline", value: "Jun 2026" },
+];
+
+const TOOLS = [tools.claudeCode, tools.codex, tools.antigravity, tools.manus, tools.figma];
 
 const BENEFITS = [
   { label: "Structured discovery", text: "Upfront questions prevent wasted iterations later." },
@@ -140,6 +148,12 @@ export default function WireframePrototyper() {
 
   return (
     <CaseStudyLayout config={config} heroContent={heroContent}>
+
+        <div className="px-8 lg:px-32 pb-20">
+          <Section>
+            <ProjectDetails color="#7B5EA7" items={ROLE} tools={TOOLS} />
+          </Section>
+        </div>
 
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>

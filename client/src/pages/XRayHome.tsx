@@ -1,7 +1,8 @@
 import { useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Section, SectionLabel, CaseStudyLayout } from "@/components/case-study";
+import { Section, SectionLabel, CaseStudyLayout, ProjectDetails } from "@/components/case-study";
 import { projectConfigs } from "@/config/projects";
+import { tools } from "@/config/tools";
 
 const IMG = `${import.meta.env.BASE_URL}images/xray-home`;
 
@@ -15,10 +16,7 @@ const ROLE = [
   { label: "Location", value: "London, UK" },
 ];
 
-const TOOLS = [
-  { name: "Figma", logo: `${IMG}/figma-logo.png` },
-  { name: "ChatGPT", logo: `${IMG}/chatgpt-logo.svg` },
-];
+const TOOLS = [tools.figma, tools.chatgpt];
 
 const STATS = [
   { value: "19", label: "Usability issues uncovered" },
@@ -133,48 +131,34 @@ export default function XRayHome() {
   return (
     <CaseStudyLayout config={config} heroContent={heroContent}>
 
-        <div className="px-8 lg:px-32 py-20" id="overview" style={{ background: "#F5F0EA" }}>
+        <div className="px-8 lg:px-32 pb-20">
+          <Section>
+            <ProjectDetails color={ACCENT} items={ROLE} tools={TOOLS} />
+          </Section>
+        </div>
+
+        <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel color={ACCENT} label="Overview" />
-            <h2 className="font-display text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>
+            <h2 className="font-display text-3xl md:text-4xl mb-6" style={{ color: "#1C1917", fontWeight: 300 }}>
               About <em style={{ color: ACCENT }}>X-Ray Home</em>
             </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-10 lg:gap-16">
-              <div className="space-y-6">
-                <p className="text-base leading-relaxed" style={{ color: "#6B6560" }}>
-                  X-Ray Home is a London-based real estate agency offering property sales, lettings, valuations, management, conveyancing, and mortgage advice, with offices in London and Istanbul serving buyers, sellers, landlords, tenants, and investors across England and Türkiye.
-                </p>
-                <p className="text-base leading-relaxed" style={{ color: "#6B6560" }}>
-                  As a UI/UX Designer Intern, I evaluated the existing website through usability testing, built a design system to unify its visual language, and redesigned the website, from the homepage and property search through to company, events, and market news pages.
-                </p>
-                <div className="grid grid-cols-3 gap-4 pt-4">
-                  {STATS.map((stat) => (
-                    <div key={stat.label}>
-                      <p className="font-display text-4xl mb-1" style={{ color: ACCENT, fontWeight: 400 }}>{stat.value}</p>
-                      <p className="font-mono-dm text-xs tracking-wide" style={{ color: "#6B6560" }}>{stat.label}</p>
-                    </div>
-                  ))}
+            <div className="space-y-6 mb-10 max-w-3xl">
+              <p className="text-lg leading-relaxed" style={{ color: "#6B6560" }}>
+                X-Ray Home is a London-based real estate agency offering property sales, lettings, valuations, management, conveyancing, and mortgage advice, with offices in London and Istanbul serving buyers, sellers, landlords, tenants, and investors across England and Türkiye.
+              </p>
+              <p className="text-lg leading-relaxed" style={{ color: "#6B6560" }}>
+                As a UI/UX Designer Intern, I evaluated the existing website through usability testing, built a design system to unify its visual language, and redesigned the website, from the homepage and property search through to company, events, and market news pages.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 max-w-3xl">
+              {STATS.map((stat) => (
+                <div key={stat.label}>
+                  <p className="font-display text-4xl mb-1" style={{ color: ACCENT, fontWeight: 400 }}>{stat.value}</p>
+                  <p className="font-mono-dm text-xs tracking-wide" style={{ color: "#6B6560" }}>{stat.label}</p>
                 </div>
-              </div>
-              <dl className="p-6 rounded-2xl space-y-4 self-start" style={{ background: "#FAF7F2" }}>
-                {ROLE.map((item) => (
-                  <div key={item.label}>
-                    <dt className="font-mono-dm text-xs tracking-widest uppercase mb-1" style={{ color: ACCENT }}>{item.label}</dt>
-                    <dd className="text-base" style={{ color: "#1C1917" }}>{item.value}</dd>
-                  </div>
-                ))}
-                <div>
-                  <dt className="font-mono-dm text-xs tracking-widest uppercase mb-2" style={{ color: ACCENT }}>Tools</dt>
-                  <dd className="flex flex-wrap gap-3">
-                    {TOOLS.map((tool) => (
-                      <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#F5F0EA" }}>
-                        <img src={tool.logo} alt={tool.name} className="w-5 h-5 object-contain" />
-                        <span className="font-mono-dm text-sm tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
-                      </div>
-                    ))}
-                  </dd>
-                </div>
-              </dl>
+              ))}
             </div>
           </Section>
         </div>

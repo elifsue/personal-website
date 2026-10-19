@@ -3,17 +3,15 @@
 
 import { Children, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useReducedMotion } from "framer-motion";
-import { Section, CaseStudyLayout } from "@/components/case-study";
+import { Section, CaseStudyLayout, ProjectDetails } from "@/components/case-study";
 import { projectConfigs } from "@/config/projects";
+import { tools } from "@/config/tools";
 
 
 const IMG = `${import.meta.env.BASE_URL}images/character-pad`;
 
 const ASSETS = {
   appLogo: `${import.meta.env.BASE_URL}images/character-pad-logo.png`,
-  figmaLogo: `${IMG}/figma-logo.png`,
-  claudeCodeLogo: `${IMG}/claude-code-logo.png`,
-  notionLogo: `${IMG}/notion-logo.png`,
   complexityDemo: `${IMG}/complexity-demo.mp4`,
   complexityDemoPoster: `${IMG}/complexity-demo-poster.png`,
   productOwnerCollaboration: `${IMG}/product-owner-collaboration.png`,
@@ -74,6 +72,13 @@ const LIGHT = "#FAF7F2";
 const SAND = "#F5F0EA";
 /* Whichever of the two beiges the enclosing band isn't using — set per band by Chapter */
 const ALT_SURFACE = "var(--surface-alt)";
+
+const ROLE = [
+  { label: "Role", value: "UI/UX Designer (Freelance)" },
+  { label: "Timeline", value: "Jun 2026 – Jul 2026" },
+];
+
+const TOOLS = [tools.figma, tools.claudeCode, tools.notion];
 
 
 type Area = "Search" | "Onboarding" | "Navigation" | "Usability";
@@ -413,6 +418,12 @@ export default function CharacterPad() {
   return (
     <CaseStudyLayout config={config} heroContent={heroContent}>
 
+        <div className="px-8 lg:px-32 pb-20">
+          <Section>
+            <ProjectDetails color="#E67E22" items={ROLE} tools={TOOLS} />
+          </Section>
+        </div>
+
         {/* 01 • The Brief */}
         <h2 className="sr-only">The Brief</h2>
         <Chapter>
@@ -425,11 +436,7 @@ export default function CharacterPad() {
             <h3 className="font-display text-2xl md:text-3xl mb-8" style={{ color: "#1C1917", fontWeight: 300 }}>Tools</h3>
             <div className="flex flex-wrap items-center gap-3 text-lg md:text-xl" style={{ color: "#6B6560" }}>
               <span>Used</span>
-              {[
-                { name: "Figma", logo: ASSETS.figmaLogo },
-                { name: "Claude Code", logo: ASSETS.claudeCodeLogo },
-                { name: "Notion", logo: ASSETS.notionLogo },
-              ].map((tool, i) => (
+              {TOOLS.map((tool, i) => (
                 <span key={tool.name} className="flex items-center gap-0.5">
                   <span className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: ALT_SURFACE }}>
                     <img src={tool.logo} alt="" className="w-5 h-5 object-contain" />
