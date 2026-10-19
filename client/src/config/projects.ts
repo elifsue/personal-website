@@ -76,6 +76,7 @@ export const projectConfigs: ProjectConfig[] = [
     thumbnailAlt: "X-Ray Home project thumbnail",
     navLinks: [
       { label: "Overview", href: "#overview" },
+      { label: "Problem", href: "#problem" },
       { label: "Process", href: "#process" },
       { label: "Design", href: "#design" },
     ],

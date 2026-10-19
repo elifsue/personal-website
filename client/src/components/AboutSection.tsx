@@ -41,7 +41,7 @@ const timeline = [
     bullets: [
       "Conducted competitive analysis and usability testing, uncovering 19 accessibility and usability issues, translating findings into targeted design improvements that elevated the overall user experience across the website.",
       "Built a design system with 26 structured components, variants, and color tokens, aligning the product\u2019s visual language across the website and enabling scalable reuse.",
-      "Led the end-to-end redesign of the homepage, property listings, and property detail pages, applying the design system to ensure consistent accessibility compliance and visual coherence at scale.",
+      "Led the end-to-end redesign of the homepage, property listings, and 9 other consumer webpages, applying the design system to ensure consistent accessibility compliance and visual coherence at scale.",
     ],
   },
   {
