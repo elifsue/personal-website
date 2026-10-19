@@ -18,11 +18,6 @@ const projects = [
     id: "01",
     title: "Character Pad",
     subtitle: "Android Unicode Characters App",
-    tags: ["UI/UX Design", "Android", "App Redesign"],
-    year: "2026",
-    description:
-      "Character Pad is an Android utility app, designed to provide users with extensive access to Unicode characters, serving as a comprehensive tool for inserting special symbols, mathematical operators, emojis, etc. into their texts, emails, and documents.",
-    outcome: "1,600,000+ installs, 4.7 rating · User review analysis · Full redesign",
     image: CHARACTERPAD_IMG,
     color: "#E67E22",
     bgColor: "#F5EDE6",
@@ -40,11 +35,6 @@ const projects = [
     id: "02",
     title: "Kiddiwear",
     subtitle: "Peer-to-peer Marketplace Website",
-    tags: ["UI/UX Design", "Marketplace", "Web Design"],
-    year: "2026",
-    description:
-      "A dedicated UK marketplace for buying and selling pre-loved children's clothing. Developed as part of the Google UX Design Professional Certificate, this project follows the full Design Thinking methodology — from simulated user research to usability testing and iterative design.",
-    outcome: "Google UX Design Certificate · Full design system · Usability tested",
     image: KIDDIWEAR_IMG,
     color: "#BF5836",
     bgColor: "#F5EDE6",
@@ -61,11 +51,6 @@ const projects = [
     id: "03",
     title: "X-Ray Home",
     subtitle: "Real Estate Website",
-    tags: ["UI/UX Design", "Real Estate", "Web Design"],
-    year: "2026",
-    description:
-      "X-Ray Home is a London-based real estate agency offering property sales, lettings, and investment services across England and Türkiye. During my internship, I ran a usability test, built a design system, and led the end-to-end redesign of the website.",
-    outcome: "19 usability issues uncovered · 26-component design system · End-to-end redesign",
     image: XRAY_IMG,
     color: "#2E4372",
     bgColor: "#E9ECF3",
@@ -79,11 +64,6 @@ const projects = [
     id: "04",
     title: "Wireframe Prototyper Skill",
     subtitle: "Claude Code Custom Skill",
-    tags: ["Claude Code", "Prototyping", "Automation"],
-    year: "2026",
-    description:
-      "A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.",
-    outcome: "Open source · Prompt-driven · Rapid prototyping",
     image: WP_IMG,
     color: "#7B5EA7",
     bgColor: "#F0ECF5",
@@ -108,17 +88,13 @@ function ProjectCard({
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [, setLocation] = useLocation();
 
-  const isEven = index % 2 === 0;
-
   return (
     <motion.article
       ref={ref}
       initial={{ opacity: 0, y: 60 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
-      className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center ${
-        !isEven ? "lg:[&>*:first-child]:order-2" : ""
-      }`}
+      transition={{ duration: 0.8, delay: (index % 2) * 0.1, ease: "easeOut" }}
+      className="flex flex-col gap-5"
     >
       {/* Image */}
       <div
@@ -143,59 +119,19 @@ function ProjectCard({
       </div>
 
       {/* Content */}
-      <div className={isEven ? "" : "lg:pr-8"}>
-        <div className="flex items-center gap-3 mb-4">
-          <span
-            className="font-mono-dm text-xs tracking-widest uppercase"
-            style={{ color: project.color }}
-          >
-            {project.year}
-          </span>
-          <div className="w-6 h-px" style={{ background: project.color }} />
-        </div>
-
+      <div>
         <h3
           className="font-display mb-2 leading-tight"
-          style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: "#1C1917", fontWeight: 300 }}
+          style={{ fontSize: "clamp(2rem, 3vw, 2.5rem)", color: "#1C1917", fontWeight: 300 }}
         >
           {project.title}
         </h3>
         <p
-          className="font-mono-dm text-sm tracking-wide mb-5"
-          style={{ color: project.color }}
+          className="font-mono-dm text-sm tracking-wide"
+          style={{ color: "#6B6560" }}
         >
           {project.subtitle}
         </p>
-
-        <div className="flex flex-wrap gap-2 mb-6">
-          {project.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-3 py-1 rounded-full text-xs font-medium"
-              style={{ background: project.bgColor, color: project.color }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <p
-          className="text-sm leading-relaxed mb-6"
-          style={{ color: "#6B6560" }}
-        >
-          {project.description}
-        </p>
-
-        <div
-          className="flex items-center gap-2 text-xs font-medium px-4 py-3 rounded-xl"
-          style={{ background: project.bgColor, color: project.color }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-            <polyline points="16 7 22 7 22 13" />
-          </svg>
-          <span>{project.outcome}</span>
-        </div>
 
         {/* External links */}
         <div className="flex flex-wrap gap-2 mt-5">
@@ -311,7 +247,7 @@ export default function WorkSection() {
         </div>
 
         {/* Projects */}
-        <div className="flex flex-col gap-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-20">
           {projects.map((project, i) => (
             <ProjectCard key={project.id} project={project} index={i} />
           ))}
