@@ -8,6 +8,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
+import StickyCTA from "@/components/StickyCTA";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
 import MarqueeStrip from "@/components/MarqueeStrip";
@@ -103,6 +104,7 @@ export default function Home() {
       </AnimatePresence>
 
       <Navbar />
+      <StickyCTA />
       {/* Main content offset for desktop left nav */}
       <main className="lg:pl-20">
         <HeroSection />

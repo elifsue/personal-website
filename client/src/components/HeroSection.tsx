@@ -6,6 +6,7 @@
 
 import { motion, useAnimationFrame, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect, useId, useRef, useState } from "react";
+import { RESUME_URL } from "@/const";
 
 // ─── Constants ───────────────────────────────────────────────
 const HERO_PHOTO = `${import.meta.env.BASE_URL}images/elifsu-portrait.jpg`;
@@ -20,7 +21,6 @@ const SKETCH_PHYSICS = {
   inherit: 0.25, trailDrag: 3, buoyancy: 40, // trail bubble momentum, drag and upward drift
 };
 const HERO_BG = `${import.meta.env.BASE_URL}images/blob-bg.webp`;
-const RESUME_URL = "/ElifsuAtes_Resume.pdf";
 const CARD_ROTATIONS = [-3, 2, -1.5, 3];
 const SPACER_COUNT = 4;
 const MIN_SPACER_PX = 32;
@@ -525,8 +525,9 @@ export default function HeroSection() {
         {/* Spacer 3 */}
         <div className="flex-1 min-h-8" data-spacer="true" />
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons — StickyCTA watches #hero-cta to know when they've scrolled away */}
         <motion.div
+          id="hero-cta"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 1 }}
