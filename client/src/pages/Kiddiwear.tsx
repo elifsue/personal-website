@@ -136,8 +136,8 @@ export default function Kiddiwear() {
                 { name: "Manus", logo: ASSETS.manusLogo },
               ].map((tool) => (
                 <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#FAF7F2" }}>
-                  <img src={tool.logo} alt={tool.name} className="w-6 h-6 object-contain" />
-                  <span className="font-mono-dm text-xs tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
+                  <img src={tool.logo} alt={tool.name} className="w-5 h-5 object-contain" />
+                  <span className="font-mono-dm text-sm tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
                 </div>
               ))}
             </div>
