@@ -64,6 +64,28 @@ export const projectConfigs: ProjectConfig[] = [
       ogTitle: "Kiddiwear — Children's Clothing Marketplace",
       ogDescription: "A dedicated UK marketplace for buying and selling pre-loved children's clothing. UI/UX Design by Elifsu Ateş.",
       ogImage: "https://elifsuates.com/images/kiddiwear-thumbnail.png",
+      ogImageWidth: "1920",
+      ogImageHeight: "1200",
+    },
+  },
+  {
+    slug: "/xray-home",
+    name: "X-Ray Home",
+    accentColor: "#2E4372",
+    thumbnailUrl: `${import.meta.env.BASE_URL}images/xray-home-thumbnail.png`,
+    thumbnailAlt: "X-Ray Home project thumbnail",
+    navLinks: [
+      { label: "Overview", href: "#overview" },
+      { label: "Process", href: "#process" },
+      { label: "Design", href: "#design" },
+    ],
+    meta: {
+      title: "X-Ray Home — Elifsu Ateş",
+      ogTitle: "X-Ray Home — Real Estate Website",
+      ogDescription: "A real estate website for property sales, lettings and investment across England and Türkiye. UI/UX Design by Elifsu Ateş.",
+      ogImage: "https://elifsuates.com/images/xray-home-thumbnail.png",
+      ogImageWidth: "1920",
+      ogImageHeight: "1200",
     },
   },
   {
@@ -84,7 +106,7 @@ export const projectConfigs: ProjectConfig[] = [
       ogDescription: "A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.",
       ogImage: "https://elifsuates.com/images/wireframe-prototyper-thumbnail.png",
       ogImageWidth: "1400",
-      ogImageHeight: "788",
+      ogImageHeight: "810",
     },
   },
 ];
