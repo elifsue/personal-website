@@ -642,6 +642,27 @@ export default function Kiddiwear() {
           </Section>
         </div>
 
+        <div className="px-8 lg:px-32 py-20">
+          <Section>
+            <SectionLabel color="#BF5836" label="Figma" />
+            <h2 className="font-display text-3xl mb-10" style={{ color: "#1C1917", fontWeight: 300 }}>
+              Figma <em style={{ color: "#BF5836" }}>File</em>
+            </h2>
+            <div className="flex justify-center">
+              <iframe
+                src="https://embed.figma.com/design/IDK1e8n4xDMTt6FJ5zKidJ/Kiddiwear?node-id=3082-18790&embed-host=share"
+                title="Kiddiwear Figma design file"
+                width={1100}
+                height={800}
+                className="max-w-full rounded-2xl"
+                style={{ border: "1px solid rgba(0,0,0,0.08)" }}
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+          </Section>
+        </div>
+
     </CaseStudyLayout>
   );
 }
