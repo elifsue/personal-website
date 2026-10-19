@@ -432,8 +432,8 @@ export default function CharacterPad() {
               ].map((tool, i) => (
                 <span key={tool.name} className="flex items-center gap-0.5">
                   <span className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: ALT_SURFACE }}>
-                    <img src={tool.logo} alt="" className="w-6 h-6 object-contain" />
-                    <span className="font-mono-dm text-xs tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
+                    <img src={tool.logo} alt="" className="w-5 h-5 object-contain" />
+                    <span className="font-mono-dm text-sm tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
                   </span>
                   {i === 0 ? "," : i === 1 ? ", and" : "."}
                 </span>
