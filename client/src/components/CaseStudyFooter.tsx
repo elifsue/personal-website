@@ -13,6 +13,7 @@ const subtitles: Record<string, string> = {
   "/character-pad": "Android Unicode Characters App",
   "/kiddiwear": "Peer-to-peer Marketplace Website",
   "/wireframe-prototyper": "Claude Code Custom Skill",
+  "/xray-home": "Real Estate Website",
 };
 
 interface CaseStudyFooterProps {
@@ -38,7 +39,7 @@ export default function CaseStudyFooter({ currentProject }: CaseStudyFooterProps
         <h2 className="font-display text-2xl md:text-3xl mb-10 text-center" style={{ color: "#FAF7F2", fontWeight: 300 }}>
           Other <em style={{ color: "#BF5836" }}>Projects</em>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {otherProjects.map((project, index) => (
             <motion.div
               key={project.slug}

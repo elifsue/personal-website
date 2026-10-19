@@ -49,7 +49,7 @@ export default function CaseStudyLayout({
 
         {children}
 
-        <CaseStudyFooter currentProject={config.slug.replace("/", "") as "character-pad" | "kiddiwear" | "wireframe-prototyper"} />
+        <CaseStudyFooter currentProject={config.slug.replace("/", "")} />
       </main>
     </div>
   );

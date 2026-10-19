@@ -42,7 +42,7 @@ const CARD_TEXT = {
   },
 };
 
-const WORK_TAGS = ["Character Pad", "Kiddiwear", "Wireframe Prototyper Skill"];
+const WORK_TAGS = ["Character Pad", "Kiddiwear", "X-Ray Home", "AI Skill"];
 
 // ─── Shared responsive class strings ────────────────────────
 const CARD_ASPECT = "aspect-[2/3] min-[430px]:aspect-[3/4] min-[455px]:aspect-[2/3] min-[500px]:aspect-[3/4] min-[920px]:aspect-[2/3] xl:aspect-[3/4]";

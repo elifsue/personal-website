@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 const CHARACTERPAD_IMG = `${import.meta.env.BASE_URL}images/character-pad-thumbnail.png`;
 const KIDDIWEAR_IMG = `${import.meta.env.BASE_URL}images/kiddiwear-thumbnail.png`;
 const WP_IMG = `${import.meta.env.BASE_URL}images/wireframe-prototyper-thumbnail.png`;
+const XRAY_IMG = `${import.meta.env.BASE_URL}images/xray-home-thumbnail.png`;
 
 const projects = [
   {
@@ -58,6 +59,24 @@ const projects = [
   },
   {
     id: "03",
+    title: "X-Ray Home",
+    subtitle: "Real Estate Website",
+    tags: ["UI/UX Design", "Real Estate", "Web Design"],
+    year: "2026",
+    description:
+      "X-Ray Home is a London-based real estate agency offering property sales, lettings, and investment services across England and Türkiye. During my internship, I ran a usability test, built a design system, and led the end-to-end redesign of the website.",
+    outcome: "19 usability issues uncovered · 26-component design system · End-to-end redesign",
+    image: XRAY_IMG,
+    color: "#2E4372",
+    bgColor: "#E9ECF3",
+    link: "/xray-home",
+    github: "",
+    links: [
+      { label: "Figma", url: "https://www.figma.com/design/5VZpQsViJwXVZPqJaYycRU/X-Ray-Home?node-id=107-2&t=0IOIIMpYdRoclDm1-1", style: { background: "#7B5EA7", color: "#FFFFFF" } },
+    ],
+  },
+  {
+    id: "04",
     title: "Wireframe Prototyper Skill",
     subtitle: "Claude Code Custom Skill",
     tags: ["Claude Code", "Prototyping", "Automation"],
