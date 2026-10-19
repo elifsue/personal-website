@@ -85,7 +85,7 @@ export default function WireframePrototyper() {
     <>
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#7B5EA720", color: "#7B5EA7" }}>
-                Claude Code Skill
+                AI Skill
               </span>
               <span className="font-mono-dm text-xs tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "#8D5E3C20", color: "#8D5E3C" }}>
                 2026
@@ -95,7 +95,7 @@ export default function WireframePrototyper() {
               Wireframe Prototyper <em style={{ color: "#7B5EA7" }}>Skill</em>
             </h1>
             <p className="text-xl leading-relaxed max-w-3xl mb-8" style={{ color: "#6B6560" }}>
-              A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.
+              A reusable AI skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.
             </p>
             <div className="flex flex-wrap gap-4">
               <a

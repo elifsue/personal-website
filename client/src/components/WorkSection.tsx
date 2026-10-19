@@ -63,7 +63,7 @@ const projects = [
   {
     id: "04",
     title: "Wireframe Prototyper Skill",
-    subtitle: "Claude Code Custom Skill",
+    subtitle: "AI Custom Skill",
     image: WP_IMG,
     color: "#7B5EA7",
     bgColor: "#F0ECF5",

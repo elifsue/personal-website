@@ -102,8 +102,8 @@ export const projectConfigs: ProjectConfig[] = [
     ],
     meta: {
       title: "Wireframe Prototyper Skill — Elifsu Ateş",
-      ogTitle: "Wireframe Prototyper Skill — Claude Code Skill",
-      ogDescription: "A reusable Claude Code Skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.",
+      ogTitle: "Wireframe Prototyper Skill — AI Skill",
+      ogDescription: "A reusable AI skill that streamlines the end-to-end design workflow, from structured discovery and competitor research to generating a WCAG-compliant design system and building interactive low-fidelity wireframes or high-fidelity prototypes with real navigation, exportable screens, and a transferable design system to Figma.",
       ogImage: "https://elifsuates.com/images/wireframe-prototyper-thumbnail.png",
       ogImageWidth: "1400",
       ogImageHeight: "810",
