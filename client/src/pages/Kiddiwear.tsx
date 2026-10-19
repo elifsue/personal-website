@@ -53,7 +53,9 @@ export default function Kiddiwear() {
               <img
                 src={ASSETS.kiddiwearLogo}
                 alt="Kiddiwear"
-                className="h-16 md:h-20 lg:h-24 w-auto"
+                // Sized by width (with the height following) so it scales down as a whole in narrow
+                // columns instead of being squashed. Caps match 64/80/96px heights at the 513×98 aspect ratio.
+                className="w-full h-auto max-w-[335px] md:max-w-[419px] lg:max-w-[503px]"
               />
             </h1>
             <p className="text-xl leading-relaxed max-w-2xl mb-8" style={{ color: "#6B6560" }}>
