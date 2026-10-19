@@ -14,8 +14,8 @@ export default function useCaseStudyMeta({
   ogTitle,
   ogDescription,
   ogImage,
-  ogImageWidth = "1200",
-  ogImageHeight = "960",
+  ogImageWidth = "1920",
+  ogImageHeight = "1200",
 }: CaseStudyMetaOptions) {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });

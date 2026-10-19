@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import CharacterPad from "./pages/CharacterPad";
 import Kiddiwear from "./pages/Kiddiwear";
 import WireframePrototyper from "./pages/WireframePrototyper";
+import XRayHome from "./pages/XRayHome";
 import NotFound from "./pages/NotFound";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
         <Route path="/character-pad" component={CharacterPad} />
         <Route path="/kiddiwear" component={Kiddiwear} />
         <Route path="/wireframe-prototyper" component={WireframePrototyper} />
+        <Route path="/xray-home" component={XRayHome} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
