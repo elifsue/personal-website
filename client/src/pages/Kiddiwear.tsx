@@ -1,14 +1,11 @@
-import { Section, SectionLabel, CaseStudyLayout } from "@/components/case-study";
+import { Section, SectionLabel, CaseStudyLayout, ProjectDetails } from "@/components/case-study";
 import { projectConfigs } from "@/config/projects";
+import { tools } from "@/config/tools";
 
 const IMG = `${import.meta.env.BASE_URL}images/kiddiwear`;
 
 const ASSETS = {
   kiddiwearLogo: `${IMG}/kiddiwear-logo.png`,
-  figmaLogo: `${IMG}/figma-logo.png`,
-  lucidchartLogo: `${IMG}/lucidchart-logo.svg`,
-  claudeCodeLogo: `${IMG}/claude-code-logo.png`,
-  manusLogo: `${IMG}/manus-logo.svg`,
   buyerProtection: `${IMG}/buyer-protection.png`,
   conditionRatings: `${IMG}/condition-ratings.png`,
   integratedDelivery: `${IMG}/integrated-delivery.png`,
@@ -28,6 +25,13 @@ const ASSETS = {
   iteration2: `${IMG}/iteration-2.png`,
   iteration3: `${IMG}/iteration-3.png`,
 };
+
+const ROLE = [
+  { label: "Role", value: "UI/UX Designer" },
+  { label: "Timeline", value: "Apr 2026 – Jun 2026" },
+];
+
+const TOOLS = [tools.figma, tools.lucidchart, tools.claudeCode, tools.manus];
 
 const config = projectConfigs.find((p) => p.slug === "/kiddiwear")!;
 
@@ -118,6 +122,12 @@ export default function Kiddiwear() {
   return (
     <CaseStudyLayout config={config} heroContent={heroContent}>
 
+        <div className="px-8 lg:px-32 pb-20">
+          <Section>
+            <ProjectDetails color="#BF5836" items={ROLE} tools={TOOLS} />
+          </Section>
+        </div>
+
         <div className="px-8 lg:px-32 py-20" style={{ background: "#F5F0EA" }}>
           <Section>
             <SectionLabel color="#BF5836" label="Overview" />
@@ -127,20 +137,6 @@ export default function Kiddiwear() {
             <p className="text-lg leading-relaxed mb-10 max-w-3xl" style={{ color: "#6B6560" }}>
               Kiddiwear is a UI/UX design project developed as part of the Google UX Design Professional Certificate on Coursera, focused on creating a dedicated UK marketplace for buying and selling pre-loved children's clothing.
             </p>
-
-            <div className="flex flex-wrap gap-4 mb-10">
-              {[
-                { name: "Figma", logo: ASSETS.figmaLogo },
-                { name: "Lucidchart", logo: ASSETS.lucidchartLogo },
-                { name: "Claude Code", logo: ASSETS.claudeCodeLogo },
-                { name: "Manus", logo: ASSETS.manusLogo },
-              ].map((tool) => (
-                <div key={tool.name} className="flex items-center gap-3 px-4 py-2.5 rounded-full" style={{ background: "#FAF7F2" }}>
-                  <img src={tool.logo} alt={tool.name} className="w-5 h-5 object-contain" />
-                  <span className="font-mono-dm text-sm tracking-wide" style={{ color: "#1C1917" }}>{tool.name}</span>
-                </div>
-              ))}
-            </div>
 
             <div className="flex flex-wrap gap-3">
               {["UX Research", "Sketching", "Wireframing", "Rapid Prototyping", "Vibe Coding"].map((skill) => (
@@ -184,7 +180,7 @@ export default function Kiddiwear() {
               </div>
               <div className="flex flex-col items-center gap-6">
                 <div className="w-full max-w-sm p-6 rounded-2xl flex items-center gap-4" style={{ background: "#FAF7F2", border: "1px solid #BF583630" }}>
-                  <img src={ASSETS.claudeCodeLogo} alt="Claude Code" className="w-10 h-10 object-contain" />
+                  <img src={tools.claudeCode.logo} alt="Claude Code" className="w-10 h-10 object-contain" />
                   <div>
                     <div className="font-mono-dm text-xs tracking-wide uppercase mb-1" style={{ color: "#BF5836" }}>Claude Code</div>
                     <div className="text-sm" style={{ color: "#6B6560" }}>Vibe coding & implementation</div>
@@ -195,7 +191,7 @@ export default function Kiddiwear() {
                   <span className="font-mono-dm text-xs" style={{ color: "#8D5E3C" }}>↑ Figma MCP</span>
                 </div>
                 <div className="w-full max-w-sm p-6 rounded-2xl flex items-center gap-4" style={{ background: "#FAF7F2", border: "1px solid #8D5E3C30" }}>
-                  <img src={ASSETS.figmaLogo} alt="Figma" className="w-10 h-10 object-contain" />
+                  <img src={tools.figma.logo} alt="Figma" className="w-10 h-10 object-contain" />
                   <div>
                     <div className="font-mono-dm text-xs tracking-wide uppercase mb-1" style={{ color: "#8D5E3C" }}>Figma</div>
                     <div className="text-sm" style={{ color: "#6B6560" }}>Component library & design system</div>
