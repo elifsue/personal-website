@@ -85,7 +85,7 @@ export default function WritingVideosSection() {
                   Design with Context: A Claude Skill That Studies Competitors and Builds Your Prototype
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: "rgba(250,247,242,0.6)" }}>
-                  How I built a reusable Claude Code Skill that performs competitor analysis and generates interactive prototypes with accessible design systems.
+                  How I built a reusable AI skill that performs competitor analysis and generates interactive prototypes with accessible design systems.
                 </p>
               </div>
               <div className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-[#C4622D] group-hover:scale-110" style={{ background: "rgba(250,247,242,0.08)" }}>
