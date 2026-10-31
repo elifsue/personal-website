@@ -185,7 +185,7 @@ export default function AboutSection() {
           className="text-base leading-relaxed mt-8 mb-4 max-w-3xl"
           style={{ color: "#6B6560" }}
         >
-          I’m Elifsu Ateş, a UI/UX Designer based in London with a Computer Science background — which means I don’t just design digital products, I have the technical fluency to build them.
+          I'm Elifsu Ateş, a UI/UX Designer based in London. My background spans both Computer Science and UX Design, so I don't stop at the design. I have the technical fluency to vibe code the products I design too.
         </motion.p>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -195,8 +195,8 @@ export default function AboutSection() {
           className="text-base leading-relaxed max-w-3xl"
           style={{ color: "#6B6560" }}
         >
-          What sets me apart is my{" "}
-          <strong style={{ color: "#4A6741" }}>fluency with AI tools</strong>. For me, AI isn’t a shortcut — it’s how I accelerate the entire design workflow without compromising craft. That craft lives in the details: research, wireframing, prototyping, and usability testing, all in service of accessible products that feel effortless to use.
+          I also bring strong expertise in{" "}
+          <strong style={{ color: "#4A6741" }}>AI-driven workflows</strong>, which I use to improve and speed up every stage of the design process. My work covers research, wireframing, prototyping, and usability testing, with a focus on accessible products that feel effortless to use.
         </motion.p>
       </div>
 

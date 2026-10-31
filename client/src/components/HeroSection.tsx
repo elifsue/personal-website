@@ -29,8 +29,8 @@ const ARROW_AREA_PX = 54;
 // ─── Card text content ───────────────────────────────────────
 const CARD_TEXT = {
   about: {
-    full: "A UI/UX designer based in London who thinks in systems and feels in pixels. CS graduate with a passion for accessible, human-first experiences and AI-driven workflows.",
-    short: "A UI/UX designer based in London who thinks in systems and feels in pixels.",
+    full: "A UI/UX designer based in London with a CS and UX Design background. I design accessible, effortless products with AI-driven workflows, and vibe code them too.",
+    short: "A UI/UX designer based in London with a CS and UX Design background.",
   },
   work: {
     full: "From UX case studies to AI-powered prototyping tools. Explore projects built with research, systems thinking, and attention to detail.",
