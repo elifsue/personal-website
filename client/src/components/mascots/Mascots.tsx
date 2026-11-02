@@ -72,7 +72,8 @@ const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 const BUBBLE_STYLE = {
   left: 0,
-  top: 0,
+  top: "auto",
+  bottom: 0,
   opacity: 0,
   transform: "translateY(6px) scale(0.92)",
   transformOrigin: "50% 100%",
@@ -308,7 +309,11 @@ export default function Mascots() {
     const tg = world.togepi;
     const jp = world.jigglypuff;
 
+    /** Height (px) of the ground they stand on above the bottom of the screen: 4px, plus the home-bar
+        inset on phones that have one (read from their CSS, which has the env() inset) */
+    let ground = 4;
     const resize = () => {
+      ground = parseFloat(getComputedStyle(rigs[0].root).bottom) || 4;
       for (const r of rigs) {
         r.c.W = desktop.matches ? r.c.def.width.desktop : r.c.def.width.mobile;
         r.c.H = (r.c.W * r.c.def.h) / r.c.def.w;
@@ -333,7 +338,7 @@ export default function Mascots() {
     };
     measureCeiling();
     /** Highest its feet can go with its body still on screen (the drawn pose is checked too, in draw) */
-    const maxLift = (c: CharacterState) => Math.max(0, window.innerHeight - 4 - c.H - ceiling);
+    const maxLift = (c: CharacterState) => Math.max(0, window.innerHeight - ground - c.H - ceiling);
     const buddyGap = () => (tg.W + jp.W) / 2 + BUDDY_GAP;
     const minGap = () => (tg.W + jp.W) / 2 + MIN_GAP;
     /** Which side of Togepi Jigglypuff is on (remembered, in case they're ever exactly level) */
@@ -355,7 +360,7 @@ export default function Mascots() {
       const lx = level.x + dx * Math.cos(a) - dy * Math.sin(a);
       const ly = level.y + dx * Math.sin(a) + dy * Math.cos(a);
       const fx2 = c.facing >= 0 ? w - lx : lx; // same rule as the flip in draw()
-      return { x: c.x + c.offset - c.W / 2 + (fx2 / w) * c.W, y: window.innerHeight - 4 - c.H + (ly / h) * c.H };
+      return { x: c.x + c.offset - c.W / 2 + (fx2 / w) * c.W, y: window.innerHeight - ground - c.H + (ly / h) * c.H };
     };
 
     /* ── Speech bubbles ── */
@@ -379,7 +384,9 @@ export default function Mascots() {
       const cx = c.x + c.offset;
       const left = clamp(cx - bw / 2, 12, document.documentElement.clientWidth - bw - 12);
       r.bubble.style.left = `${left}px`;
-      r.bubble.style.top = `${point(c, c.def.w / 2, 0).y - r.hop - r.bubble.offsetHeight - 10}px`;
+      // Pinned to the bottom of the screen like the mascots, so it stays with them when a phone's
+      // address bar hides or shows
+      r.bubble.style.bottom = `${window.innerHeight - (point(c, c.def.w / 2, 0).y - r.hop - 10)}px`;
       r.bubbleTail.style.left = `${clamp(cx - left, 14, bw - 14)}px`;
     };
 
@@ -432,7 +439,7 @@ export default function Mascots() {
       c.v = c.lv = c.vx = 0;
       // Hold it by the spot that was grabbed, so it doesn't jump to the pointer
       c.grabDX = x - c.x;
-      c.grabDY = window.innerHeight - 4 - c.lift - y;
+      c.grabDY = window.innerHeight - ground - c.lift - y;
       if (Math.random() < 0.7) say(c, c.def.air.pickup[Math.floor(Math.random() * c.def.air.pickup.length)], 1500);
     };
     const onPointerMove = (e: PointerEvent) => {
@@ -580,7 +587,7 @@ export default function Mascots() {
           // Release flash
           const size = ballSize();
           const flash = document.createElement("div");
-          flash.style.cssText = `position:absolute;left:${ballX() - size * 1.5}px;bottom:4px;width:${size * 3}px;height:${size * 3}px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,240,220,.75) 40%,rgba(255,240,220,0) 70%);transform-origin:50% 70%`;
+          flash.style.cssText = `position:absolute;left:${ballX() - size * 1.5}px;bottom:${ground}px;width:${size * 3}px;height:${size * 3}px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,240,220,.75) 40%,rgba(255,240,220,0) 70%);transform-origin:50% 70%`;
           fx.appendChild(flash);
           flash.animate([{ opacity: 0, transform: "scale(0.3)" }, { opacity: 1, transform: "scale(1.2)", offset: 0.25 }, { opacity: 0, transform: "scale(2)" }], { duration: 420, easing: "ease-out" }).onfinish = () => flash.remove();
         }
@@ -641,7 +648,7 @@ export default function Mascots() {
       if (c.held) {
         const k = Math.min(1, dt * CARRY_FOLLOW);
         const tx = clamp(c.grabPX - c.grabDX, minX, maxX);
-        const tl = clamp(window.innerHeight - 4 - c.grabPY - c.grabDY, 0, maxLift(c));
+        const tl = clamp(window.innerHeight - ground - c.grabPY - c.grabDY, 0, maxLift(c));
         const nx = c.x + (tx - c.x) * k, nl = c.lift + (tl - c.lift) * k;
         if (dt > 0) {
           const s = Math.min(1, dt * 12);
@@ -949,7 +956,7 @@ export default function Mascots() {
       place();
       // Never past the top of the screen, whatever the pose (puffed up, tilted, mid-leap…): when it's up
       // high, measure where it's actually drawn and bring it down if any of it pokes over the top
-      if (p.hop > 0 && p.hop + c.H * 1.6 > window.innerHeight - 4 - ceiling) {
+      if (p.hop > 0 && p.hop + c.H * 1.6 > window.innerHeight - ground - ceiling) {
         const over = ceiling - r.body.getBoundingClientRect().top;
         if (over > 0) {
           p.hop = Math.max(0, p.hop - over);

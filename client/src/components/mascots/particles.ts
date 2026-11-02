@@ -1,7 +1,14 @@
 /* ============================================================
    MASCOT PARTICLES — small SVG/emoji sprites animated with the
-   Web Animations API and removed as soon as they finish
+   Web Animations API and removed as soon as they finish.
+   Points come in viewport coordinates but are pinned to the bottom
+   of the screen, like the mascots: on phones the visible screen
+   grows and shrinks as the address bar hides and shows, and
+   anything placed from the top would drift away from them
    ============================================================ */
+
+/** Distance (px) from a viewport y to the bottom of the screen */
+const fromBottom = (y: number) => window.innerHeight - y;
 
 const svg = (body: string, size: number) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="display:block;overflow:visible">${body}</svg>`;
@@ -45,9 +52,10 @@ export function makeSpawner(layer: HTMLElement, reduce: boolean): Spawn {
     const { dur = 1200, delay = 0, rot = 0, scale = 1, sway = 0 } = opts;
     const el = document.createElement("div");
     el.innerHTML = html;
-    el.style.cssText = `position:absolute;left:${from.x}px;top:${from.y}px;will-change:transform,opacity;opacity:0`;
+    el.style.cssText = `position:absolute;left:${from.x}px;bottom:${fromBottom(from.y)}px;will-change:transform,opacity;opacity:0`;
     layer.appendChild(el);
-    const t = (px: number, py: number, s: number, r: number) => `translate(-50%,-50%) translate(${px}px,${py}px) scale(${s}) rotate(${r}deg)`;
+    // Centred on the point (it's anchored by its bottom edge, hence +50%)
+    const t = (px: number, py: number, s: number, r: number) => `translate(-50%,50%) translate(${px}px,${py}px) scale(${s}) rotate(${r}deg)`;
     const anim = el.animate(
       [
         { transform: t(0, 0, 0.3, 0), opacity: 0 },
@@ -66,10 +74,11 @@ export function makePathSpawner(layer: HTMLElement) {
   return (html: string, pts: { x: number; y: number }[], dur: number) => {
     const el = document.createElement("div");
     el.innerHTML = html;
-    el.style.cssText = "position:absolute;left:0;top:0;will-change:transform,opacity";
+    el.style.cssText = "position:absolute;left:0;bottom:0;will-change:transform,opacity";
     layer.appendChild(el);
+    // Its tip (15% across, 85% down) on each point, measured up from the bottom of the screen
     const frames = pts.map((p, i) => ({
-      transform: `translate(${p.x}px,${p.y}px) translate(-15%,-85%)`,
+      transform: `translate(${p.x}px,${-fromBottom(p.y)}px) translate(-15%,15%)`,
       opacity: i === 0 || i === pts.length - 1 ? 0 : 1,
     }));
     const anim = el.animate(frames, { duration: dur, easing: "linear", fill: "both" });
