@@ -340,8 +340,10 @@ export default function Mascots() {
     resize();
     /** While they're out, the Poké Ball waits in the bottom-right corner and they keep clear of it */
     let dockReserved = false;
+    /** Width of the fixed sidebar down the left on desktop (nothing goes under it) */
+    const sidebar = () => (desktop.matches ? 80 : 0);
     const bounds = (c: CharacterState) => {
-      const left = desktop.matches ? 80 : 0; // fixed left nav on desktop
+      const left = sidebar();
       const right = dockReserved ? (desktop.matches ? BALL_DOCK.desktop : BALL_DOCK.mobile) + 14 : 0;
       return [left + c.W / 2 + 12, document.documentElement.clientWidth - c.W / 2 - 12 - right] as const;
     };
@@ -504,7 +506,7 @@ export default function Mascots() {
     // On touch screens a finger dragging across a mascot would scroll the page (and the browser would
     // cancel the drag to do it): while one's pressed, the page stays put. Only the moves are stopped, so
     // a tap still clicks. (touch-action on the SVG isn't honoured everywhere, iOS Safari especially)
-    const onTouchMove = (e: TouchEvent) => { if (grab && e.cancelable) e.preventDefault(); };
+    const onTouchMove = (e: TouchEvent) => { if ((grab || ballDrag) && e.cancelable) e.preventDefault(); };
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
     window.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -572,6 +574,7 @@ export default function Mascots() {
     const lid = ball.querySelector<SVGElement>("[data-b='lid']")!;
     const base = ball.querySelector<SVGElement>("[data-b='base']")!;
     const hint = hintRef.current!;
+    const ballShadow = ball.querySelector<HTMLElement>("[data-b='shadow']")!;
     const hintText = hint.querySelector<HTMLElement>("[data-b='hint']")!;
     /** waiting: they're inside, click to let them out · out: it's in the corner, click to call them back */
     let ballState: "waiting" | "out" | "busy" = "busy";
@@ -593,12 +596,18 @@ export default function Mascots() {
       hint.style.left = `${centre.toFixed(1)}px`;
       hintTail.style.left = `${clamp(ballAtX - (centre - w / 2), 14, w - 14).toFixed(1)}px`;
     };
+    /** How high it is off the ground (px), while it's being carried or thrown */
+    let ballLift = 0;
     const setBall = (x: number, size: number) => {
       ballAtX = x;
       ballAtSize = size;
       ball.style.width = ball.style.height = `${size}px`;
-      ball.style.transform = `translate3d(${(x - size / 2).toFixed(1)}px,0,0)`;
-      hint.style.bottom = `${size + 16}px`;
+      ball.style.transform = `translate3d(${(x - size / 2).toFixed(1)}px,${(-ballLift).toFixed(1)}px,0)`;
+      // Its shadow stays on the ground, smaller and fainter the higher it goes
+      const sh = clamp(1 - ballLift / 220, 0.35, 1);
+      ballShadow.style.transform = `translateY(${ballLift.toFixed(1)}px) scale(${sh.toFixed(2)})`;
+      ballShadow.style.opacity = sh.toFixed(2);
+      hint.style.bottom = `${size + 16 + ballLift}px`;
       placeHint();
     };
     /** Rolls along the ground to x (turning as it goes), growing or shrinking to size on the way */
@@ -662,43 +671,44 @@ export default function Mascots() {
       jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
     };
 
+    /** Pops open where it is and lets them out, then closes and rolls off to wait in the corner */
+    const letOut = () => {
+      const t = performance.now();
+      rigs.forEach((r) => {
+        r.fromX = reduce ? NaN : ballAtX;
+        r.appearAt = t + (r.c === jp ? RELEASE_STAGGER_MS : 0) * (reduce ? 0 : 1);
+        r.c.lastActive = t;
+      });
+      setLid(true);
+      if (!reduce) {
+        const size = ballAtSize;
+        const flash = document.createElement("div");
+        flash.style.cssText = `position:absolute;left:${ballAtX - size * 1.5}px;bottom:${ground}px;width:${size * 3}px;height:${size * 3}px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,240,220,.75) 40%,rgba(255,240,220,0) 70%);transform-origin:50% 70%`;
+        fx.appendChild(flash);
+        flash.animate([{ opacity: 0, transform: "scale(0.3)" }, { opacity: 1, transform: "scale(1.2)", offset: 0.25 }, { opacity: 0, transform: "scale(2)" }], { duration: 420, easing: "ease-out" }).onfinish = () => flash.remove();
+      }
+      // Once they're out it closes and rolls off to wait in the corner (they keep clear of it)
+      dockReserved = true;
+      later(() => {
+        setLid(false);
+        rollBall(dockX(), dockSize(), BALL_DOCK_MS, () => ballReady("out"));
+      }, reduce ? 0 : RELEASE_MS);
+      if (!introsPlayed) {
+        introsPlayed = true;
+        introOver = false;
+        startIntros(RELEASE_MS + 500);
+      }
+    };
     const release = () => {
       if (ballState !== "waiting") return;
       ballBusy();
-      const open = () => {
-        const t = performance.now();
-        rigs.forEach((r) => {
-          r.fromX = reduce ? NaN : ballAtX;
-          r.appearAt = t + (r.c === jp ? RELEASE_STAGGER_MS : 0) * (reduce ? 0 : 1);
-          r.c.lastActive = t;
-        });
-        setLid(true);
-        if (!reduce) {
-          const size = ballAtSize;
-          const flash = document.createElement("div");
-          flash.style.cssText = `position:absolute;left:${ballAtX - size * 1.5}px;bottom:${ground}px;width:${size * 3}px;height:${size * 3}px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,240,220,.75) 40%,rgba(255,240,220,0) 70%);transform-origin:50% 70%`;
-          fx.appendChild(flash);
-          flash.animate([{ opacity: 0, transform: "scale(0.3)" }, { opacity: 1, transform: "scale(1.2)", offset: 0.25 }, { opacity: 0, transform: "scale(2)" }], { duration: 420, easing: "ease-out" }).onfinish = () => flash.remove();
-        }
-        // Once they're out it closes and rolls off to wait in the corner (they keep clear of it)
-        dockReserved = true;
-        later(() => {
-          setLid(false);
-          rollBall(dockX(), dockSize(), BALL_DOCK_MS, () => ballReady("out"));
-        }, reduce ? 0 : RELEASE_MS);
-        if (!introsPlayed) {
-          introsPlayed = true;
-          introOver = false;
-          startIntros(RELEASE_MS + 500);
-        }
-      };
-      if (reduce) return open();
+      if (reduce) return letOut();
       // A little hop and spin, like it's been thrown, then it pops open
       ballBody.animate(
         [{ transform: "translateY(0) rotate(0deg)" }, { transform: `translateY(${-ballAtSize * 1.2}px) rotate(-200deg)`, offset: 0.5 }, { transform: "translateY(0) rotate(-360deg)" }],
         { duration: BALL_HOP_MS, easing: "ease-in-out" },
       );
-      later(open, BALL_HOP_MS);
+      later(letOut, BALL_HOP_MS);
     };
 
     /** A red recall beam from the ball out to a Pokémon */
@@ -719,6 +729,10 @@ export default function Mascots() {
     const recall = () => {
       if (ballState !== "out") return;
       ballBusy();
+      callBack();
+    };
+    /** Opens where it is and pulls them back in, then the capture, then it rolls back out to the middle */
+    const callBack = () => {
       introOver = true;
       if (grab) {
         grab.c.held = false;
@@ -754,6 +768,113 @@ export default function Mascots() {
       }, inside);
     };
 
+    /* ── The ball can be picked up and thrown too: it spins in the air, and where it lands it lets them
+       out (or calls them back) ── */
+    /** A press on the ball, which becomes a drag once the pointer moves far enough */
+    let ballDrag: { id: number; x0: number; y0: number; started: boolean; dx: number; dy: number; px: number; py: number; vx: number; vy: number; then: "release" | "recall" } | null = null;
+    /** Thrown: flying (or bouncing) until it lands */
+    let ballFly: { vx: number; vy: number; then: "release" | "recall" } | null = null;
+    let ballSpin = 0; // deg
+    let noBallClickUntil = 0;
+    const maxBallLift = () => Math.max(0, window.innerHeight - ground - ballAtSize - ceiling);
+    const spinBall = (degPerSec: number, dt: number) => {
+      if (reduce) return;
+      ballSpin += degPerSec * dt;
+      ballBody.style.transform = `rotate(${ballSpin.toFixed(1)}deg)`;
+    };
+    const onBallDown = (e: PointerEvent) => {
+      if (e.button !== 0 || (ballState !== "waiting" && ballState !== "out")) return;
+      ballDrag = {
+        id: e.pointerId, x0: e.clientX, y0: e.clientY, started: false, dx: 0, dy: 0, px: e.clientX, py: e.clientY, vx: 0, vy: 0,
+        then: ballState === "waiting" ? "release" : "recall",
+      };
+    };
+    const onBallDragMove = (e: PointerEvent) => {
+      const d = ballDrag;
+      if (!d || e.pointerId !== d.id) return;
+      d.px = e.clientX;
+      d.py = e.clientY;
+      if (!d.started && Math.hypot(d.px - d.x0, d.py - d.y0) > DRAG_START) {
+        d.started = true;
+        ballBusy();
+        // Held by the spot that was grabbed
+        d.dx = d.x0 - ballAtX;
+        d.dy = d.y0 - (window.innerHeight - ground - ballLift - ballAtSize / 2);
+      }
+    };
+    const onBallDragEnd = (e: PointerEvent) => {
+      const d = ballDrag;
+      if (!d || e.pointerId !== d.id) return;
+      ballDrag = null;
+      if (!d.started) return; // just a click
+      noBallClickUntil = performance.now() + 60;
+      ballFly = { vx: d.vx, vy: d.vy, then: d.then };
+    };
+    /** Landed: straight away lets them out where it is, or calls them back to it (turning upright as it opens) */
+    const ballLanded = (then: "release" | "recall") => {
+      const a = ((ballSpin % 360) + 360) % 360;
+      ballSpin = 0;
+      ballBody.style.transform = "";
+      if (!reduce) ballBody.animate([{ transform: `rotate(${a.toFixed(0)}deg)` }, { transform: `rotate(${a > 180 ? 360 : 0}deg)` }], { duration: 160, easing: "ease-out" });
+      if (then === "recall") return callBack();
+      // They come out either side of where it landed (moved in from the edge if there isn't room there)
+      const half = buddyGap() / 2;
+      const mid = clamp(ballAtX, bounds(jp)[0] + half, bounds(tg)[1] - half);
+      tg.x = tg.tx = mid + half;
+      jp.x = jp.tx = mid - half;
+      letOut();
+    };
+    /** Every frame: the ball follows the pointer while it's carried, and flies once it's thrown */
+    const ballTick = (dt: number) => {
+      const vw = document.documentElement.clientWidth;
+      if (ballDrag?.started) {
+        const d = ballDrag;
+        // Picked up from the corner, it grows back to full size
+        const size = ballAtSize + (ballSize() - ballAtSize) * Math.min(1, dt * 10);
+        const tx = clamp(d.px - d.dx, sidebar() + size / 2 + 4, vw - size / 2 - 4);
+        const tl = clamp(window.innerHeight - ground - (d.py - d.dy) - size / 2, 0, maxBallLift());
+        const k = Math.min(1, dt * 20);
+        const nx = ballAtX + (tx - ballAtX) * k, nl = ballLift + (tl - ballLift) * k;
+        if (dt > 0) {
+          const sm = Math.min(1, dt * 12);
+          d.vx += ((nx - ballAtX) / dt - d.vx) * sm;
+          d.vy += ((nl - ballLift) / dt - d.vy) * sm;
+        }
+        ballLift = nl;
+        setBall(nx, size);
+        // Spins the whole time it's held, faster the faster it's swung about (the way it's going)
+        spinBall((d.vx < 0 ? -1 : 1) * (420 + Math.hypot(d.vx, d.vy) * 0.9), dt);
+        return;
+      }
+      const f = ballFly;
+      if (!f) return;
+      f.vy -= GRAVITY * dt;
+      ballLift = Math.min(ballLift + f.vy * dt, maxBallLift());
+      if (ballLift >= maxBallLift() && f.vy > 0) f.vy = 0;
+      let x = ballAtX + f.vx * dt;
+      f.vx *= Math.exp(-dt * 0.6);
+      const half = ballAtSize / 2 + 4;
+      if (x < sidebar() + half || x > vw - half) {
+        x = clamp(x, sidebar() + half, vw - half);
+        f.vx *= -0.5;
+      }
+      spinBall((f.vx < 0 ? -1 : 1) * (300 + Math.abs(f.vx) * 1.2), dt);
+      if (ballLift <= 0) {
+        // The moment it touches the ground, it does its thing
+        ballLift = 0;
+        if (!reduce) spawn(SHAPES.dust(rand(10, 13)), { x, y: window.innerHeight - ground }, 0, -10, { dur: 500 });
+        ballFly = null;
+        setBall(x, ballAtSize);
+        ballLanded(f.then);
+        return;
+      }
+      setBall(x, ballAtSize);
+    };
+    window.addEventListener("pointermove", onBallDragMove, { passive: true });
+    window.addEventListener("pointerup", onBallDragEnd);
+    window.addEventListener("pointercancel", onBallDragEnd);
+    ball.addEventListener("pointerdown", onBallDown);
+
     // Rolls in from the right edge after the loading screen
     setBall(document.documentElement.clientWidth + ballSize(), ballSize());
     ball.tabIndex = -1;
@@ -765,7 +886,11 @@ export default function Mascots() {
         later(() => { if (ballState === "waiting") showHint(false); }, 5500);
       });
     }, APPEAR_DELAY_MS);
-    const onBallClick = () => (ballState === "waiting" ? release() : recall());
+    const onBallClick = () => {
+      if (performance.now() < noBallClickUntil) return; // the end of a throw, not a click
+      if (ballState === "waiting") release();
+      else recall();
+    };
     const onBallEnter = () => {
       if (ballState === "waiting") { showHint(true, HINT_RELEASE); wobble(); }
       else if (ballState === "out") showHint(true, HINT_RECALL);
@@ -1242,6 +1367,7 @@ export default function Mascots() {
       for (const r of ordered) move(r, t, dt);
       separate(t);
       for (const r of ordered) draw(r, t, dt);
+      ballTick(dt);
     };
     raf = requestAnimationFrame(tick);
 
@@ -1256,6 +1382,10 @@ export default function Mascots() {
       window.removeEventListener("resize", onResize);
       window.clearInterval(wobbler);
       ball.removeEventListener("click", onBallClick);
+      ball.removeEventListener("pointerdown", onBallDown);
+      window.removeEventListener("pointermove", onBallDragMove);
+      window.removeEventListener("pointerup", onBallDragEnd);
+      window.removeEventListener("pointercancel", onBallDragEnd);
       ball.removeEventListener("pointerenter", onBallEnter);
       ball.removeEventListener("pointerleave", onBallLeave);
       unbind.forEach((u) => u());
@@ -1322,10 +1452,10 @@ export default function Mascots() {
         aria-label="Let Togepi and Jigglypuff out of their Poké Ball"
         data-cursor-pointer
         className="fixed left-0 z-[39] p-0 border-0 bg-transparent rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C4622D] focus-visible:ring-offset-2 print:hidden"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", opacity: 0, width: BALL.desktop, height: BALL.desktop, transformOrigin: "50% 100%" }}
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", opacity: 0, width: BALL.desktop, height: BALL.desktop, transformOrigin: "50% 100%", touchAction: "none" }}
       >
         {/* Ground shadow, under the ball (the ball is positioned too, and comes after it, so it paints on top) */}
-        <span className="absolute left-1/2 -translate-x-1/2 rounded-full" style={{ bottom: -3, width: "90%", height: 6, background: "rgba(28,25,23,0.22)", filter: "blur(2px)" }} />
+        <span data-b="shadow" className="absolute left-1/2 -translate-x-1/2 rounded-full" style={{ bottom: -3, width: "90%", height: 6, background: "rgba(28,25,23,0.22)", filter: "blur(2px)" }} />
         <span data-b="body" className="relative block w-full h-full" style={{ transformOrigin: "50% 100%" }}>
           <svg viewBox="0 0 64 64" className="block w-full h-full overflow-visible">
             <g data-b="base" style={{ transformBox: "fill-box", transformOrigin: "2px 0px" }}>
