@@ -11,7 +11,8 @@ const navLinks = [
   { label: "Home", href: "#hero" },
   { label: "About", href: "#about" },
   { label: "Work", href: "#work" },
-  { label: "Skills", href: "#skills" },
+  // Certifications sit directly above Skills and are grouped under this link
+  { label: "Skills", href: "#certifications" },
   { label: "Contact", href: "#contact" },
 ];
 

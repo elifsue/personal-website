@@ -60,7 +60,7 @@ export default function CertificationsSection() {
   return (
     <section
       id="certifications"
-      className="relative pt-0 pb-24 lg:pt-0 lg:pb-32 overflow-hidden"
+      className="relative py-24 lg:py-32 overflow-hidden"
       style={{ background: "#FAF7F2" }}
     >
       {/* Decorative element */}
