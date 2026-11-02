@@ -7,10 +7,31 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import PhotoStack, { type StackPhoto } from "./PhotoStack";
 
 // Use Vite's BASE_URL so the path resolves correctly both locally (/)
 // and on GitHub Pages (/personal-website/)
-const ABOUT_BG = `${import.meta.env.BASE_URL}images/elifsu-ates.webp`;
+const IMG = `${import.meta.env.BASE_URL}images`;
+
+// The Santander photo closes the stack. Photos that aren't 3:4 are
+// cropped by the frame, so `position` picks which edge gets trimmed.
+const PHOTOS: StackPhoto[] = [
+  {
+    src: `${IMG}/about/experiencing-latency-in-vision.jpg`,
+    alt: "Elifsu Ateş crouching by the water at Canary Wharf, wearing a VR headset",
+    caption: "Experiencing Latency in Vision - UAL",
+  },
+  {
+    src: `${IMG}/about/university-of-greenwich-graduation.webp`,
+    alt: "Elifsu Ateş at University of Greenwich graduation",
+    caption: "University of Greenwich Graduation",
+  },
+  {
+    src: `${IMG}/about/bodystorming-santander-mobile-app.jpg`,
+    alt: "Elifsu Ateş wearing a Santander headband and waving with both hands",
+    caption: "Bodystorming the UX of Santander Mobile App - UAL",
+  },
+];
 
 const timeline = [
   {
@@ -210,56 +231,10 @@ export default function AboutSection() {
           className="relative"
         >
           <div className="relative px-8 lg:pl-0 lg:pr-8">
-            <div
-              className="w-full aspect-[3/4] rounded-3xl overflow-hidden"
-              style={{ background: "#E8DDD0" }}
-            >
-              <img
-                src={ABOUT_BG}
-                alt="Elifsu Ateş at University of Greenwich graduation"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            {/* Floating quote card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="absolute -bottom-6 right-0 p-5 rounded-2xl shadow-xl"
-              style={{
-                background: "#FAF7F2",
-                border: "1px solid rgba(196,98,45,0.15)",
-                maxWidth: "240px",
-              }}
-            >
-              <p
-                className="font-display text-sm italic leading-snug mb-2"
-                style={{ color: "#1C1917" }}
-              >
-                "Design is not just what it looks like — it's how it works."
-              </p>
-              <div
-                className="font-mono-dm text-xs"
-                style={{ color: "#C4622D" }}
-              >
-                — Elifsu
-              </div>
-            </motion.div>
-
-            {/* Available badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.7, duration: 0.5 }}
-              className="absolute top-4 right-0 flex items-center gap-2 px-4 py-2 rounded-full shadow-lg"
-              style={{ background: "#4A6741", color: "#FAF7F2" }}
-            >
-              <span className="w-2 h-2 rounded-full bg-green-300 animate-pulse" />
-              <span className="font-mono-dm text-xs tracking-wide">Open to work</span>
-            </motion.div>
+            <PhotoStack
+              photos={PHOTOS}
+              accent="#C4622D"
+            />
 
             {/* Decorative rotating blob */}
             <motion.div
