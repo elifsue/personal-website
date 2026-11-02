@@ -113,8 +113,8 @@ export default function Home() {
         <MarqueeStrip />
         <WorkSection />
         <WritingVideosSection />
-        <SkillsSection />
         <CertificationsSection />
+        <SkillsSection />
         <TestimonialsSection />
         <ContactSection />
       </main>
