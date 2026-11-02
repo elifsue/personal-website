@@ -20,6 +20,7 @@ import ContactSection from "@/components/ContactSection";
 import WritingVideosSection from "@/components/WritingVideosSection";
 import CustomCursor from "@/components/CustomCursor";
 import Mascots from "@/components/mascots/Mascots";
+import SplashPokeBall from "@/components/mascots/SplashPokeBall";
 
 function LoadingScreen({ onDone }: { onDone: () => void }) {
   useEffect(() => {
@@ -40,19 +41,7 @@ function LoadingScreen({ onDone }: { onDone: () => void }) {
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center gap-4"
       >
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center"
-          style={{ background: "#C4622D" }}
-        >
-          <span className="font-display text-white font-semibold text-2xl">EA</span>
-        </div>
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: "120px" }}
-          transition={{ duration: 1.2, delay: 0.3, ease: "easeInOut" }}
-          className="h-px"
-          style={{ background: "#C4622D" }}
-        />
+        <SplashPokeBall />
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
