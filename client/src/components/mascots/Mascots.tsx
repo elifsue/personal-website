@@ -824,7 +824,7 @@ export default function Mascots() {
       if (air && Math.abs(c.vx) > 80) c.wantFacing = Math.sign(c.vx);
       else if (Math.abs(c.v) > 6) c.wantFacing = Math.sign(c.v);
       else if (!busy && !c.leapStart && c.sleep < 0.5 && Math.abs(mx - c.x) > c.W) c.wantFacing = Math.sign(mx - c.x);
-      c.facing = reduce ? c.wantFacing : clamp(c.facing + Math.sign(c.wantFacing - c.facing) * dt * 9, -1, 1);
+      c.facing = c.wantFacing; // turns round instantly
 
       /* Moods */
       c.happy += ((c.hovered && !busy ? 1 : 0) - c.happy) * Math.min(1, dt * 10);
@@ -951,8 +951,8 @@ export default function Mascots() {
       /* Render */
       const { feet, center } = def;
       r.root.style.transform = `translate3d(${(c.x + c.offset - c.W / 2).toFixed(2)}px,0,0)`;
-      // The artwork faces left. Turning squashes it horizontally through the flip, so it reads as a quick spin
-      const flip = c.facing < 0 ? Math.max(0.08, -c.facing) : -Math.max(0.08, c.facing);
+      // The artwork faces left: mirrored when facing right
+      const flip = c.facing < 0 ? 1 : -1;
       const spin = p.spin * Math.sign(flip); // keep the on-screen roll direction when mirrored
       const place = () => r.all.setAttribute(
         "transform",
@@ -996,7 +996,7 @@ export default function Mascots() {
       r.contacts[1].style.opacity = clamp(1 - p.liftR / 12, 0, 1).toFixed(2);
       /* Eyes follow the cursor (each on its own, so they cross a little when it's right in front of them) */
       r.look.style.opacity = p.eye === "open" ? "1" : "0";
-      // Offsets are in artwork units, so when the artwork mirrors mid-turn they mirror too: keep the
+      // Offsets are in artwork units, so when the artwork mirrors on a turn they mirror too: keep the
       // eyes looking the same way on screen instead of swinging across
       const mirror = Math.sign(flip);
       if (mirror !== r.mirror) {
