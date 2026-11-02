@@ -289,6 +289,15 @@ export const togepi: CharacterDef = {
   ),
   intro: (touch) => ["Toge-priii! ✨", "I'm Togepi, Elifsu's lucky charm.", touch ? "Tap me for a surprise!" : "Click me for a surprise!"],
   moves,
+  air: {
+    // Flapping its stubby arms like it's flying under its own steam
+    pose: (p, secs) => {
+      p.raiseL = 70 + Math.sin(secs * 18) * 28;
+      p.raiseR = 70 + Math.sin(secs * 18 + 0.6) * 28;
+    },
+    trail: () => SHAPES.sparkle(rand(9, 13)),
+    pickup: ["Toge-wheee! ✨", "I'm flying! ✨", "Toge-priii~! 🪽"],
+  },
   onClick: (ctx, c) => {
     if (c.doodleStart && !c.doodleWoke) {
       // Drawn on: clicking wakes it straight into the surprise (or does nothing while the marker's still going)
@@ -316,7 +325,7 @@ export const togepi: CharacterDef = {
       path.setAttribute("stroke-dashoffset", (1 - k).toFixed(3));
     });
     // Wakes up to find it's been drawn on (waits for any move in progress to finish first)
-    if (drawn >= 1 && !c.doodleWoke && c.sleep < 0.4 && !c.action) wakeToDoodle(ctx, c);
+    if (drawn >= 1 && !c.doodleWoke && c.sleep < 0.4 && !c.action && !c.held && c.lift === 0) wakeToDoodle(ctx, c);
     let opacity = 1;
     if (c.doodleWoke) {
       opacity = 1 - (ctx.now - c.doodleWoke - DOODLE_KEEP_MS) / 1000;

@@ -129,6 +129,22 @@ export interface CharacterState {
   leapStart: number;
   leapFrom: number;
   leapSide: number;
+  /** Being carried through the air by the cursor */
+  held: boolean;
+  /** Height of its feet above the ground (px) and how fast that's changing (px/s, up is positive) */
+  lift: number;
+  lv: number;
+  /** Sideways speed while carried or falling (px/s) */
+  vx: number;
+  /** Where the pointer grabbed it, relative to its feet, and where the pointer is now */
+  grabDX: number;
+  grabDY: number;
+  grabPX: number;
+  grabPY: number;
+  /** When it last hit the ground after a fall, and how hard (0–1) */
+  landAt: number;
+  landHard: number;
+  nextTrail: number;
 }
 
 export interface Ctx {
@@ -189,6 +205,9 @@ export interface CharacterDef {
   intro: (touch: boolean) => string[];
   moves: Record<string, MoveDef>;
   onClick: (ctx: Ctx, c: CharacterState) => void;
+  /** Being dragged about: extra flair on top of the dangling pose, a particle for its trail when
+      it's moving fast, and things it might say when picked up */
+  air: { pose?: (p: Pose, secs: number, c: CharacterState) => void; trail: () => string; pickup: string[] };
   /** Per-frame update for the character's own overlays */
   frame?: (ctx: Ctx, c: CharacterState, p: Pose, q: (k: string) => SVGElement | null) => void;
 }
