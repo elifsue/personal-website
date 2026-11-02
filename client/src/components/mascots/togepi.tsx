@@ -243,8 +243,20 @@ export const togepi: CharacterDef = {
   soles: [{ x: 75, y: 395 }, { x: 270, y: 395 }],
   shadow: { cx: 172, cy: 394, rx: 130, ry: 10 },
   eyes: [
-    { x: 149, y: 102, lid: { rx: 15, ry: 24, tilt: 10, fill: "#FFFEBC" }, arc: 12, stroke: 6 },
-    { x: 208.5, y: 111, lid: { rx: 15, ry: 24, tilt: 6, fill: "#F9F4B0" }, arc: 12, stroke: 6 },
+    {
+      x: 149, y: 102, lid: { rx: 15, ry: 24, tilt: 10, fill: "#FFFEBC" }, arc: 12, stroke: 6,
+      look: {
+        cut: { x: 149.8, y: 102.8, rx: 13, ry: 20, tilt: 15 }, range: [9, 7],
+        shine: { x: 151.7, y: 94.1, rx: 3.2, ry: 6.4, tilt: 26, range: [3.2, 7], under: "#0A0A09", within: { x: 149, y: 101.7, rx: 6.6, ry: 16.7, tilt: 21 } },
+      },
+    },
+    {
+      x: 208.5, y: 111, lid: { rx: 15, ry: 24, tilt: 6, fill: "#F9F4B0" }, arc: 12, stroke: 6,
+      look: {
+        cut: { x: 207.8, y: 112.7, rx: 11, ry: 20.5, tilt: 0 }, range: [9, 7],
+        shine: { x: 208.4, y: 104.1, rx: 3, ry: 6.5, tilt: 0, range: [3.8, 7], under: "#030303", within: { x: 207.6, y: 112.2, rx: 7.7, ry: 17, tilt: 3.6 } },
+      },
+    },
   ],
   cheeks: [{ x: 122, y: 132, rx: 20, ry: 11 }, { x: 240, y: 146, rx: 20, ry: 11 }],
   mouth: MOUTH,
