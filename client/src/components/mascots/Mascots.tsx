@@ -650,6 +650,7 @@ export default function Mascots() {
     const ball = ballRef.current!;
     const ballBody = ball.querySelector<HTMLElement>("[data-b='body']")!;
     const lid = ball.querySelector<SVGElement>("[data-b='lid']")!;
+    const light = ball.querySelector<SVGElement>("[data-b='light']")!;
     const base = ball.querySelector<SVGElement>("[data-b='base']")!;
     const hint = hintRef.current!;
     const ballShadow = ball.querySelector<HTMLElement>("[data-b='shadow']")!;
@@ -851,6 +852,21 @@ export default function Mascots() {
         setLid(false);
         if (!reduce) {
           [0, 1, 2].forEach((n) => later(() => wobble(CAPTURE_WOBBLE_MS), CAPTURE_PAUSE_MS + n * CAPTURE_WOBBLE_GAP_MS));
+          // Its button glows red the whole time, flaring with each wobble, and goes out with the click
+          const at = (ms: number, opacity: number) => ({ offset: ms / CAPTURE_CLICK_MS, opacity, easing: "ease-in-out" });
+          light.animate(
+            [
+              at(0, 0),
+              at(200, 0.75),
+              ...[0, 1, 2].flatMap((n) => {
+                const t = CAPTURE_PAUSE_MS + n * CAPTURE_WOBBLE_GAP_MS;
+                return [at(t, 0.75), at(t + CAPTURE_WOBBLE_MS * 0.4, 1), at(t + CAPTURE_WOBBLE_MS, 0.75)];
+              }),
+              at(CAPTURE_CLICK_MS - 120, 0.75),
+              at(CAPTURE_CLICK_MS, 0),
+            ],
+            { duration: CAPTURE_CLICK_MS },
+          );
           later(() => {
             for (const dx of [-1, 0, 1]) spawn(SHAPES.star(rand(9, 12)), { x: ballAtX, y: window.innerHeight - ground - ballAtSize }, dx * 18, -22 + Math.abs(dx) * 6, { dur: 900 });
           }, CAPTURE_CLICK_MS);
@@ -1772,6 +1788,12 @@ export default function Mascots() {
         <span data-b="shadow" className="absolute left-1/2 -translate-x-1/2 rounded-full" style={{ bottom: -3, width: "90%", height: 6, background: "rgba(28,25,23,0.22)", filter: "blur(2px)" }} />
         <span data-b="body" className="relative block w-full h-full" style={{ transformOrigin: "50% 100%" }}>
           <svg viewBox="0 0 64 64" className="block w-full h-full overflow-visible">
+            <defs>
+              <radialGradient id="ball-glow">
+                <stop offset="0.2" stopColor="#FF3B30" stopOpacity="0.85" />
+                <stop offset="1" stopColor="#FF3B30" stopOpacity="0" />
+              </radialGradient>
+            </defs>
             <g data-b="base" style={{ transformBox: "fill-box", transformOrigin: "2px 0px" }}>
               <path d="M0,32 A32,32 0 0 0 64,32 Z" fill="#FAF7F2" stroke="#1C1917" strokeWidth="2.5" />
               <rect x="0" y="31" width="64" height="4" fill="#1C1917" />
@@ -1781,6 +1803,12 @@ export default function Mascots() {
               <rect x="0" y="29" width="64" height="4" fill="#1C1917" />
               <circle cx="32" cy="32" r="10" fill="#1C1917" />
               <circle cx="32" cy="32" r="6" fill="#FAF7F2" />
+              {/* The red glow of its button while it's catching them */}
+              <g data-b="light" style={{ opacity: 0 }}>
+                <circle cx="32" cy="32" r="28" fill="url(#ball-glow)" />
+                <circle cx="32" cy="32" r="6.5" fill="#FF3326" />
+                <circle cx="32" cy="32" r="3" fill="#FFB3AB" />
+              </g>
               {/* Shine */}
               <path d="M14,16 Q20,9 29,7" stroke="#fff" strokeOpacity="0.55" strokeWidth="4" strokeLinecap="round" fill="none" />
             </g>
