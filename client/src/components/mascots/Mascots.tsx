@@ -108,7 +108,7 @@ function CharacterArt({ def }: { def: CharacterDef }) {
     return happy ? `M${x - a},${y + 7 * k} Q${x},${y - 10 * k} ${x + a},${y + 7 * k}` : `M${x - a},${y + 2 * k} Q${x},${y + 13 * k} ${x + a},${y + 2 * k}`;
   };
   return (
-    <svg viewBox={`0 0 ${def.w} ${def.h}`} className="block w-full h-auto" style={{ overflow: "visible" }}>
+    <svg viewBox={`0 0 ${def.w} ${def.h}`} className="block w-full h-auto" style={{ overflow: "visible", touchAction: "none" }}>
       <defs>
         {def.limbs.map((l) => (
           <clipPath key={l.k} id={`${def.id}-clip-${l.k}`}>
@@ -481,8 +481,13 @@ export default function Mascots() {
     };
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
+    // On touch screens a finger dragging across a mascot would scroll the page (and the browser would
+    // cancel the drag to do it): while one's pressed, the page stays put. Only the moves are stopped, so
+    // a tap still clicks. (touch-action on the SVG isn't honoured everywhere, iOS Safari especially)
+    const onTouchMove = (e: TouchEvent) => { if (grab && e.cancelable) e.preventDefault(); };
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     const onResize = () => {
       resize();
       measureCeiling();
@@ -1071,6 +1076,7 @@ export default function Mascots() {
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("resize", onResize);
       window.clearInterval(wobbler);
       ball.removeEventListener("click", release);
