@@ -3,7 +3,8 @@
    screen. Togepi waddles after the cursor (or the last tap), and
    Jigglypuff bounces along beside Togepi. Both blink, nap when left
    alone and get happy on hover; clicking one makes it use a move
-   (see togepi.tsx / jigglypuff.tsx).
+   (see togepi.tsx / jigglypuff.tsx). They start out in a Poké Ball
+   that rolls in after the loading screen; clicking it lets them out.
    Everything is driven imperatively from one rAF loop so React never
    re-renders while animating
    ============================================================ */
@@ -19,9 +20,15 @@ const CHARACTERS: CharacterDef[] = [jigglypuff, togepi];
 /** Update order: Togepi first, so Jigglypuff follows where Togepi is this frame */
 const UPDATE_ORDER: CharacterId[] = ["togepi", "jigglypuff"];
 
-/** Loading screen (Home) is shown for 1.8s — hatch right after it fades */
+/** Loading screen (Home) is shown for 1.8s — the Poké Ball rolls in right after it fades */
 const APPEAR_DELAY_MS = 2000;
-const APPEAR_STAGGER_MS = 350;
+const BALL = { desktop: 34, mobile: 28 };
+const BALL_ROLL_MS = 900;
+/** The ball hops and spins before it opens… */
+const BALL_HOP_MS = 420;
+/** …then each Pokémon flies out of it to its spot */
+const RELEASE_MS = 650;
+const RELEASE_STAGGER_MS = 70;
 const INTRO_LINE_MS = 2500;
 const SLEEP_AFTER_MS = 7000;
 /** How far (px) the cursor has to be from an eye for it to look all the way that way */
@@ -49,6 +56,7 @@ const smooth = (t: number) => {
   return k * k * (3 - 2 * k);
 };
 const easeOutBack = (t: number) => 1 + 2.7 * Math.pow(t - 1, 3) + 1.7 * Math.pow(t - 1, 2);
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 const BUBBLE_STYLE = {
   left: 0,
@@ -221,6 +229,8 @@ interface Rig {
   bubbleTail: HTMLSpanElement;
   bubbleUntil: number;
   appearAt: number;
+  /** Viewport x of the Poké Ball it's flying out of (NaN with reduced motion, where it just appears) */
+  fromX: number;
   /** This frame's hop (px), so the bubble rises with the character instead of being jumped into */
   hop: number;
 }
@@ -229,6 +239,8 @@ export default function Mascots() {
   const rootRefs = useRef<Partial<Record<CharacterId, HTMLDivElement | null>>>({});
   const bubbleRefs = useRef<Partial<Record<CharacterId, HTMLDivElement | null>>>({});
   const fxRef = useRef<HTMLDivElement>(null);
+  const ballRef = useRef<HTMLButtonElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -271,9 +283,11 @@ export default function Mascots() {
         bubbleTail: bubble.lastElementChild as HTMLSpanElement,
         bubbleUntil: 0,
         hop: 0,
-        appearAt: now + APPEAR_DELAY_MS + (def.id === "jigglypuff" ? APPEAR_STAGGER_MS : 0),
+        appearAt: Infinity, // set when they're let out of the Poké Ball
+        fromX: NaN,
       };
     });
+    for (const r of rigs) r.hit.style.pointerEvents = "none";
     const rigOf = (c: CharacterState) => rigs.find((r) => r.c === c)!;
     const world = Object.fromEntries(rigs.map((r) => [r.c.def.id, r.c])) as Record<CharacterId, CharacterState>;
     const tg = world.togepi;
@@ -393,7 +407,14 @@ export default function Mascots() {
     };
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
-    window.addEventListener("resize", resize);
+    const onResize = () => {
+      resize();
+      if (released) return;
+      tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...bounds(tg));
+      jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
+      placeBall();
+    };
+    window.addEventListener("resize", onResize);
     const unbind = rigs.map(({ c, hit }) => {
       const enter = (e: PointerEvent) => {
         if (e.pointerType !== "mouse") return;
@@ -417,14 +438,105 @@ export default function Mascots() {
     });
 
     /* ── Intros, one after the other ── */
-    let introAt = APPEAR_DELAY_MS + 600;
-    for (const id of UPDATE_ORDER) {
-      const c = world[id];
-      for (const line of c.def.intro(touch)) {
-        later(() => { if (!introOver && !c.action && now > c.forcedSleepUntil) say(c, line, 2300); }, introAt);
-        introAt += INTRO_LINE_MS;
+    const startIntros = (delay: number) => {
+      let introAt = delay;
+      for (const id of UPDATE_ORDER) {
+        const c = world[id];
+        for (const line of c.def.intro(touch)) {
+          later(() => { if (!introOver && !c.action && now > c.forcedSleepUntil) say(c, line, 2300); }, introAt);
+          introAt += INTRO_LINE_MS;
+        }
       }
-    }
+    };
+
+    /* ── The Poké Ball they start out in: rolls in, wobbles now and then, and lets them out when clicked ── */
+    const ball = ballRef.current!;
+    const ballBody = ball.querySelector<HTMLElement>("[data-b='body']")!;
+    const hint = hintRef.current!;
+    const ballSize = () => (desktop.matches ? BALL.desktop : BALL.mobile);
+    // Between their two spots, so they fly out to either side of it
+    const ballX = () => (tg.x + jp.x) / 2;
+    let released = false;
+    let wobbler = 0;
+    const placeBall = () => {
+      const size = ballSize();
+      ball.style.width = ball.style.height = `${size}px`;
+      ball.style.transform = `translate3d(${(ballX() - size / 2).toFixed(1)}px,0,0)`;
+      hint.style.left = `${ballX().toFixed(1)}px`;
+      hint.style.bottom = `${size + 16}px`;
+    };
+    const showHint = (on: boolean) => {
+      hint.style.opacity = on ? "1" : "0";
+      hint.style.transform = on ? "translate(-50%, 0) scale(1)" : "translate(-50%, 6px) scale(0.92)";
+    };
+    const wobble = () => {
+      if (!released && !reduce) ballBody.animate(
+        [{ transform: "rotate(0deg)" }, { transform: "rotate(-16deg)" }, { transform: "rotate(13deg)" }, { transform: "rotate(-8deg)" }, { transform: "rotate(0deg)" }],
+        { duration: 650, easing: "ease-in-out" },
+      );
+    };
+    const release = () => {
+      if (released) return;
+      released = true;
+      introOver = false;
+      window.clearInterval(wobbler);
+      showHint(false);
+      ball.tabIndex = -1;
+      ball.style.pointerEvents = "none";
+      const open = () => {
+        const t = performance.now();
+        rigs.forEach((r, i) => {
+          r.fromX = reduce ? NaN : ballX();
+          r.appearAt = t + (r.c === jp ? RELEASE_STAGGER_MS : 0) * (reduce ? 0 : 1);
+          r.c.lastActive = t;
+        });
+        if (!reduce) {
+          const lid = ball.querySelector("[data-b='lid']")!, base = ball.querySelector("[data-b='base']")!;
+          const opts = { duration: 140, easing: "ease-out", fill: "forwards" as const };
+          lid.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(-40deg)" }], opts);
+          base.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(32deg)" }], opts);
+          // Release flash
+          const size = ballSize();
+          const flash = document.createElement("div");
+          flash.style.cssText = `position:absolute;left:${ballX() - size * 1.5}px;bottom:4px;width:${size * 3}px;height:${size * 3}px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,240,220,.75) 40%,rgba(255,240,220,0) 70%);transform-origin:50% 70%`;
+          fx.appendChild(flash);
+          flash.animate([{ opacity: 0, transform: "scale(0.3)" }, { opacity: 1, transform: "scale(1.2)", offset: 0.25 }, { opacity: 0, transform: "scale(2)" }], { duration: 420, easing: "ease-out" }).onfinish = () => flash.remove();
+        }
+        ball.animate([{ opacity: 1, transform: `${ball.style.transform} scale(1)` }, { opacity: 0, transform: `${ball.style.transform} scale(0.6)` }], { duration: 300, delay: reduce ? 0 : 450, fill: "forwards" }).onfinish = () => { ball.style.display = "none"; };
+        startIntros(RELEASE_MS + 500);
+      };
+      if (reduce) return open();
+      // A little hop and spin, like it's been thrown, then it pops open
+      ballBody.animate(
+        [{ transform: "translateY(0) rotate(0deg)" }, { transform: `translateY(${-ballSize() * 1.2}px) rotate(-200deg)`, offset: 0.5 }, { transform: "translateY(0) rotate(-360deg)" }],
+        { duration: BALL_HOP_MS, easing: "ease-in-out" },
+      );
+      later(open, BALL_HOP_MS);
+    };
+
+    placeBall();
+    ball.tabIndex = -1;
+    // Rolls in from the right edge after the loading screen, turning as it goes
+    later(() => {
+      ball.style.opacity = "1";
+      ball.tabIndex = 0;
+      const dist = document.documentElement.clientWidth + ballSize() - ballX();
+      if (!reduce) {
+        ball.animate(
+          [{ transform: `translate3d(${(ballX() - ballSize() / 2 + dist).toFixed(1)}px,0,0)` }, { transform: ball.style.transform }],
+          { duration: BALL_ROLL_MS, easing: "cubic-bezier(.2,.7,.3,1)" },
+        );
+        ballBody.animate([{ transform: `rotate(${((dist / (Math.PI * ballSize())) * 360).toFixed(0)}deg)` }, { transform: "rotate(0deg)" }], { duration: BALL_ROLL_MS, easing: "cubic-bezier(.2,.7,.3,1)" });
+      }
+      later(() => { if (!released) showHint(true); }, BALL_ROLL_MS + 900);
+      later(() => { if (!released) showHint(false); }, BALL_ROLL_MS + 5500);
+      wobbler = window.setInterval(wobble, 2800);
+    }, APPEAR_DELAY_MS);
+    const onBallEnter = () => { if (!released) { showHint(true); wobble(); } };
+    const onBallLeave = () => { if (!released) showHint(false); };
+    ball.addEventListener("click", release);
+    ball.addEventListener("pointerenter", onBallEnter);
+    ball.addEventListener("pointerleave", onBallLeave);
 
     /* ── Jigglypuff hops over Togepi's head to get to its other side ── */
     const leapArc = () => (tg.H + 0.15 * jp.H + 10) / Math.sin(Math.PI * LEAP_RISE);
@@ -440,7 +552,7 @@ export default function Mascots() {
     const move = (r: Rig, t: number, dt: number) => {
       const { c } = r;
       const { def } = c;
-      if (t < r.appearAt) return;
+      if (t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS)) return; // still flying out of the ball
       const [minX, maxX] = bounds(c);
       const busy = !!c.action;
       const forcedAsleep = t < c.forcedSleepUntil;
@@ -519,7 +631,8 @@ export default function Mascots() {
        to sleep or being hovered) Togepi is stopped instead. While Jigglypuff is in the air above
        Togepi's head, they can pass ── */
     const separate = (t: number) => {
-      if (t < rigOf(jp).appearAt) return;
+      // Not while they're flying out of the Poké Ball (they both start inside it)
+      if (rigs.some((r) => t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS))) return;
       const tgX = tg.x + tg.offset;
       const jpX = jp.x + jp.offset;
       if (jp.leapStart && rigOf(jp).hop > tg.H + rigOf(tg).hop + 0.15 * jp.H) return;
@@ -551,7 +664,10 @@ export default function Mascots() {
       const { def } = c;
       const secs = t / 1000;
       if (t < r.appearAt) return;
-      r.root.style.opacity = "1";
+      if (r.root.style.opacity !== "1") {
+        r.root.style.opacity = "1";
+        r.hit.style.pointerEvents = "all"; // can't be hovered or clicked until it's out
+      }
       const hatch = reduce ? 1 : easeOutBack(Math.min(1, (t - r.appearAt) / 550));
       const busy = !!c.action;
       const forcedAsleep = t < c.forcedSleepUntil;
@@ -628,6 +744,14 @@ export default function Mascots() {
         const squash = Math.max(0, 1 - k / 0.08) + Math.max(0, (k - 0.92) / 0.08);
         p.sy *= 1 - 0.1 * squash;
         p.sx *= 1 + 0.08 * squash;
+      }
+
+      /* Flying out of the Poké Ball: an arc from the ball over to its spot, growing as it goes */
+      const flight = Number.isNaN(r.fromX) ? 1 : Math.min(1, (t - r.appearAt) / RELEASE_MS);
+      if (flight < 1) {
+        p.offset += (r.fromX - c.x) * (1 - easeOutCubic(flight));
+        p.hop += Math.sin(Math.PI * flight) * c.H * 0.8;
+        p.spin += (1 - flight) * 25 * Math.sign(c.x - r.fromX);
       }
 
       if (reduce) {
@@ -753,7 +877,11 @@ export default function Mascots() {
       timers.forEach(clearTimeout);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", onResize);
+      window.clearInterval(wobbler);
+      ball.removeEventListener("click", release);
+      ball.removeEventListener("pointerenter", onBallEnter);
+      ball.removeEventListener("pointerleave", onBallLeave);
       unbind.forEach((u) => u());
       fx.replaceChildren();
     };
@@ -811,6 +939,46 @@ export default function Mascots() {
           <CharacterArt def={def} />
         </div>
       ))}
+      {/* The Poké Ball they start out in (see release() above) */}
+      <button
+        ref={ballRef}
+        type="button"
+        aria-label="Let Togepi and Jigglypuff out of their Poké Ball"
+        data-cursor-pointer
+        className="fixed left-0 z-[39] p-0 border-0 bg-transparent rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C4622D] focus-visible:ring-offset-2 print:hidden"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", opacity: 0, width: BALL.desktop, height: BALL.desktop }}
+      >
+        {/* Ground shadow */}
+        <span className="absolute left-1/2 -translate-x-1/2 rounded-full" style={{ bottom: -3, width: "90%", height: 6, background: "rgba(28,25,23,0.22)", filter: "blur(2px)" }} />
+        <span data-b="body" className="block w-full h-full" style={{ transformOrigin: "50% 100%" }}>
+          <svg viewBox="0 0 64 64" className="block w-full h-full overflow-visible">
+            <g data-b="base" style={{ transformBox: "fill-box", transformOrigin: "2px 0px" }}>
+              <path d="M0,32 A32,32 0 0 0 64,32 Z" fill="#FAF7F2" stroke="#1C1917" strokeWidth="2.5" />
+              <rect x="0" y="31" width="64" height="4" fill="#1C1917" />
+            </g>
+            <g data-b="lid" style={{ transformBox: "fill-box", transformOrigin: "2px 33px" }}>
+              <path d="M0,32 A32,32 0 0 1 64,32 Z" fill="#C4622D" stroke="#1C1917" strokeWidth="2.5" />
+              <rect x="0" y="29" width="64" height="4" fill="#1C1917" />
+              <circle cx="32" cy="32" r="10" fill="#1C1917" />
+              <circle cx="32" cy="32" r="6" fill="#FAF7F2" />
+              {/* Shine */}
+              <path d="M14,16 Q20,9 29,7" stroke="#fff" strokeOpacity="0.55" strokeWidth="4" strokeLinecap="round" fill="none" />
+            </g>
+          </svg>
+        </span>
+      </button>
+      <div
+        ref={hintRef}
+        aria-hidden
+        className="fixed z-[39] pointer-events-none w-max whitespace-nowrap font-mono-dm text-[11px] lg:text-xs tracking-wide px-3 py-2 rounded-2xl print:hidden"
+        style={{ ...BUBBLE_STYLE, top: "auto", transform: "translate(-50%, 6px) scale(0.92)" }}
+      >
+        Who's inside? 👀
+        <span
+          className="absolute -bottom-[5px] left-1/2 w-2.5 h-2.5 -ml-[5px] rotate-45"
+          style={{ background: "#FFFDF8", borderRight: "1px solid rgba(196,98,45,0.25)", borderBottom: "1px solid rgba(196,98,45,0.25)" }}
+        />
+      </div>
       {/* Particles and speech bubbles come after the mascots so they're drawn on top; all of it stays
           below the nav (z-50) and the mobile menu overlay (z-40) */}
       <div ref={fxRef} aria-hidden className="fixed inset-0 z-[39] pointer-events-none overflow-hidden print:hidden" />
