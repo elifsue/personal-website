@@ -719,14 +719,31 @@ export default function Mascots() {
       );
     };
     let lidAnims: Animation[] = [];
+    /** Which way it opens: toward them when they're both on one side (-1 left, 1 right), or straight up
+        when it's between them (0) */
+    const towardThem = () => {
+      const sides = [tg, jp].map((c) => {
+        const dx = c.x + c.offset - ballAtX;
+        return Math.abs(dx) < 4 ? 0 : Math.sign(dx);
+      });
+      return sides[0] === sides[1] ? sides[0] : 0;
+    };
+    /** Open, its halves swing apart on a hinge at the far side, like a clamshell, or the top lifts straight up */
+    const openPose = (dir: number) =>
+      dir
+        ? { lid: `rotate(${-40 * dir}deg)`, base: `rotate(${32 * dir}deg)`, lidAt: `${dir > 0 ? 2 : 62}px 33px`, baseAt: `${dir > 0 ? 2 : 62}px 0px` }
+        : { lid: "translateY(-14px)", base: "translateY(6px)", lidAt: "32px 33px", baseAt: "32px 0px" };
+    let lidDir = 1;
     const setLid = (open: boolean) => {
       if (reduce) return;
       lidAnims.forEach((a) => a.cancel());
+      if (open) lidDir = towardThem();
+      const pose = openPose(lidDir);
+      lid.style.transformOrigin = pose.lidAt;
+      base.style.transformOrigin = pose.baseAt;
       const opts = { duration: open ? 140 : 160, easing: open ? "ease-out" : "ease-in", fill: "forwards" as const };
-      lidAnims = [
-        lid.animate([{ transform: `rotate(${open ? 0 : -40}deg)` }, { transform: `rotate(${open ? -40 : 0}deg)` }], opts),
-        base.animate([{ transform: `rotate(${open ? 0 : 32}deg)` }, { transform: `rotate(${open ? 32 : 0}deg)` }], opts),
-      ];
+      const swing = (el: SVGElement, to: string) => el.animate(open ? [{ transform: "none" }, { transform: to }] : [{ transform: to }, { transform: "none" }], opts);
+      lidAnims = [swing(lid, pose.lid), swing(base, pose.base)];
     };
     const ballReady = (state: "waiting" | "out") => {
       ballState = state;

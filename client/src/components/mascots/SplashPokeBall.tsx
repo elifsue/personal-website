@@ -70,14 +70,14 @@ const CSS = `
     ${k(0.95)}, 100% { transform: rotate(0deg); }
   }
   @keyframes spb-lid {
-    0%, ${k(0.98)} { transform: rotate(0deg); animation-timing-function: ease-out; }
-    ${k(1.08)}, ${k(1.3)} { transform: rotate(-40deg); }
-    ${k(1.38)}, 100% { transform: rotate(0deg); }
+    0%, ${k(0.98)} { transform: translateY(0); animation-timing-function: ease-out; }
+    ${k(1.08)}, ${k(1.3)} { transform: translateY(-14px); }
+    ${k(1.38)}, 100% { transform: translateY(0); }
   }
   @keyframes spb-base {
-    0%, ${k(0.98)} { transform: rotate(0deg); animation-timing-function: ease-out; }
-    ${k(1.08)}, ${k(1.3)} { transform: rotate(32deg); }
-    ${k(1.38)}, 100% { transform: rotate(0deg); }
+    0%, ${k(0.98)} { transform: translateY(0); animation-timing-function: ease-out; }
+    ${k(1.08)}, ${k(1.3)} { transform: translateY(6px); }
+    ${k(1.38)}, 100% { transform: translateY(0); }
   }
   @keyframes spb-flash {
     0%, ${k(1.0)} { opacity: 0; transform: scale(0.2); animation-timing-function: ease-out; }
@@ -110,12 +110,13 @@ function Monogram() {
 function PokeBall() {
   return (
     <svg viewBox="0 0 64 64" width={BALL} height={BALL} className="block overflow-visible">
-      {/* Both halves swing apart on a hinge at the left, like a clamshell, showing the monogram inside */}
-      <g className="spb-run" style={{ animationName: "spb-base", transformBox: "fill-box", transformOrigin: "2px 0px" }}>
+      {/* The Pokémon come out to either side of it, so it opens straight up between them (the top lifts
+          off the bottom), showing the monogram inside */}
+      <g className="spb-run" style={{ animationName: "spb-base" }}>
         <path d="M0,32 A32,32 0 0 0 64,32 Z" fill="#FAF7F2" />
         <rect x="0" y="32" width="64" height="3" fill="#1C1917" />
       </g>
-      <g className="spb-run" style={{ animationName: "spb-lid", transformBox: "fill-box", transformOrigin: "2px 32px" }}>
+      <g className="spb-run" style={{ animationName: "spb-lid" }}>
         <path d="M0,32 A32,32 0 0 1 64,32 Z" fill="#C4622D" />
         <rect x="0" y="29" width="64" height="3" fill="#1C1917" />
         <circle cx="32" cy="32" r="9.5" fill="#1C1917" />
