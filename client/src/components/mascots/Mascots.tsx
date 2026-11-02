@@ -45,6 +45,18 @@ const LEAP_MS = 1000;
     above Togepi's head while their x ranges overlap */
 const LEAP_RISE = 0.28;
 
+// Being dragged about and dropped
+/** How far (px) the pointer has to move on a mascot before it's a drag rather than a click */
+const DRAG_START = 6;
+/** How quickly a carried mascot catches up with the pointer (per second): lower trails behind more */
+const CARRY_FOLLOW = 16;
+const GRAVITY = 2600; // px/s²
+/** Lands any harder than this (px/s) and it bounces */
+const BOUNCE_SPEED = 450;
+const LAND_MS = 260;
+/** Closest (px) any part of a mascot gets to the top of the screen (or the mobile top bar) */
+const CEILING_GAP = 8;
+
 // Walking (px/s²)
 const ACCEL = 260;
 const DECEL = 300;
@@ -153,7 +165,7 @@ function CharacterArt({ def }: { def: CharacterDef }) {
           {/* Patches go under the body, so they only show through the holes front limbs leave when
               they move; the stroke slightly enlarges them to also fill the antialiased cut edges */}
           {front.map((l) => l.patch && <path key={l.k} stroke={l.patch.fill} strokeWidth="3" strokeLinejoin="round" {...l.patch} />)}
-          <image href={def.src} width={def.w} height={def.h} mask={`url(#${def.id}-body)`} />
+          <image data-t="body" href={def.src} width={def.w} height={def.h} mask={`url(#${def.id}-body)`} />
           {front.map((l) => (
             <LimbGroup key={l.k} def={def} limb={l} />
           ))}
@@ -200,7 +212,7 @@ function CharacterArt({ def }: { def: CharacterDef }) {
       </g>
 
       {/* Static hit area, so hopping doesn't make hover flicker on and off */}
-      <ellipse data-t="hit" data-mascot-hit data-cursor-pointer cx={def.hit.cx} cy={def.hit.cy} rx={def.hit.rx} ry={def.hit.ry} fill="transparent" style={{ pointerEvents: "all" }} />
+      <ellipse data-t="hit" data-mascot-hit data-cursor-pointer cx={def.hit.cx} cy={def.hit.cy} rx={def.hit.rx} ry={def.hit.ry} fill="transparent" style={{ pointerEvents: "all", touchAction: "none" }} />
     </svg>
   );
 }
@@ -211,6 +223,8 @@ interface Rig {
   art: SVGSVGElement;
   q: (k: string) => SVGElement | null;
   all: SVGElement;
+  /** The artwork itself (the whole picture, as drawn this frame) */
+  body: SVGElement;
   shadow: SVGElement;
   contacts: SVGElement[];
   limbs: Partial<Record<LimbKey, { el: SVGElement; pivot: readonly [number, number] }>>;
@@ -264,11 +278,12 @@ export default function Mascots() {
         hovered: false, lastActive: now, forcedSleepUntil: 0, blinkAt: now + 2000 + i * 900, blinkUntil: 0,
         action: null, offset: 0, nextZ: 0, nextHeart: 0, clicks: 0, lastMove: null, doodleStart: 0, doodleWoke: 0,
         leapStart: 0, leapFrom: 0, leapSide: 0,
+        held: false, lift: 0, lv: 0, vx: 0, grabDX: 0, grabDY: 0, grabPX: 0, grabPY: 0, landAt: -1e9, landHard: 0, nextTrail: 0,
       };
       return {
         c, root, q, limbs, bubble,
         art: root.querySelector("svg")!,
-        all: q("all")!, shadow: q("shadow")!, contacts: def.soles.map((_, j) => q(`contact${j}`)!),
+        all: q("all")!, body: q("body")!, shadow: q("shadow")!, contacts: def.soles.map((_, j) => q(`contact${j}`)!),
         lids: q("lids")!, look: q("look")!,
         pupils: def.eyes.map((e, j) => {
           if (!e.look) return null;
@@ -305,6 +320,20 @@ export default function Mascots() {
       const left = desktop.matches ? 80 : 0; // fixed left nav on desktop
       return [left + c.W / 2 + 12, document.documentElement.clientWidth - c.W / 2 - 12] as const;
     };
+    /** The top edge they mustn't cross: the top of the screen, or the bottom of a fixed top bar (mobile nav) */
+    let ceiling = CEILING_GAP;
+    const measureCeiling = () => {
+      ceiling = CEILING_GAP;
+      document.querySelectorAll("nav").forEach((nav) => {
+        const b = nav.getBoundingClientRect();
+        if (b.height > 0 && b.top <= 0 && b.width > window.innerWidth * 0.8 && b.height < window.innerHeight / 3 && getComputedStyle(nav).position === "fixed") {
+          ceiling = Math.max(ceiling, b.bottom + CEILING_GAP);
+        }
+      });
+    };
+    measureCeiling();
+    /** Highest its feet can go with its body still on screen (the drawn pose is checked too, in draw) */
+    const maxLift = (c: CharacterState) => Math.max(0, window.innerHeight - 4 - c.H - ceiling);
     const buddyGap = () => (tg.W + jp.W) / 2 + BUDDY_GAP;
     const minGap = () => (tg.W + jp.W) / 2 + MIN_GAP;
     /** Which side of Togepi Jigglypuff is on (remembered, in case they're ever exactly level) */
@@ -388,10 +417,39 @@ export default function Mascots() {
     let introOver = false; // the intros stop once the visitor starts playing
 
     /* ── Input ── */
+    /** A press on a mascot, which becomes a drag once the pointer moves far enough */
+    let grab: { c: CharacterState; id: number; x0: number; y0: number; started: boolean } | null = null;
+    let noClickUntil = 0; // the click that ends a drag isn't a click on the mascot
+    /** Picked up at (x, y), where the press started */
+    const pickUp = (c: CharacterState, x: number, y: number) => {
+      introOver = true;
+      measureCeiling();
+      c.held = true;
+      if (c.action) c.action = null; // drops whatever it was doing
+      if (c === jp) jp.leapStart = 0;
+      c.forcedSleepUntil = 0;
+      c.sleep = 0;
+      c.v = c.lv = c.vx = 0;
+      // Hold it by the spot that was grabbed, so it doesn't jump to the pointer
+      c.grabDX = x - c.x;
+      c.grabDY = window.innerHeight - 4 - c.lift - y;
+      if (Math.random() < 0.7) say(c, c.def.air.pickup[Math.floor(Math.random() * c.def.air.pickup.length)], 1500);
+    };
     const onPointerMove = (e: PointerEvent) => {
       mx = e.clientX;
       my = e.clientY;
       pointerSeen = true;
+      if (grab && e.pointerId === grab.id) {
+        if (!grab.started && Math.hypot(mx - grab.x0, my - grab.y0) > DRAG_START) {
+          grab.started = true;
+          pickUp(grab.c, grab.x0, grab.y0);
+        }
+        if (grab.started) {
+          grab.c.grabPX = mx;
+          grab.c.grabPY = my;
+          return;
+        }
+      }
       // Togepi stays put while the cursor is on either mascot, so it doesn't walk onto Jigglypuff
       if (e.pointerType === "mouse" && !tg.hovered && !jp.hovered) {
         tg.tx = clamp(mx, ...bounds(tg));
@@ -405,10 +463,22 @@ export default function Mascots() {
         if (now < tg.forcedSleepUntil) jpChase = mx;
       }
     };
+    const onPointerUp = (e: PointerEvent) => {
+      if (!grab || e.pointerId !== grab.id) return;
+      if (grab.started) {
+        // Let go: it keeps the speed it was being carried at, so it can be tossed
+        grab.c.held = false;
+        noClickUntil = performance.now() + 60;
+      }
+      grab = null;
+    };
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
     const onResize = () => {
       resize();
+      measureCeiling();
       if (released) return;
       tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...bounds(tg));
       jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
@@ -424,16 +494,28 @@ export default function Mascots() {
       };
       const leave = () => { c.hovered = false; };
       const click = () => {
+        if (performance.now() < noClickUntil) return;
         introOver = true;
         if (!c.action) c.def.onClick(ctx, c);
+      };
+      const down = (e: PointerEvent) => {
+        if (e.button !== 0) return;
+        if (e.pointerType === "mouse") e.preventDefault(); // no text selection while dragging
+        mx = e.clientX;
+        my = e.clientY;
+        c.grabPX = mx;
+        c.grabPY = my;
+        grab = { c, id: e.pointerId, x0: mx, y0: my, started: false };
       };
       hit.addEventListener("pointerenter", enter);
       hit.addEventListener("pointerleave", leave);
       hit.addEventListener("click", click);
+      hit.addEventListener("pointerdown", down);
       return () => {
         hit.removeEventListener("pointerenter", enter);
         hit.removeEventListener("pointerleave", leave);
         hit.removeEventListener("click", click);
+        hit.removeEventListener("pointerdown", down);
       };
     });
 
@@ -554,6 +636,57 @@ export default function Mascots() {
       const { def } = c;
       if (t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS)) return; // still flying out of the ball
       const [minX, maxX] = bounds(c);
+
+      /* Carried: chases the pointer through the air (a little behind, so it swings) */
+      if (c.held) {
+        const k = Math.min(1, dt * CARRY_FOLLOW);
+        const tx = clamp(c.grabPX - c.grabDX, minX, maxX);
+        const tl = clamp(window.innerHeight - 4 - c.grabPY - c.grabDY, 0, maxLift(c));
+        const nx = c.x + (tx - c.x) * k, nl = c.lift + (tl - c.lift) * k;
+        if (dt > 0) {
+          const s = Math.min(1, dt * 12);
+          c.vx += ((nx - c.x) / dt - c.vx) * s;
+          c.lv += ((nl - c.lift) / dt - c.lv) * s;
+        }
+        c.x = c.tx = nx;
+        c.lift = nl;
+        c.v = 0;
+        c.lastActive = t;
+        c.amp += (0 - c.amp) * Math.min(1, dt * 8);
+        return;
+      }
+      /* Dropped (or tossed): falls, drifting with the speed it was let go at, bouncing off the edges */
+      if (c.lift > 0 || c.lv > 0) {
+        c.lv -= GRAVITY * dt;
+        c.lift = Math.min(c.lift + c.lv * dt, maxLift(c));
+        if (c.lift >= maxLift(c) && c.lv > 0) c.lv = 0; // tossed up into the ceiling
+        c.x += c.vx * dt;
+        c.vx *= Math.exp(-dt * 0.8);
+        if (c.x < minX || c.x > maxX) {
+          c.x = clamp(c.x, minX, maxX);
+          c.vx *= -0.5;
+        }
+        if (c.lift <= 0) {
+          const impact = -c.lv;
+          c.lift = 0;
+          c.landAt = t;
+          c.landHard = clamp(impact / 1600, 0.25, 1);
+          if (impact > BOUNCE_SPEED) {
+            c.lv = impact * 0.32;
+          } else {
+            c.lv = c.vx = 0;
+          }
+          if (!reduce) {
+            spawn(SHAPES.dust(rand(12, 16)), point(c, def.soles[0].x, def.soles[0].y), -16, -10, { dur: 550 });
+            spawn(SHAPES.dust(rand(12, 16)), point(c, def.soles[1].x, def.soles[1].y), 16, -10, { dur: 550 });
+          }
+        }
+        c.tx = c.x;
+        c.v = 0;
+        c.lastActive = t;
+        c.amp += (0 - c.amp) * Math.min(1, dt * 8);
+        return;
+      }
       const busy = !!c.action;
       const forcedAsleep = t < c.forcedSleepUntil;
 
@@ -631,8 +764,10 @@ export default function Mascots() {
        to sleep or being hovered) Togepi is stopped instead. While Jigglypuff is in the air above
        Togepi's head, they can pass ── */
     const separate = (t: number) => {
-      // Not while they're flying out of the Poké Ball (they both start inside it)
+      // Not while they're flying out of the Poké Ball (they both start inside it), or while one's in
+      // the air being carried or falling (they sort themselves out once it lands)
       if (rigs.some((r) => t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS))) return;
+      if (tg.held || jp.held || tg.lift > 0 || jp.lift > 0) return;
       const tgX = tg.x + tg.offset;
       const jpX = jp.x + jp.offset;
       if (jp.leapStart && rigOf(jp).hop > tg.H + rigOf(tg).hop + 0.15 * jp.H) return;
@@ -673,7 +808,9 @@ export default function Mascots() {
       const forcedAsleep = t < c.forcedSleepUntil;
 
       /* Facing: the way it walks, otherwise toward the cursor (with a dead zone so it doesn't flip-flop) */
-      if (Math.abs(c.v) > 6) c.wantFacing = Math.sign(c.v);
+      const air = c.held || c.lift > 0;
+      if (air && Math.abs(c.vx) > 80) c.wantFacing = Math.sign(c.vx);
+      else if (Math.abs(c.v) > 6) c.wantFacing = Math.sign(c.v);
       else if (!busy && !c.leapStart && c.sleep < 0.5 && Math.abs(mx - c.x) > c.W) c.wantFacing = Math.sign(mx - c.x);
       c.facing = reduce ? c.wantFacing : clamp(c.facing + Math.sign(c.wantFacing - c.facing) * dt * 9, -1, 1);
 
@@ -754,10 +891,42 @@ export default function Mascots() {
         p.spin += (1 - flight) * 25 * Math.sign(c.x - r.fromX);
       }
 
+      /* In the air: dangling from the pointer, swinging with its speed, legs kicking with glee */
+      if (air) {
+        p.rot = 0;
+        p.spin = clamp(c.vx * 0.035, -28, 28) + Math.sin(secs * 3.2) * 5;
+        p.eye = "happy";
+        p.blush = Math.max(p.blush, 0.7);
+        if (c.held) {
+          p.liftL = Math.max(0, Math.sin(secs * 14)) * 14;
+          p.liftR = Math.max(0, -Math.sin(secs * 14)) * 14;
+          p.tiltL = p.tiltR = 10;
+          p.raiseL = 55 + Math.sin(secs * 12) * 25;
+          p.raiseR = 55 + Math.cos(secs * 12) * 25;
+          p.sy *= 1 + Math.sin(secs * 8) * 0.03;
+        } else {
+          // Falling: arms up, feet together
+          p.raiseL = p.raiseR = 80;
+          p.liftL = p.liftR = 0;
+        }
+        def.air.pose?.(p, secs, c);
+        // A trail when it's whizzing about
+        if (!reduce && Math.hypot(c.vx, c.lv) > 380 && t > c.nextTrail) {
+          c.nextTrail = t + 70;
+          spawn(def.air.trail(), point(c, def.center.x, def.center.y), -Math.sign(c.vx) * rand(10, 30), rand(-10, 20), { dur: 700, scale: rand(0.8, 1.1) });
+        }
+      } else if (t - c.landAt < LAND_MS) {
+        // Squashes as it hits the ground
+        const k = 1 - (t - c.landAt) / LAND_MS;
+        p.sy *= 1 - 0.26 * c.landHard * k;
+        p.sx *= 1 + 0.2 * c.landHard * k;
+      }
+
       if (reduce) {
         p.hop = p.rot = p.spin = 0;
         p.raiseL = p.raiseR = p.liftL = p.liftR = p.tiltL = p.tiltR = p.ears = 0;
       }
+      if (air) p.hop = c.lift; // carried or falling, it's wherever it is in the air
       p.sx *= hatch * p.shrink;
       p.sy *= hatch * p.shrink;
       c.offset = p.offset;
@@ -772,16 +941,32 @@ export default function Mascots() {
       r.root.style.transform = `translate3d(${(c.x + c.offset - c.W / 2).toFixed(2)}px,0,0)`;
       // The artwork faces left. Turning squashes it horizontally through the flip, so it reads as a quick spin
       const flip = c.facing < 0 ? Math.max(0.08, -c.facing) : -Math.max(0.08, c.facing);
-      const hopArt = (p.hop * def.h) / c.H; // px → artwork units
       const spin = p.spin * Math.sign(flip); // keep the on-screen roll direction when mirrored
-      r.all.setAttribute(
+      const place = () => r.all.setAttribute(
         "transform",
-        `translate(0 ${(-hopArt).toFixed(2)}) rotate(${p.rot.toFixed(2)} ${feet.x} ${feet.y}) translate(${feet.x} ${feet.y}) scale(${(p.sx * flip).toFixed(3)} ${p.sy.toFixed(3)}) translate(${-feet.x} ${-feet.y}) rotate(${spin.toFixed(1)} ${center.x} ${center.y})`,
+        `translate(0 ${((-p.hop * def.h) / c.H).toFixed(2)}) rotate(${p.rot.toFixed(2)} ${feet.x} ${feet.y}) translate(${feet.x} ${feet.y}) scale(${(p.sx * flip).toFixed(3)} ${p.sy.toFixed(3)}) translate(${-feet.x} ${-feet.y}) rotate(${spin.toFixed(1)} ${center.x} ${center.y})`,
       );
+      place();
+      // Never past the top of the screen, whatever the pose (puffed up, tilted, mid-leap…): when it's up
+      // high, measure where it's actually drawn and bring it down if any of it pokes over the top
+      if (p.hop > 0 && p.hop + c.H * 1.6 > window.innerHeight - 4 - ceiling) {
+        const over = ceiling - r.body.getBoundingClientRect().top;
+        if (over > 0) {
+          p.hop = Math.max(0, p.hop - over);
+          r.hop = p.hop;
+          if (air) {
+            c.lift = Math.min(c.lift, p.hop);
+            if (c.lv > 0) c.lv = 0;
+          }
+          place();
+        }
+      }
       const sh = clamp(1 - p.hop / 40, 0.45, 1) * hatch * p.shrink;
       // The shadow mirrors with the artwork so each contact shadow stays under its foot
       r.shadow.setAttribute("transform", `translate(${feet.x} ${feet.y}) scale(${(sh * flip).toFixed(3)} ${sh.toFixed(3)}) translate(${-feet.x} ${-feet.y})`);
       r.shadow.style.opacity = String(0.3 + 0.7 * sh);
+      // The hit area goes up with it in the air, so it can be caught mid-fall
+      r.hit.setAttribute("transform", c.lift > 0 ? `translate(0 ${(-(c.lift * def.h) / c.H).toFixed(1)})` : "translate(0 0)");
 
       // Left limbs lift clockwise, right limbs anticlockwise
       const limb = (k: LimbKey, angle: number, lift = 0) => {
@@ -877,6 +1062,8 @@ export default function Mascots() {
       timers.forEach(clearTimeout);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
       window.removeEventListener("resize", onResize);
       window.clearInterval(wobbler);
       ball.removeEventListener("click", release);

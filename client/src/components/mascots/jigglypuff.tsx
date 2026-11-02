@@ -352,6 +352,19 @@ export const jigglypuff: CharacterDef = {
   ),
   intro: (touch) => ["Jiggly~puff! 🎤", "I'm Jigglypuff. Want to hear my song?", touch ? "Tap me and I'll sing!" : "Click me and I'll sing!"],
   moves,
+  air: {
+    // Puffs herself up and floats like a balloon (as she does in the anime)
+    pose: (p, secs, c) => {
+      if (!c.held) return;
+      const puff = 1.12 + Math.sin(secs * 5) * 0.02;
+      p.sx *= puff;
+      p.sy *= puff;
+      p.mouth = "sing";
+      p.ears = Math.sin(secs * 16) * 12;
+    },
+    trail: () => SHAPES.heart(rand(9, 12)),
+    pickup: ["Puuuff~! 🎈", "Jiggly-wheee! 🎈", "Hey, put me down! 💢"],
+  },
   onClick: (ctx, c) => {
     c.clicks++;
     // Always Sing first; after that mostly Sing, with the odd other move
