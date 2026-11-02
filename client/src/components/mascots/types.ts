@@ -1,5 +1,6 @@
 import type { ReactNode, SVGProps } from "react";
 import type { Spawn } from "./particles";
+import type { Perch } from "./perches";
 
 export type Pt = { x: number; y: number };
 export type CharacterId = "togepi" | "jigglypuff";
@@ -145,6 +146,17 @@ export interface CharacterState {
   landAt: number;
   landHard: number;
   nextTrail: number;
+  /** What it's standing on when that's part of the page rather than the ground (see perches.ts) */
+  perch: Perch | null;
+  /** How high (px) above the ground the thing it's standing on is (0 on the ground or in the air) */
+  stand: number;
+  /** In the air because it jumped, rather than being dropped or thrown */
+  jumping: boolean;
+  /** When it got to the edge of what it's on, wanting to get down, and when it crouched to jump (0: not) */
+  edgeAt: number;
+  crouchAt: number;
+  /** How fast what it's standing on is going up (px/s), as the page scrolls */
+  pv: number;
 }
 
 export interface Ctx {
@@ -163,6 +175,8 @@ export interface Ctx {
   /** Leftmost / rightmost x the character's centre may reach */
   bounds: (c: CharacterState) => readonly [number, number];
   spawnPath: (html: string, pts: Pt[], dur: number) => void;
+  /** Standing at the same height on the same thing, or both on the ground */
+  sameLevel: (a: CharacterState, b: CharacterState) => boolean;
 }
 
 export interface MoveDef {

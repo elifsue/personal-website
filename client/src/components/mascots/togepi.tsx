@@ -325,7 +325,7 @@ export const togepi: CharacterDef = {
       path.setAttribute("stroke-dashoffset", (1 - k).toFixed(3));
     });
     // Wakes up to find it's been drawn on (waits for any move in progress to finish first)
-    if (drawn >= 1 && !c.doodleWoke && c.sleep < 0.4 && !c.action && !c.held && c.lift === 0) wakeToDoodle(ctx, c);
+    if (drawn >= 1 && !c.doodleWoke && c.sleep < 0.4 && !c.action && !c.held && c.lift === c.stand) wakeToDoodle(ctx, c);
     let opacity = 1;
     if (c.doodleWoke) {
       opacity = 1 - (ctx.now - c.doodleWoke - DOODLE_KEEP_MS) / 1000;

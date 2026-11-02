@@ -62,7 +62,7 @@ const moves: Record<string, MoveDef> = {
       }
       if (at >= SONG_END && !d.angry) {
         d.angry = 1;
-        d.near = tg && tg.sleep > 0.5 && Math.abs(tg.x - c.x) < DOODLE_REACH ? 1 : 0;
+        d.near = tg && tg.sleep > 0.5 && ctx.sameLevel(tg, c) && Math.abs(tg.x - c.x) < DOODLE_REACH ? 1 : 0;
         ctx.spawn(SHAPES.anger(22), ctx.point(c, 300, 60), 6, -14, { dur: 1300 });
         ctx.say(c, d.near ? "Jiggly…?! 💢 You fell asleep?!" : "Jiggly…?! 💢", 1500);
       }
