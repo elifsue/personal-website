@@ -19,6 +19,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import WritingVideosSection from "@/components/WritingVideosSection";
 import CustomCursor from "@/components/CustomCursor";
+import Mascots from "@/components/mascots/Mascots";
 
 function LoadingScreen({ onDone }: { onDone: () => void }) {
   useEffect(() => {
@@ -105,6 +106,7 @@ export default function Home() {
 
       <Navbar />
       <StickyCTA />
+      <Mascots />
       {/* Main content offset for desktop left nav */}
       <main className="lg:pl-20">
         <HeroSection />
