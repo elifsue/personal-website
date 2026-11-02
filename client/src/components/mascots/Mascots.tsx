@@ -4,7 +4,8 @@
    Jigglypuff bounces along beside Togepi. Both blink, nap when left
    alone and get happy on hover; clicking one makes it use a move
    (see togepi.tsx / jigglypuff.tsx). They start out in a Poké Ball
-   that rolls in after the loading screen; clicking it lets them out.
+   that rolls in after the loading screen; clicking it lets them out,
+   and clicking it again (it waits in the corner) calls them back.
    Everything is driven imperatively from one rAF loop so React never
    re-renders while animating
    ============================================================ */
@@ -29,6 +30,19 @@ const BALL_HOP_MS = 420;
 /** …then each Pokémon flies out of it to its spot */
 const RELEASE_MS = 650;
 const RELEASE_STAGGER_MS = 70;
+/** While they're out the ball waits, smaller, in the bottom-right corner */
+const BALL_DOCK = { desktop: 26, mobile: 24 };
+const BALL_DOCK_MS = 700;
+/** Called back: each is pulled into the ball along a red beam */
+const RECALL_MS = 700;
+const RECALL_STAGGER_MS = 90;
+/** Then the capture: a pause, three slow wobbles, and a click before it rolls back out */
+const CAPTURE_PAUSE_MS = 450;
+const CAPTURE_WOBBLE_MS = 700;
+const CAPTURE_WOBBLE_GAP_MS = 1050;
+const CAPTURE_CLICK_MS = CAPTURE_PAUSE_MS + 3 * CAPTURE_WOBBLE_GAP_MS;
+const HINT_RELEASE = "Who's inside? 👀";
+const HINT_RECALL = "Come back! ✨";
 const INTRO_LINE_MS = 2500;
 const SLEEP_AFTER_MS = 7000;
 /** How far (px) the cursor has to be from an eye for it to look all the way that way */
@@ -246,6 +260,8 @@ interface Rig {
   appearAt: number;
   /** Viewport x of the Poké Ball it's flying out of (NaN with reduced motion, where it just appears) */
   fromX: number;
+  /** When it started being called back into the Poké Ball (Infinity when it isn't) */
+  recallAt: number;
   /** This frame's hop (px), so the bubble rises with the character instead of being jumped into */
   hop: number;
 }
@@ -301,6 +317,7 @@ export default function Mascots() {
         hop: 0,
         appearAt: Infinity, // set when they're let out of the Poké Ball
         fromX: NaN,
+        recallAt: Infinity,
       };
     });
     for (const r of rigs) r.hit.style.pointerEvents = "none";
@@ -321,9 +338,12 @@ export default function Mascots() {
       }
     };
     resize();
+    /** While they're out, the Poké Ball waits in the bottom-right corner and they keep clear of it */
+    let dockReserved = false;
     const bounds = (c: CharacterState) => {
       const left = desktop.matches ? 80 : 0; // fixed left nav on desktop
-      return [left + c.W / 2 + 12, document.documentElement.clientWidth - c.W / 2 - 12] as const;
+      const right = dockReserved ? (desktop.matches ? BALL_DOCK.desktop : BALL_DOCK.mobile) + 14 : 0;
+      return [left + c.W / 2 + 12, document.documentElement.clientWidth - c.W / 2 - 12 - right] as const;
     };
     /** The top edge they mustn't cross: the top of the screen, or the bottom of a fixed top bar (mobile nav) */
     let ceiling = CEILING_GAP;
@@ -491,10 +511,11 @@ export default function Mascots() {
     const onResize = () => {
       resize();
       measureCeiling();
-      if (released) return;
-      tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...bounds(tg));
-      jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
-      placeBall();
+      if (ballState === "out") setBall(dockX(), dockSize());
+      else if (ballState === "waiting") {
+        homeSpots();
+        setBall(ballX(), ballSize());
+      }
     };
     window.addEventListener("resize", onResize);
     const unbind = rigs.map(({ c, hit }) => {
@@ -543,94 +564,232 @@ export default function Mascots() {
       }
     };
 
-    /* ── The Poké Ball they start out in: rolls in, wobbles now and then, and lets them out when clicked ── */
+    /* ── The Poké Ball: rolls in after the loading screen and lets them out when clicked. While they're out
+       it waits in the bottom-right corner, and clicking it calls them back (then it rolls back out, ready
+       to let them out again) ── */
     const ball = ballRef.current!;
     const ballBody = ball.querySelector<HTMLElement>("[data-b='body']")!;
+    const lid = ball.querySelector<SVGElement>("[data-b='lid']")!;
+    const base = ball.querySelector<SVGElement>("[data-b='base']")!;
     const hint = hintRef.current!;
-    const ballSize = () => (desktop.matches ? BALL.desktop : BALL.mobile);
-    // Between their two spots, so they fly out to either side of it
-    const ballX = () => (tg.x + jp.x) / 2;
-    let released = false;
+    const hintText = hint.querySelector<HTMLElement>("[data-b='hint']")!;
+    /** waiting: they're inside, click to let them out · out: it's in the corner, click to call them back */
+    let ballState: "waiting" | "out" | "busy" = "busy";
+    let introsPlayed = false;
     let wobbler = 0;
-    const placeBall = () => {
-      const size = ballSize();
-      ball.style.width = ball.style.height = `${size}px`;
-      ball.style.transform = `translate3d(${(ballX() - size / 2).toFixed(1)}px,0,0)`;
-      hint.style.left = `${ballX().toFixed(1)}px`;
-      hint.style.bottom = `${size + 16}px`;
+    const ballSize = () => (desktop.matches ? BALL.desktop : BALL.mobile);
+    const dockSize = () => (desktop.matches ? BALL_DOCK.desktop : BALL_DOCK.mobile);
+    /** Where they come out: between their two spots, so they fly out to either side of it */
+    const ballX = () => (tg.x + jp.x) / 2;
+    /** Where it waits while they're out */
+    const dockX = () => document.documentElement.clientWidth - dockSize() / 2 - 14;
+    let ballAtX = 0;
+    let ballAtSize = 0;
+    const hintTail = hint.lastElementChild as HTMLElement;
+    /** Over the ball, but kept inside the window (the tail still points at the ball), as when it's in the corner */
+    const placeHint = () => {
+      const w = hint.offsetWidth;
+      const centre = clamp(ballAtX, w / 2 + 12, document.documentElement.clientWidth - w / 2 - 12);
+      hint.style.left = `${centre.toFixed(1)}px`;
+      hintTail.style.left = `${clamp(ballAtX - (centre - w / 2), 14, w - 14).toFixed(1)}px`;
     };
-    const showHint = (on: boolean) => {
+    const setBall = (x: number, size: number) => {
+      ballAtX = x;
+      ballAtSize = size;
+      ball.style.width = ball.style.height = `${size}px`;
+      ball.style.transform = `translate3d(${(x - size / 2).toFixed(1)}px,0,0)`;
+      hint.style.bottom = `${size + 16}px`;
+      placeHint();
+    };
+    /** Rolls along the ground to x (turning as it goes), growing or shrinking to size on the way */
+    const rollBall = (x: number, size: number, ms: number, done: () => void) => {
+      const fromX = ballAtX, fromSize = ballAtSize;
+      setBall(x, size);
+      if (!reduce) {
+        const easing = "cubic-bezier(.2,.7,.3,1)";
+        ball.animate(
+          [{ transform: `translate3d(${(fromX - size / 2).toFixed(1)}px,0,0) scale(${(fromSize / size).toFixed(3)})` }, { transform: ball.style.transform }],
+          { duration: ms, easing },
+        );
+        const turn = ((x - fromX) / (Math.PI * (fromSize + size) * 0.5)) * 360; // rolling right turns it clockwise
+        ballBody.animate([{ transform: `rotate(${(-turn).toFixed(0)}deg)` }, { transform: "rotate(0deg)" }], { duration: ms, easing });
+      }
+      later(done, reduce ? 0 : ms);
+    };
+    const showHint = (on: boolean, text?: string) => {
+      if (text) {
+        hintText.textContent = text;
+        placeHint();
+      }
       hint.style.opacity = on ? "1" : "0";
       hint.style.transform = on ? "translate(-50%, 0) scale(1)" : "translate(-50%, 6px) scale(0.92)";
     };
-    const wobble = () => {
-      if (!released && !reduce) ballBody.animate(
+    const wobble = (duration = 650) => {
+      if (reduce) return;
+      ballBody.animate(
         [{ transform: "rotate(0deg)" }, { transform: "rotate(-16deg)" }, { transform: "rotate(13deg)" }, { transform: "rotate(-8deg)" }, { transform: "rotate(0deg)" }],
-        { duration: 650, easing: "ease-in-out" },
+        { duration, easing: "ease-in-out" },
       );
     };
-    const release = () => {
-      if (released) return;
-      released = true;
-      introOver = false;
+    let lidAnims: Animation[] = [];
+    const setLid = (open: boolean) => {
+      if (reduce) return;
+      lidAnims.forEach((a) => a.cancel());
+      const opts = { duration: open ? 140 : 160, easing: open ? "ease-out" : "ease-in", fill: "forwards" as const };
+      lidAnims = [
+        lid.animate([{ transform: `rotate(${open ? 0 : -40}deg)` }, { transform: `rotate(${open ? -40 : 0}deg)` }], opts),
+        base.animate([{ transform: `rotate(${open ? 0 : 32}deg)` }, { transform: `rotate(${open ? 32 : 0}deg)` }], opts),
+      ];
+    };
+    const ballReady = (state: "waiting" | "out") => {
+      ballState = state;
+      ball.style.pointerEvents = "";
+      ball.tabIndex = 0;
+      ball.setAttribute("aria-label", state === "waiting" ? "Let Togepi and Jigglypuff out of their Poké Ball" : "Call Togepi and Jigglypuff back to their Poké Ball");
+      window.clearInterval(wobbler);
+      if (state === "waiting") wobbler = window.setInterval(() => wobble(), 2800);
+    };
+    const ballBusy = () => {
+      ballState = "busy";
       window.clearInterval(wobbler);
       showHint(false);
       ball.tabIndex = -1;
       ball.style.pointerEvents = "none";
+    };
+    /** Where they spawn from the ball: back to their usual spots, either side of the middle of the ground */
+    const homeSpots = () => {
+      tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...bounds(tg));
+      jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
+    };
+
+    const release = () => {
+      if (ballState !== "waiting") return;
+      ballBusy();
       const open = () => {
         const t = performance.now();
-        rigs.forEach((r, i) => {
-          r.fromX = reduce ? NaN : ballX();
+        rigs.forEach((r) => {
+          r.fromX = reduce ? NaN : ballAtX;
           r.appearAt = t + (r.c === jp ? RELEASE_STAGGER_MS : 0) * (reduce ? 0 : 1);
           r.c.lastActive = t;
         });
+        setLid(true);
         if (!reduce) {
-          const lid = ball.querySelector("[data-b='lid']")!, base = ball.querySelector("[data-b='base']")!;
-          const opts = { duration: 140, easing: "ease-out", fill: "forwards" as const };
-          lid.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(-40deg)" }], opts);
-          base.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(32deg)" }], opts);
-          // Release flash
-          const size = ballSize();
+          const size = ballAtSize;
           const flash = document.createElement("div");
-          flash.style.cssText = `position:absolute;left:${ballX() - size * 1.5}px;bottom:${ground}px;width:${size * 3}px;height:${size * 3}px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,240,220,.75) 40%,rgba(255,240,220,0) 70%);transform-origin:50% 70%`;
+          flash.style.cssText = `position:absolute;left:${ballAtX - size * 1.5}px;bottom:${ground}px;width:${size * 3}px;height:${size * 3}px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,240,220,.75) 40%,rgba(255,240,220,0) 70%);transform-origin:50% 70%`;
           fx.appendChild(flash);
           flash.animate([{ opacity: 0, transform: "scale(0.3)" }, { opacity: 1, transform: "scale(1.2)", offset: 0.25 }, { opacity: 0, transform: "scale(2)" }], { duration: 420, easing: "ease-out" }).onfinish = () => flash.remove();
         }
-        ball.animate([{ opacity: 1, transform: `${ball.style.transform} scale(1)` }, { opacity: 0, transform: `${ball.style.transform} scale(0.6)` }], { duration: 300, delay: reduce ? 0 : 450, fill: "forwards" }).onfinish = () => { ball.style.display = "none"; };
-        startIntros(RELEASE_MS + 500);
+        // Once they're out it closes and rolls off to wait in the corner (they keep clear of it)
+        dockReserved = true;
+        later(() => {
+          setLid(false);
+          rollBall(dockX(), dockSize(), BALL_DOCK_MS, () => ballReady("out"));
+        }, reduce ? 0 : RELEASE_MS);
+        if (!introsPlayed) {
+          introsPlayed = true;
+          introOver = false;
+          startIntros(RELEASE_MS + 500);
+        }
       };
       if (reduce) return open();
       // A little hop and spin, like it's been thrown, then it pops open
       ballBody.animate(
-        [{ transform: "translateY(0) rotate(0deg)" }, { transform: `translateY(${-ballSize() * 1.2}px) rotate(-200deg)`, offset: 0.5 }, { transform: "translateY(0) rotate(-360deg)" }],
+        [{ transform: "translateY(0) rotate(0deg)" }, { transform: `translateY(${-ballAtSize * 1.2}px) rotate(-200deg)`, offset: 0.5 }, { transform: "translateY(0) rotate(-360deg)" }],
         { duration: BALL_HOP_MS, easing: "ease-in-out" },
       );
       later(open, BALL_HOP_MS);
     };
 
-    placeBall();
+    /** A red recall beam from the ball out to a Pokémon */
+    const beam = (c: CharacterState) => {
+      const bx = ballAtX, bBottom = ground + ballAtSize / 2;
+      const to = point(c, c.def.center.x, c.def.center.y);
+      const dx = to.x - bx, dy = to.y - (window.innerHeight - bBottom);
+      const angle = Math.atan2(dy, dx);
+      const el = document.createElement("div");
+      el.style.cssText = `position:absolute;left:${bx}px;bottom:${bBottom - 2}px;width:${Math.hypot(dx, dy)}px;height:4px;border-radius:2px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,96,96,.95),rgba(255,170,170,.7));box-shadow:0 0 10px 3px rgba(255,70,70,.55)`;
+      fx.appendChild(el);
+      const rot = `rotate(${angle.toFixed(3)}rad)`;
+      el.animate(
+        [{ opacity: 0, transform: `${rot} scaleX(0)` }, { opacity: 1, transform: `${rot} scaleX(1)`, offset: 0.25 }, { opacity: 1, transform: `${rot} scaleX(1)`, offset: 0.65 }, { opacity: 0, transform: `${rot} scaleX(0.2)` }],
+        { duration: RECALL_MS + 150, easing: "ease-out" },
+      ).onfinish = () => el.remove();
+    };
+    const recall = () => {
+      if (ballState !== "out") return;
+      ballBusy();
+      introOver = true;
+      if (grab) {
+        grab.c.held = false;
+        grab = null;
+      }
+      setLid(true);
+      const t = performance.now();
+      ordered.forEach((r, i) => {
+        const c = r.c;
+        c.action = null;
+        c.held = false;
+        if (c === jp) jp.leapStart = 0;
+        hideBubble(r);
+        r.hit.style.pointerEvents = "none";
+        r.recallAt = t + (reduce ? 0 : i * RECALL_STAGGER_MS);
+        if (!reduce) later(() => beam(c), i * RECALL_STAGGER_MS);
+      });
+      // In they go: it snaps shut, wobbles three times, clicks, and rolls back out to where it started
+      const inside = reduce ? 0 : RECALL_MS + RECALL_STAGGER_MS + 60;
+      later(() => {
+        setLid(false);
+        if (!reduce) {
+          [0, 1, 2].forEach((n) => later(() => wobble(CAPTURE_WOBBLE_MS), CAPTURE_PAUSE_MS + n * CAPTURE_WOBBLE_GAP_MS));
+          later(() => {
+            for (const dx of [-1, 0, 1]) spawn(SHAPES.star(rand(9, 12)), { x: ballAtX, y: window.innerHeight - ground - ballAtSize }, dx * 18, -22 + Math.abs(dx) * 6, { dur: 900 });
+          }, CAPTURE_CLICK_MS);
+        }
+        later(() => {
+          dockReserved = false;
+          homeSpots();
+          rollBall(ballX(), ballSize(), BALL_DOCK_MS, () => ballReady("waiting"));
+        }, reduce ? 0 : CAPTURE_CLICK_MS + 650);
+      }, inside);
+    };
+
+    // Rolls in from the right edge after the loading screen
+    setBall(document.documentElement.clientWidth + ballSize(), ballSize());
     ball.tabIndex = -1;
-    // Rolls in from the right edge after the loading screen, turning as it goes
     later(() => {
       ball.style.opacity = "1";
-      ball.tabIndex = 0;
-      const dist = document.documentElement.clientWidth + ballSize() - ballX();
-      if (!reduce) {
-        ball.animate(
-          [{ transform: `translate3d(${(ballX() - ballSize() / 2 + dist).toFixed(1)}px,0,0)` }, { transform: ball.style.transform }],
-          { duration: BALL_ROLL_MS, easing: "cubic-bezier(.2,.7,.3,1)" },
-        );
-        ballBody.animate([{ transform: `rotate(${((dist / (Math.PI * ballSize())) * 360).toFixed(0)}deg)` }, { transform: "rotate(0deg)" }], { duration: BALL_ROLL_MS, easing: "cubic-bezier(.2,.7,.3,1)" });
-      }
-      later(() => { if (!released) showHint(true); }, BALL_ROLL_MS + 900);
-      later(() => { if (!released) showHint(false); }, BALL_ROLL_MS + 5500);
-      wobbler = window.setInterval(wobble, 2800);
+      rollBall(ballX(), ballSize(), BALL_ROLL_MS, () => {
+        ballReady("waiting");
+        later(() => { if (ballState === "waiting") showHint(true, HINT_RELEASE); }, 900);
+        later(() => { if (ballState === "waiting") showHint(false); }, 5500);
+      });
     }, APPEAR_DELAY_MS);
-    const onBallEnter = () => { if (!released) { showHint(true); wobble(); } };
-    const onBallLeave = () => { if (!released) showHint(false); };
-    ball.addEventListener("click", release);
+    const onBallClick = () => (ballState === "waiting" ? release() : recall());
+    const onBallEnter = () => {
+      if (ballState === "waiting") { showHint(true, HINT_RELEASE); wobble(); }
+      else if (ballState === "out") showHint(true, HINT_RECALL);
+    };
+    const onBallLeave = () => { if (ballState !== "busy") showHint(false); };
+    ball.addEventListener("click", onBallClick);
     ball.addEventListener("pointerenter", onBallEnter);
     ball.addEventListener("pointerleave", onBallLeave);
+
+    /* ── Back in the ball: hidden, and reset so it comes out fresh next time ── */
+    /** Where the recall beam pulls them: into the ball (x, and its middle's height above the ground) */
+    const recallTo = { get x() { return ballAtX; }, get lift() { return ballAtSize * 0.25; } };
+    const stowAway = (r: Rig) => {
+      const c = r.c;
+      r.root.style.opacity = "0";
+      r.hit.style.pointerEvents = "none";
+      r.art.style.filter = "";
+      r.appearAt = r.recallAt = Infinity;
+      r.fromX = NaN;
+      Object.assign(c, {
+        action: null, held: false, lift: 0, lv: 0, vx: 0, v: 0, offset: 0, amp: 0, happy: 0, sleep: 0, hovered: false,
+        forcedSleepUntil: 0, doodleStart: 0, doodleWoke: 0, leapStart: 0, lastActive: performance.now(),
+      });
+    };
 
     /* ── Jigglypuff hops over Togepi's head to get to its other side ── */
     const leapArc = () => (tg.H + 0.15 * jp.H + 10) / Math.sin(Math.PI * LEAP_RISE);
@@ -647,6 +806,7 @@ export default function Mascots() {
       const { c } = r;
       const { def } = c;
       if (t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS)) return; // still flying out of the ball
+      if (t >= r.recallAt) return; // being called back into it
       const [minX, maxX] = bounds(c);
 
       /* Carried: chases the pointer through the air (a little behind, so it swings) */
@@ -780,6 +940,7 @@ export default function Mascots() {
       // the air being carried or falling (they sort themselves out once it lands)
       if (rigs.some((r) => t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS))) return;
       if (tg.held || jp.held || tg.lift > 0 || jp.lift > 0) return;
+      if (rigs.some((r) => t >= r.recallAt)) return;
       const tgX = tg.x + tg.offset;
       const jpX = jp.x + jp.offset;
       if (jp.leapStart && rigOf(jp).hop > tg.H + rigOf(tg).hop + 0.15 * jp.H) return;
@@ -811,6 +972,12 @@ export default function Mascots() {
       const { def } = c;
       const secs = t / 1000;
       if (t < r.appearAt) return;
+      /* Being called back: 0 → 1 as it's pulled into the ball, then it's gone until it's let out again */
+      const recall = t >= r.recallAt ? Math.min(1, (t - r.recallAt) / RECALL_MS) : 0;
+      if (recall >= 1) {
+        stowAway(r);
+        return;
+      }
       if (r.root.style.opacity !== "1") {
         r.root.style.opacity = "1";
         r.hit.style.pointerEvents = "all"; // can't be hovered or clicked until it's out
@@ -939,6 +1106,15 @@ export default function Mascots() {
         p.raiseL = p.raiseR = p.liftL = p.liftR = p.tiltL = p.tiltR = p.ears = 0;
       }
       if (air) p.hop = c.lift; // carried or falling, it's wherever it is in the air
+      if (recall > 0) {
+        // Pulled down the beam into the ball, shrinking, glowing red
+        const e = recall * recall;
+        p.offset = (recallTo.x - c.x) * e;
+        p.hop = p.hop * (1 - e) + recallTo.lift * e;
+        p.sx *= 1 - 0.92 * e;
+        p.sy *= 1 - 0.92 * e;
+        r.art.style.filter = `sepia(${recall.toFixed(2)}) saturate(${(1 + 5 * recall).toFixed(2)}) hue-rotate(${(-45 * recall).toFixed(0)}deg) brightness(${(1 + 0.4 * recall).toFixed(2)})`;
+      }
       p.sx *= hatch * p.shrink;
       p.sy *= hatch * p.shrink;
       c.offset = p.offset;
@@ -1079,7 +1255,7 @@ export default function Mascots() {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("resize", onResize);
       window.clearInterval(wobbler);
-      ball.removeEventListener("click", release);
+      ball.removeEventListener("click", onBallClick);
       ball.removeEventListener("pointerenter", onBallEnter);
       ball.removeEventListener("pointerleave", onBallLeave);
       unbind.forEach((u) => u());
@@ -1139,18 +1315,18 @@ export default function Mascots() {
           <CharacterArt def={def} />
         </div>
       ))}
-      {/* The Poké Ball they start out in (see release() above) */}
+      {/* The Poké Ball they start out in, and go back into (see release() and recall() above) */}
       <button
         ref={ballRef}
         type="button"
         aria-label="Let Togepi and Jigglypuff out of their Poké Ball"
         data-cursor-pointer
         className="fixed left-0 z-[39] p-0 border-0 bg-transparent rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C4622D] focus-visible:ring-offset-2 print:hidden"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", opacity: 0, width: BALL.desktop, height: BALL.desktop }}
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", opacity: 0, width: BALL.desktop, height: BALL.desktop, transformOrigin: "50% 100%" }}
       >
-        {/* Ground shadow */}
+        {/* Ground shadow, under the ball (the ball is positioned too, and comes after it, so it paints on top) */}
         <span className="absolute left-1/2 -translate-x-1/2 rounded-full" style={{ bottom: -3, width: "90%", height: 6, background: "rgba(28,25,23,0.22)", filter: "blur(2px)" }} />
-        <span data-b="body" className="block w-full h-full" style={{ transformOrigin: "50% 100%" }}>
+        <span data-b="body" className="relative block w-full h-full" style={{ transformOrigin: "50% 100%" }}>
           <svg viewBox="0 0 64 64" className="block w-full h-full overflow-visible">
             <g data-b="base" style={{ transformBox: "fill-box", transformOrigin: "2px 0px" }}>
               <path d="M0,32 A32,32 0 0 0 64,32 Z" fill="#FAF7F2" stroke="#1C1917" strokeWidth="2.5" />
@@ -1173,9 +1349,9 @@ export default function Mascots() {
         className="fixed z-[39] pointer-events-none w-max whitespace-nowrap font-mono-dm text-[11px] lg:text-xs tracking-wide px-3 py-2 rounded-2xl print:hidden"
         style={{ ...BUBBLE_STYLE, top: "auto", transform: "translate(-50%, 6px) scale(0.92)" }}
       >
-        Who's inside? 👀
+        <span data-b="hint">Who&apos;s inside? 👀</span>
         <span
-          className="absolute -bottom-[5px] left-1/2 w-2.5 h-2.5 -ml-[5px] rotate-45"
+          className="absolute -bottom-[5px] w-2.5 h-2.5 -ml-[5px] rotate-45"
           style={{ background: "#FFFDF8", borderRight: "1px solid rgba(196,98,45,0.25)", borderBottom: "1px solid rgba(196,98,45,0.25)" }}
         />
       </div>
