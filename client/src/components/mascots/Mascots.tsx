@@ -13,6 +13,7 @@
 import { Fragment, useEffect, useRef, type SVGProps } from "react";
 import { jigglypuff } from "./jigglypuff";
 import { SHAPES, makePathSpawner, makeSpawner, rand } from "./particles";
+import { makePerches, topAt, type Surface } from "./perches";
 import { togepi } from "./togepi";
 import type { CharacterDef, CharacterId, CharacterState, Ctx, Ellipse, EyeDef, LimbDef, LimbKey, Pose } from "./types";
 
@@ -70,6 +71,24 @@ const BOUNCE_SPEED = 450;
 const LAND_MS = 260;
 /** Closest (px) any part of a mascot gets to the top of the screen (or the mobile top bar) */
 const CEILING_GAP = 8;
+
+// Up on the page (see perches.ts)
+/** At the edge of what it's on, wanting to get down: how long it peeks over before hopping off (Togepi;
+    Jigglypuff, following Togepi, doesn't dither as long) */
+const EDGE_PEEK_MS = 900;
+/** Crouching before a jump */
+const CROUCH_MS = 220;
+/** How far (px) to the side Jigglypuff will jump from to get up beside Togepi */
+const JUMP_REACH = 140;
+/** How far (px) a jump rises above the higher of where it starts and lands */
+const JUMP_CLEAR = 50;
+/** Carried up faster than this (px/s) by the page scrolling, and it wobbles to keep its balance… */
+const SWAY_SPEED = 250;
+/** …and if what it's on stops dead while going up faster than this, it's tossed up into the air */
+const TOSS_SPEED = 900;
+const TOSS_MAX = 950;
+/** …and if it's whipped down away from under it faster than this, it's left in the air for a moment */
+const DROP_SPEED = 700;
 
 // Walking (px/s²)
 const ACCEL = 260;
@@ -264,6 +283,15 @@ interface Rig {
   recallAt: number;
   /** This frame's hop (px), so the bubble rises with the character instead of being jumped into */
   hop: number;
+  /** The top of what it's standing on this frame (null on the ground) */
+  surface: Surface | null;
+  /** Its next jump, once it's crouched: where to, and who to land beside (their level) or null for the ground */
+  jump: { x: number; to: CharacterState | null } | null;
+  /** Which edge it's peeking over (-1 left, 1 right) */
+  edgeDir: number;
+  /** In the air from a jump: what it jumped off (it won't come straight back down on that), and who it's
+      jumping up beside (it lands only at their height) */
+  flight: { from: Element | null; to: CharacterState | null } | null;
 }
 
 export default function Mascots() {
@@ -296,6 +324,7 @@ export default function Mascots() {
         action: null, offset: 0, nextZ: 0, nextHeart: 0, clicks: 0, lastMove: null, doodleStart: 0, doodleWoke: 0,
         leapStart: 0, leapFrom: 0, leapSide: 0,
         held: false, lift: 0, lv: 0, vx: 0, grabDX: 0, grabDY: 0, grabPX: 0, grabPY: 0, landAt: -1e9, landHard: 0, nextTrail: 0,
+        perch: null, stand: 0, jumping: false, edgeAt: 0, crouchAt: 0, pv: 0,
       };
       return {
         c, root, q, limbs, bubble,
@@ -315,6 +344,10 @@ export default function Mascots() {
         bubbleTail: bubble.lastElementChild as HTMLSpanElement,
         bubbleUntil: 0,
         hop: 0,
+        surface: null,
+        jump: null,
+        edgeDir: 0,
+        flight: null,
         appearAt: Infinity, // set when they're let out of the Poké Ball
         fromX: NaN,
         recallAt: Infinity,
@@ -342,10 +375,37 @@ export default function Mascots() {
     let dockReserved = false;
     /** Width of the fixed sidebar down the left on desktop (nothing goes under it) */
     const sidebar = () => (desktop.matches ? 80 : 0);
-    const bounds = (c: CharacterState) => {
+    /** Leftmost / rightmost x it can be at on the ground */
+    const floorBounds = (c: CharacterState) => {
       const left = sidebar();
       const right = dockReserved ? (desktop.matches ? BALL_DOCK.desktop : BALL_DOCK.mobile) + 14 : 0;
       return [left + c.W / 2 + 12, document.documentElement.clientWidth - c.W / 2 - 12 - right] as const;
+    };
+    /** Where it can walk on top of something: its feet stay on, though it can lean out over the edge a bit */
+    const walkRange = (c: CharacterState, s: Surface) => {
+      const [a, b] = floorBounds(c);
+      const inset = Math.min(c.W * 0.22, (s.right - s.left) / 2);
+      return [Math.max(a, s.left + inset), Math.min(b, s.right - inset)] as const;
+    };
+    /** Where it can walk now: along the ground, or along what it's standing on */
+    const bounds = (c: CharacterState) => {
+      const s = rigOf(c).surface;
+      return c.perch && s ? walkRange(c, s) : floorBounds(c);
+    };
+    const perches = makePerches();
+    // Text is measured in the site's fonts, so start again once they've loaded
+    const onFonts = () => perches.reset();
+    document.fonts?.addEventListener("loadingdone", onFonts);
+    /** In the air (not held): dropped, thrown or jumping */
+    const aloft = (c: CharacterState) => !c.held && !c.perch && (c.lift > 0 || c.lv > 0);
+    /** Both on the ground, or standing at the same height on overlapping things (a card and the picture
+        flush with its top count as one) */
+    const sameLevel = (a: CharacterState, b: CharacterState) => {
+      if (!a.perch || !b.perch) return !a.perch && !b.perch;
+      const sa = rigOf(a).surface, sb = rigOf(b).surface;
+      if (!sa || !sb || sa.left > sb.right || sb.left > sa.right) return false;
+      const x = (Math.max(sa.left, sb.left) + Math.min(sa.right, sb.right)) / 2;
+      return Math.abs(topAt(sa, x) - topAt(sb, x)) < 4;
     };
     /** The top edge they mustn't cross: the top of the screen, or the bottom of a fixed top bar (mobile nav) */
     let ceiling = CEILING_GAP;
@@ -366,8 +426,8 @@ export default function Mascots() {
     /** Which side of Togepi Jigglypuff is on (remembered, in case they're ever exactly level) */
     let buddySide = -1;
 
-    tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...bounds(tg));
-    jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
+    tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...floorBounds(tg));
+    jp.x = jp.tx = clamp(tg.x - buddyGap(), ...floorBounds(jp));
     let mx = tg.x;
     let my = 0;
     let pointerSeen = false;
@@ -382,7 +442,7 @@ export default function Mascots() {
       const lx = level.x + dx * Math.cos(a) - dy * Math.sin(a);
       const ly = level.y + dx * Math.sin(a) + dy * Math.cos(a);
       const fx2 = c.facing >= 0 ? w - lx : lx; // same rule as the flip in draw()
-      return { x: c.x + c.offset - c.W / 2 + (fx2 / w) * c.W, y: window.innerHeight - ground - c.H + (ly / h) * c.H };
+      return { x: c.x + c.offset - c.W / 2 + (fx2 / w) * c.W, y: window.innerHeight - ground - c.stand - c.H + (ly / h) * c.H };
     };
 
     /* ── Speech bubbles ── */
@@ -408,14 +468,16 @@ export default function Mascots() {
       r.bubble.style.left = `${left}px`;
       // Pinned to the bottom of the screen like the mascots, so it stays with them when a phone's
       // address bar hides or shows
-      r.bubble.style.bottom = `${window.innerHeight - (point(c, c.def.w / 2, 0).y - r.hop - 10)}px`;
+      // Never up off the top of the screen (or behind the mobile nav) when it's perched up high
+      const bottom = window.innerHeight - (point(c, c.def.w / 2, 0).y - r.hop - 10);
+      r.bubble.style.bottom = `${Math.min(bottom, window.innerHeight - ceiling - r.bubble.offsetHeight)}px`;
       r.bubbleTail.style.left = `${clamp(cx - left, 14, bw - 14)}px`;
     };
 
     /* ── Moves ── */
     const ctx: Ctx = {
       get now() { return now; },
-      reduce, touch, world, spawn, spawnPath, say, point, later, bounds,
+      reduce, touch, world, spawn, spawnPath, say, point, later, bounds, sameLevel,
       useMove: (c, key, text) => {
         const move = c.def.moves[key];
         if (!move) return;
@@ -459,6 +521,11 @@ export default function Mascots() {
       c.forcedSleepUntil = 0;
       c.sleep = 0;
       c.v = c.lv = c.vx = 0;
+      c.perch = null;
+      c.stand = 0;
+      c.jumping = false;
+      c.edgeAt = c.crouchAt = 0;
+      rigOf(c).surface = rigOf(c).jump = rigOf(c).flight = null;
       // Hold it by the spot that was grabbed, so it doesn't jump to the pointer
       c.grabDX = x - c.x;
       c.grabDY = window.innerHeight - ground - c.lift - y;
@@ -481,18 +548,28 @@ export default function Mascots() {
       }
       // Togepi stays put while the cursor is on either mascot, so it doesn't walk onto Jigglypuff
       if (e.pointerType === "mouse" && !tg.hovered && !jp.hovered) {
-        tg.tx = clamp(mx, ...bounds(tg));
+        // Up on something, it stops beside the cursor rather than right under it when the cursor's just
+        // above it, so it doesn't get in the way of whatever's being pointed at there
+        const feet = window.innerHeight - ground - tg.stand;
+        const near = tg.perch && my > feet - tg.H * 1.4 && my < feet + 10;
+        tg.tx = clamp(near ? mx + (tg.x < mx ? -1 : 1) * tg.W * 0.75 : mx, ...floorBounds(tg));
         if (now < tg.forcedSleepUntil) jpChase = mx;
       }
     };
+    /** A touch that isn't on a mascot: only a tap (not the start of a scroll) sends Togepi there */
+    let tap: { id: number; x: number; y: number } | null = null;
     const onPointerDown = (e: PointerEvent) => {
       onPointerMove(e);
-      if (e.pointerType !== "mouse" && !(e.target as Element).closest?.("[data-mascot-hit]")) {
-        tg.tx = clamp(mx, ...bounds(tg));
-        if (now < tg.forcedSleepUntil) jpChase = mx;
-      }
+      if (e.pointerType !== "mouse" && !(e.target as Element).closest?.("[data-mascot-hit]")) tap = { id: e.pointerId, x: e.clientX, y: e.clientY };
     };
     const onPointerUp = (e: PointerEvent) => {
+      if (tap && e.pointerId === tap.id) {
+        if (e.type === "pointerup" && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 12) {
+          tg.tx = clamp(e.clientX, ...floorBounds(tg));
+          if (now < tg.forcedSleepUntil) jpChase = e.clientX;
+        }
+        tap = null;
+      }
       if (!grab || e.pointerId !== grab.id) return;
       if (grab.started) {
         // Let go: it keeps the speed it was being carried at, so it can be tossed
@@ -511,6 +588,7 @@ export default function Mascots() {
     window.addEventListener("pointercancel", onPointerUp);
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     const onResize = () => {
+      perches.reset();
       resize();
       measureCeiling();
       if (ballState === "out") setBall(dockX(), dockSize());
@@ -667,8 +745,8 @@ export default function Mascots() {
     };
     /** Where they spawn from the ball: back to their usual spots, either side of the middle of the ground */
     const homeSpots = () => {
-      tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...bounds(tg));
-      jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
+      tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...floorBounds(tg));
+      jp.x = jp.tx = clamp(tg.x - buddyGap(), ...floorBounds(jp));
     };
 
     /** Pops open where it is and lets them out, then closes and rolls off to wait in the corner */
@@ -819,7 +897,7 @@ export default function Mascots() {
       if (then === "recall") return callBack();
       // They come out either side of where it landed (moved in from the edge if there isn't room there)
       const half = buddyGap() / 2;
-      const mid = clamp(ballAtX, bounds(jp)[0] + half, bounds(tg)[1] - half);
+      const mid = clamp(ballAtX, floorBounds(jp)[0] + half, floorBounds(tg)[1] - half);
       tg.x = tg.tx = mid + half;
       jp.x = jp.tx = mid - half;
       letOut();
@@ -910,9 +988,11 @@ export default function Mascots() {
       r.art.style.filter = "";
       r.appearAt = r.recallAt = Infinity;
       r.fromX = NaN;
+      r.surface = r.jump = r.flight = null;
       Object.assign(c, {
         action: null, held: false, lift: 0, lv: 0, vx: 0, v: 0, offset: 0, amp: 0, happy: 0, sleep: 0, hovered: false,
         forcedSleepUntil: 0, doodleStart: 0, doodleWoke: 0, leapStart: 0, lastActive: performance.now(),
+        perch: null, stand: 0, jumping: false, edgeAt: 0, crouchAt: 0, pv: 0,
       });
     };
 
@@ -926,16 +1006,89 @@ export default function Mascots() {
       spawn(SHAPES.dust(14), point(jp, 165, 390), toSide * 10, -8, { dur: 500 });
     };
 
+    /* ── Up on the page ── */
+    /** The page's scroll position this frame and last, so a fall can tell what it passed on the way down
+        (the page moves under them as it scrolls) */
+    let scrollNow = window.scrollY;
+    let scrollPrev = scrollNow;
+    /** Puffs of dust from under its feet, wherever they are (on something, or about to be) */
+    const dustUp = (c: CharacterState, feetLift: number) => {
+      if (reduce) return;
+      const rise = feetLift - c.stand;
+      c.def.soles.forEach((sole, i) => {
+        const at = point(c, sole.x, sole.y);
+        spawn(SHAPES.dust(rand(12, 16)), { x: at.x, y: at.y - rise }, i ? 16 : -16, -10, { dur: 550 });
+      });
+    };
+    /** Takes off on an arc that comes down at x, `lift` px above the ground (beside `to`, if it's joining them) */
+    const jumpTo = (r: Rig, x: number, lift: number, to: CharacterState | null) => {
+      const { c } = r;
+      const from = c.lift;
+      r.flight = { from: c.perch?.el ?? null, to };
+      const apex = clamp(Math.max(from, lift) + JUMP_CLEAR + Math.abs(x - c.x) * 0.12, Math.max(from, lift), Math.max(from, maxLift(c)));
+      // (a few px extra: stepping the arc frame by frame tops out a little short of the exact peak)
+      const up = Math.sqrt(2 * GRAVITY * (apex - from + 6));
+      const secs = up / GRAVITY + Math.sqrt((2 * (apex - lift)) / GRAVITY);
+      dustUp(c, from);
+      c.perch = null;
+      r.surface = null;
+      c.stand = 0;
+      c.lv = up;
+      c.vx = secs > 0 ? (x - c.x) / secs : 0;
+      c.v = 0;
+      c.jumping = true;
+      c.edgeAt = c.crouchAt = 0;
+      r.jump = null;
+    };
+    /** Stops standing on what it was on and drops from where it is */
+    const fallOff = (r: Rig, lv: number, vx: number) => {
+      const { c } = r;
+      c.perch = null;
+      r.surface = null;
+      c.stand = 0;
+      c.lv = lv;
+      c.vx = vx;
+      c.jumping = false;
+      c.edgeAt = c.crouchAt = 0;
+      r.jump = r.flight = null;
+    };
+    /** Standing on something on the page: it goes wherever that goes as the page scrolls. It steps off
+        onto the ground if that's brought down to it, slips off if it's carried up off the top of the
+        screen (or vanishes), and is tossed up if it's going up fast and stops dead */
+    const ride = (r: Rig, dt: number) => {
+      const { c } = r;
+      const s = perches.surfaceOf(c.perch!, c.x);
+      if (!s || c.x < s.left - 2 || c.x > s.right + 2) return fallOff(r, 0, c.v);
+      const h = window.innerHeight - ground - topAt(s, c.x);
+      if (h > maxLift(c)) return fallOff(r, clamp(c.pv, 0, TOSS_MAX), c.v);
+      if (h <= 0) {
+        fallOff(r, 0, 0);
+        c.lift = 0;
+        c.x = clamp(c.x, ...floorBounds(c));
+        return;
+      }
+      const v = dt > 0 ? (h - c.lift) / dt : 0;
+      if (v < -DROP_SPEED && !reduce) return fallOff(r, 0, c.v); // whipped away from under it: left in the air a moment
+      if (c.pv > TOSS_SPEED && v < c.pv * 0.25 && !reduce) {
+        c.lift = h;
+        return fallOff(r, Math.min(c.pv * 0.7, TOSS_MAX), c.v);
+      }
+      c.pv += (v - c.pv) * Math.min(1, dt * 12);
+      if (r.surface) c.x += s.left - r.surface.left; // slid sideways with it
+      r.surface = s;
+      c.lift = c.stand = h;
+    };
+
     /* ── One character, one frame: walking ── */
     const move = (r: Rig, t: number, dt: number) => {
       const { c } = r;
       const { def } = c;
       if (t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS)) return; // still flying out of the ball
       if (t >= r.recallAt) return; // being called back into it
-      const [minX, maxX] = bounds(c);
 
       /* Carried: chases the pointer through the air (a little behind, so it swings) */
       if (c.held) {
+        const [minX, maxX] = floorBounds(c);
         const k = Math.min(1, dt * CARRY_FOLLOW);
         const tx = clamp(c.grabPX - c.grabDX, minX, maxX);
         const tl = clamp(window.innerHeight - ground - c.grabPY - c.grabDY, 0, maxLift(c));
@@ -952,40 +1105,79 @@ export default function Mascots() {
         c.amp += (0 - c.amp) * Math.min(1, dt * 8);
         return;
       }
-      /* Dropped (or tossed): falls, drifting with the speed it was let go at, bouncing off the edges */
-      if (c.lift > 0 || c.lv > 0) {
+      if (c.perch) ride(r, dt);
+      /* Dropped, tossed or jumping: falls, drifting with the speed it was let go at (a jump flies true),
+         bouncing off the edges, until it comes down on something or the ground */
+      if (!c.perch && (c.lift > 0 || c.lv > 0)) {
+        const [minX, maxX] = floorBounds(c);
+        const feet = (lift: number) => window.innerHeight - ground - lift;
+        // Where its feet were last frame, against the page as it is now (it may have scrolled)
+        const y0 = feet(c.lift) + scrollPrev - scrollNow;
         c.lv -= GRAVITY * dt;
         c.lift = Math.min(c.lift + c.lv * dt, maxLift(c));
         if (c.lift >= maxLift(c) && c.lv > 0) c.lv = 0; // tossed up into the ceiling
         c.x += c.vx * dt;
-        c.vx *= Math.exp(-dt * 0.8);
+        if (!c.jumping) c.vx *= Math.exp(-dt * 0.8);
         if (c.x < minX || c.x > maxX) {
           c.x = clamp(c.x, minX, maxX);
           c.vx *= -0.5;
         }
-        if (c.lift <= 0) {
-          const impact = -c.lv;
-          c.lift = 0;
-          c.landAt = t;
-          c.landHard = clamp(impact / 1600, 0.25, 1);
-          if (impact > BOUNCE_SPEED) {
-            c.lv = impact * 0.32;
-          } else {
-            c.lv = c.vx = 0;
-          }
-          if (!reduce) {
-            spawn(SHAPES.dust(rand(12, 16)), point(c, def.soles[0].x, def.soles[0].y), -16, -10, { dur: 550 });
-            spawn(SHAPES.dust(rand(12, 16)), point(c, def.soles[1].x, def.soles[1].y), 16, -10, { dur: 550 });
-          }
-        }
-        c.tx = c.x;
+        if (!c.jumping) c.tx = c.x; // dropped: it stays where it lands (a jump's going somewhere, though)
         c.v = 0;
         c.lastActive = t;
         c.amp += (0 - c.amp) * Math.min(1, dt * 8);
+        const y1 = feet(Math.max(0, c.lift));
+        const f = c.jumping ? r.flight : null;
+        const hit = y1 > y0 ? perches.find(c.x, y0, y1, (s, el) => {
+          const [a, b] = walkRange(c, s);
+          const h = window.innerHeight - ground - topAt(s, c.x);
+          if (h <= 0 || h > maxLift(c) || c.x < a - 1 || c.x > b + 1) return false;
+          // Not straight back onto what it jumped off, and when joining someone, only where they are
+          if (f?.from && (f.from === el || f.from.contains(el) || el.contains(f.from))) return false;
+          if (f?.to?.perch && !f.to.held && Math.abs(h - f.to.stand) > 8) return false;
+          return true;
+        }) : null;
+        if (!hit && c.lift > 0) return;
+        const impact = Math.max(0, -c.lv);
+        c.lift = hit ? window.innerHeight - ground - topAt(hit.surface, c.x) : 0;
+        c.landAt = t;
+        c.landHard = clamp(impact / 1600, 0.25, 1);
+        dustUp(c, c.lift);
+        if (impact > BOUNCE_SPEED && !c.jumping) {
+          c.lv = impact * 0.32; // bounces (and comes down again on whatever it hit)
+          return;
+        }
+        c.lv = c.vx = c.pv = 0;
+        c.jumping = false;
+        r.flight = null;
+        if (hit) {
+          c.perch = hit.perch;
+          r.surface = hit.surface;
+          c.stand = c.lift;
+        }
         return;
       }
+      const [minX, maxX] = bounds(c);
       const busy = !!c.action;
       const forcedAsleep = t < c.forcedSleepUntil;
+      /** Up on something, it may hop down off the edge to get where it's going (Jigglypuff only when
+          she's not up there with Togepi) */
+      let mayHop = c === tg;
+
+      /* Crouched, about to jump */
+      if (c.crouchAt) {
+        c.v = 0;
+        c.amp += (0 - c.amp) * Math.min(1, dt * 8);
+        c.lastActive = t;
+        if (busy || forcedAsleep || !r.jump) {
+          c.crouchAt = 0;
+          r.jump = null;
+        } else if (t - c.crouchAt >= CROUCH_MS) {
+          const to = r.jump.to;
+          jumpTo(r, r.jump.x, to && to.perch && !aloft(to) && !to.held ? to.stand : 0, to);
+        }
+        return;
+      }
 
       if (c === jp && jp.leapStart) {
         const k = (t - jp.leapStart) / LEAP_MS;
@@ -1023,6 +1215,34 @@ export default function Mascots() {
           return;
         }
         jp.tx = (jpChase - tg.x) * side < buddyGap() ? tg.x + side * buddyGap() : jpChase;
+      } else if (c === jp && !busy && !forcedAsleep && !tg.held && !aloft(tg) && !sameLevel(jp, tg)) {
+        /* Not up (or down) where Togepi is: she gets to Togepi's level, beside it */
+        const side = Math.sign(jp.x - tg.x) || buddySide;
+        const s = rigOf(tg).surface;
+        if (!tg.perch || !s) {
+          // Togepi's on the ground: she heads off the nearer edge toward it and hops down
+          const want = tg.x + side * buddyGap();
+          jp.tx = want >= minX && want <= maxX ? (want - minX < maxX - want ? minX - 100 : maxX + 100) : want;
+          mayHop = true;
+        } else {
+          // Togepi's up on something: she goes as near as she can get to a spot beside it, and jumps up
+          const [a, b] = walkRange(jp, s);
+          let land = clamp(tg.x + side * buddyGap(), a, b);
+          // Short of room on her side, she lands at whichever end has more and nudges Togepi along
+          if (Math.abs(land - tg.x) < minGap()) land = tg.x - a > b - tg.x ? a : b;
+          if (b - a < minGap() || tg.stand > maxLift(jp) - 12) {
+            jp.tx = tg.x + side * buddyGap(); // no room up there (or it's too near the top): she waits by it
+            if (jp.perch) mayHop = true;
+          } else {
+            jp.tx = land;
+            const reach = clamp(land, minX, maxX);
+            // Near enough, she takes a running jump (it carries her the rest of the way)
+            if (Math.abs(jp.x - reach) < JUMP_REACH && !jp.hovered && jp.sleep < 0.5 && !reduce) {
+              jp.crouchAt = t;
+              r.jump = { x: land, to: tg };
+            }
+          }
+        }
       } else if (c === jp && !busy && !forcedAsleep) {
         const side = Math.sign(jp.x - tg.x) || buddySide;
         const ideal = tg.x + tg.v * 0.5 + side * buddyGap();
@@ -1035,12 +1255,34 @@ export default function Mascots() {
           startLeap(t, -side);
           return;
         }
+        // Up on something with no room to hop over Togepi, she gets out of its way by hopping off the end
+        if (jp.perch && (side < 0 ? jp.x - minX : maxX - jp.x) < 12 && pushing && !jp.hovered && jp.sleep < 0.5 && !reduce) {
+          jp.crouchAt = t;
+          r.jump = { x: clamp((side < 0 ? minX : maxX) + side * (jp.W * 0.5 + 40), ...floorBounds(jp)), to: null };
+          return;
+        }
       }
-      c.tx = clamp(c.tx, minX, maxX);
+      if (c === jp && jpChase !== null && !sameLevel(jp, tg)) mayHop = true;
+      const goal = clamp(c.tx, minX, maxX);
+
+      /* Up on something and wanting to be past its end: goes to the edge, peeks over, and hops down */
+      const past = c.tx < minX - def.walk.startDist ? -1 : c.tx > maxX + def.walk.startDist ? 1 : 0;
+      if (c.perch && mayHop && past && Math.abs(c.x - goal) < STOP_DIST + 3 && !busy && !forcedAsleep && !c.hovered && c.sleep < 0.5 && !reduce) {
+        if (!c.edgeAt || r.edgeDir !== past) {
+          c.edgeAt = t;
+          r.edgeDir = past;
+        }
+        if (t - c.edgeAt > (c === tg ? EDGE_PEEK_MS : EDGE_PEEK_MS * 0.3)) {
+          c.crouchAt = t;
+          r.jump = { x: clamp(goal + past * (c.W * 0.5 + 40), ...floorBounds(c)), to: null };
+        }
+      } else c.edgeAt = 0;
 
       /* Walking: accelerate toward the target, brake so it arrives without overshooting */
-      const dist = c.tx - c.x;
-      const walking = !busy && !c.hovered && !reduce && !forcedAsleep && (crowded || Math.abs(c.v) > 1 || Math.abs(dist) > def.walk.startDist);
+      const dist = goal - c.x;
+      // (heading for an edge to hop off, it goes all the way, however close it is)
+      const toEdge = !!c.perch && mayHop && past !== 0 && Math.abs(dist) > STOP_DIST;
+      const walking = !busy && !c.hovered && !reduce && !forcedAsleep && (crowded || toEdge || Math.abs(c.v) > 1 || Math.abs(dist) > def.walk.startDist);
       if (walking) {
         const maxSpeed = def.walk.maxSpeed * (crowded ? 1.4 : 1);
         const want = Math.sign(dist) * Math.min(maxSpeed, Math.sqrt(2 * DECEL * Math.max(0, Math.abs(dist) - STOP_DIST)));
@@ -1064,7 +1306,7 @@ export default function Mascots() {
       // Not while they're flying out of the Poké Ball (they both start inside it), or while one's in
       // the air being carried or falling (they sort themselves out once it lands)
       if (rigs.some((r) => t < r.appearAt + (Number.isNaN(r.fromX) ? 0 : RELEASE_MS))) return;
-      if (tg.held || jp.held || tg.lift > 0 || jp.lift > 0) return;
+      if (tg.held || jp.held || aloft(tg) || aloft(jp) || !sameLevel(tg, jp)) return;
       if (rigs.some((r) => t >= r.recallAt)) return;
       const tgX = tg.x + tg.offset;
       const jpX = jp.x + jp.offset;
@@ -1086,8 +1328,15 @@ export default function Mascots() {
       }
       if (rest > 0.01) {
         const [tMin, tMax] = bounds(tg);
-        tg.x = clamp(tg.x - side * rest, tMin, tMax);
+        const nx = clamp(tg.x - side * rest, tMin, tMax);
+        rest -= (tg.x - nx) * side;
+        tg.x = nx;
         tg.v = 0;
+      }
+      // Still not enough room for both up on something: Jigglypuff hops down out of the way
+      if (rest > 0.5 && jp.perch && movable && !jp.crouchAt && !reduce) {
+        jp.crouchAt = t;
+        rigOf(jp).jump = { x: clamp(jp.x + side * (jp.W + 40), ...floorBounds(jp)), to: null };
       }
     };
 
@@ -1112,7 +1361,7 @@ export default function Mascots() {
       const forcedAsleep = t < c.forcedSleepUntil;
 
       /* Facing: the way it walks, otherwise toward the cursor (with a dead zone so it doesn't flip-flop) */
-      const air = c.held || c.lift > 0;
+      const air = c.held || aloft(c);
       if (air && Math.abs(c.vx) > 80) c.wantFacing = Math.sign(c.vx);
       else if (Math.abs(c.v) > 6) c.wantFacing = Math.sign(c.v);
       else if (!busy && !c.leapStart && c.sleep < 0.5 && Math.abs(mx - c.x) > c.W) c.wantFacing = Math.sign(mx - c.x);
@@ -1195,8 +1444,44 @@ export default function Mascots() {
         p.spin += (1 - flight) * 25 * Math.sign(c.x - r.fromX);
       }
 
+      /* Up on something: crouching to jump, peeking over the edge, or keeping its balance as the page
+         carries it along */
+      if (c.crouchAt) {
+        const k = smooth((t - c.crouchAt) / CROUCH_MS);
+        p.hop = p.rot = 0;
+        p.sy *= 1 - 0.14 * k;
+        p.sx *= 1 + 0.08 * k;
+        p.raiseL = p.raiseR = -12 * k;
+        p.tiltL = p.tiltR = 0;
+      } else if (c.edgeAt && c.perch) {
+        const k = smooth((t - c.edgeAt) / 300);
+        p.rot += r.edgeDir * 7 * k;
+        p.raiseL += (25 + Math.sin(secs * 9) * 10) * k;
+        p.raiseR += (25 + Math.sin(secs * 9 + 2) * 10) * k;
+        // Looks down over the edge, at where it's going
+        const foot = point(c, def.feet.x, def.feet.y);
+        p.look = { x: foot.x + r.edgeDir * 80, y: foot.y + 140 };
+      }
+      if (c.perch && Math.abs(c.pv) > SWAY_SPEED && !reduce) {
+        const k = clamp((Math.abs(c.pv) - SWAY_SPEED) / 900, 0, 1);
+        p.raiseL += 60 * k;
+        p.raiseR += 60 * k;
+        p.rot += Math.sin(secs * 13) * 6 * k;
+        p.eye = "open";
+      }
+
       /* In the air: dangling from the pointer, swinging with its speed, legs kicking with glee */
-      if (air) {
+      if (air && c.jumping) {
+        // Jumping: arms up, toes pointed, all smiles
+        p.rot = 0;
+        p.spin = clamp(c.vx * 0.02, -12, 12);
+        p.raiseL = p.raiseR = 60;
+        p.tiltL = p.tiltR = 18;
+        p.liftL = p.liftR = 0;
+        p.eye = "happy";
+        const k = clamp(-c.lv / 900, 0, 1); // stretches out on the way up, and as it comes down
+        p.sy *= 1 + 0.06 * Math.max(k, clamp(c.lv / 900, 0, 1));
+      } else if (air) {
         p.rot = 0;
         p.spin = clamp(c.vx * 0.035, -28, 28) + Math.sin(secs * 3.2) * 5;
         p.eye = "happy";
@@ -1231,8 +1516,14 @@ export default function Mascots() {
         p.raiseL = p.raiseR = p.liftL = p.liftR = p.tiltL = p.tiltR = p.ears = 0;
       }
       if (air) p.hop = c.lift; // carried or falling, it's wherever it is in the air
+      /** How high what it's standing on is (the whole picture's lifted that much, shadow and all) */
+      let stand = c.stand;
+      // Rolling or leaning along a sloping top edge, it stays on the edge where it's drawn
+      if (c.perch && r.surface && p.offset) stand += topAt(r.surface, c.x) - topAt(r.surface, c.x + p.offset);
       if (recall > 0) {
         // Pulled down the beam into the ball, shrinking, glowing red
+        p.hop += stand;
+        stand = 0;
         const e = recall * recall;
         p.offset = (recallTo.x - c.x) * e;
         p.hop = p.hop * (1 - e) + recallTo.lift * e;
@@ -1243,7 +1534,7 @@ export default function Mascots() {
       p.sx *= hatch * p.shrink;
       p.sy *= hatch * p.shrink;
       c.offset = p.offset;
-      r.hop = p.hop;
+      r.hop = p.hop + stand - c.stand;
 
       /* Blink */
       if (t > c.blinkAt && p.eye === "open") { c.blinkUntil = t + 130; c.blinkAt = t + rand(2200, 6000); }
@@ -1251,7 +1542,7 @@ export default function Mascots() {
 
       /* Render */
       const { feet, center } = def;
-      r.root.style.transform = `translate3d(${(c.x + c.offset - c.W / 2).toFixed(2)}px,0,0)`;
+      r.root.style.transform = `translate3d(${(c.x + c.offset - c.W / 2).toFixed(2)}px,${(-stand).toFixed(2)}px,0)`;
       // The artwork faces left: mirrored when facing right
       const flip = c.facing < 0 ? 1 : -1;
       const spin = p.spin * Math.sign(flip); // keep the on-screen roll direction when mirrored
@@ -1262,11 +1553,11 @@ export default function Mascots() {
       place();
       // Never past the top of the screen, whatever the pose (puffed up, tilted, mid-leap…): when it's up
       // high, measure where it's actually drawn and bring it down if any of it pokes over the top
-      if (p.hop > 0 && p.hop + c.H * 1.6 > window.innerHeight - ground - ceiling) {
+      if (p.hop > 0 && stand + p.hop + c.H * 1.6 > window.innerHeight - ground - ceiling) {
         const over = ceiling - r.body.getBoundingClientRect().top;
         if (over > 0) {
           p.hop = Math.max(0, p.hop - over);
-          r.hop = p.hop;
+          r.hop = p.hop + stand - c.stand;
           if (air) {
             c.lift = Math.min(c.lift, p.hop);
             if (c.lv > 0) c.lv = 0;
@@ -1279,7 +1570,8 @@ export default function Mascots() {
       r.shadow.setAttribute("transform", `translate(${feet.x} ${feet.y}) scale(${(sh * flip).toFixed(3)} ${sh.toFixed(3)}) translate(${-feet.x} ${-feet.y})`);
       r.shadow.style.opacity = String(0.3 + 0.7 * sh);
       // The hit area goes up with it in the air, so it can be caught mid-fall
-      r.hit.setAttribute("transform", c.lift > 0 ? `translate(0 ${(-(c.lift * def.h) / c.H).toFixed(1)})` : "translate(0 0)");
+      const rise = c.lift - c.stand;
+      r.hit.setAttribute("transform", rise > 0 ? `translate(0 ${(-(rise * def.h) / c.H).toFixed(1)})` : "translate(0 0)");
 
       // Left limbs lift clockwise, right limbs anticlockwise
       const limb = (k: LimbKey, angle: number, lift = 0) => {
@@ -1364,10 +1656,12 @@ export default function Mascots() {
       now = t;
       const dt = Math.min(0.05, (t - last) / 1000);
       last = t;
+      scrollNow = window.scrollY;
       for (const r of ordered) move(r, t, dt);
       separate(t);
       for (const r of ordered) draw(r, t, dt);
       ballTick(dt);
+      scrollPrev = scrollNow;
     };
     raf = requestAnimationFrame(tick);
 
@@ -1380,6 +1674,7 @@ export default function Mascots() {
       window.removeEventListener("pointercancel", onPointerUp);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("resize", onResize);
+      document.fonts?.removeEventListener("loadingdone", onFonts);
       window.clearInterval(wobbler);
       ball.removeEventListener("click", onBallClick);
       ball.removeEventListener("pointerdown", onBallDown);
@@ -1438,6 +1733,7 @@ export default function Mascots() {
           key={def.id}
           ref={(el) => { rootRefs.current[def.id] = el; }}
           data-mascot={def.id}
+          data-mascot-ui
           aria-hidden
           className="fixed left-0 z-[39] pointer-events-none print:hidden"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", opacity: 0, transition: "opacity 0.3s ease-out", willChange: "transform" }}
@@ -1449,6 +1745,7 @@ export default function Mascots() {
       <button
         ref={ballRef}
         type="button"
+        data-mascot-ui
         aria-label="Let Togepi and Jigglypuff out of their Poké Ball"
         data-cursor-pointer
         className="fixed left-0 z-[39] p-0 border-0 bg-transparent rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C4622D] focus-visible:ring-offset-2 print:hidden"
@@ -1475,6 +1772,7 @@ export default function Mascots() {
       </button>
       <div
         ref={hintRef}
+        data-mascot-ui
         aria-hidden
         className="fixed z-[39] pointer-events-none w-max whitespace-nowrap font-mono-dm text-[11px] lg:text-xs tracking-wide px-3 py-2 rounded-2xl print:hidden"
         style={{ ...BUBBLE_STYLE, top: "auto", transform: "translate(-50%, 6px) scale(0.92)" }}
@@ -1487,11 +1785,12 @@ export default function Mascots() {
       </div>
       {/* Particles and speech bubbles come after the mascots so they're drawn on top; all of it stays
           below the nav (z-50) and the mobile menu overlay (z-40) */}
-      <div ref={fxRef} aria-hidden className="fixed inset-0 z-[39] pointer-events-none overflow-hidden print:hidden" />
+      <div ref={fxRef} data-mascot-ui aria-hidden className="fixed inset-0 z-[39] pointer-events-none overflow-hidden print:hidden" />
       {CHARACTERS.map((def) => (
         <div
           key={def.id}
           ref={(el) => { bubbleRefs.current[def.id] = el; }}
+          data-mascot-ui
           aria-hidden
           className="fixed z-[39] pointer-events-none w-max whitespace-nowrap font-mono-dm text-[11px] lg:text-xs tracking-wide px-3 py-2 rounded-2xl print:hidden"
           style={BUBBLE_STYLE}
