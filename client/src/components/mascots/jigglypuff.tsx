@@ -21,6 +21,14 @@ const DOODLE_AT = 4.6;
 const DONE_AT = 6.4;
 /** Togepi must be this close (px) for Jigglypuff to reach its face with the marker */
 const DOODLE_REACH = 260;
+/** The marker scribbles round Togepi's eyes, then its cheeks (Togepi artwork coordinates) */
+const DOODLE_PATH = [
+  [149, 60], [170, 100], [149, 125], [127, 100], [149, 80], [208, 89], [230, 111], [208, 133], [186, 111],
+  [180, 104], [115, 140], [122, 140], [245, 156], [252, 156], [270, 120],
+];
+const DOODLE_MS = 1700;
+/** Between Togepi's eyes (Togepi artwork coordinates), where Jigglypuff glares when it falls asleep on her */
+const TOGEPI_FACE = { x: 180, y: 105 };
 
 const MOUTH = { x: 154, y: 239 };
 
@@ -53,12 +61,7 @@ const moves: Record<string, MoveDef> = {
         if (tg && d.near) {
           tg.doodleStart = ctx.now;
           ctx.say(c, "*scribble scribble* ✍️", 1800);
-          // The marker scribbles round Togepi's eyes, then its cheeks
-          const pts = [
-            [149, 60], [170, 100], [149, 125], [127, 100], [149, 80], [208, 89], [230, 111], [208, 133], [186, 111],
-            [180, 104], [115, 140], [122, 140], [245, 156], [252, 156], [270, 120],
-          ].map(([ax, ay]) => ctx.point(tg, ax, ay));
-          ctx.spawnPath(SHAPES.marker(26), pts, 1700);
+          ctx.spawnPath(SHAPES.marker(26), DOODLE_PATH.map(([ax, ay]) => ctx.point(tg, ax, ay)), DOODLE_MS);
         } else {
           ctx.say(c, "Hmph! 😤", 1500);
         }
@@ -86,11 +89,20 @@ const moves: Record<string, MoveDef> = {
         p.mouth = "pout";
         p.sx *= 1 + 0.16 * huff + Math.sin(at * 9) * 0.02 * huff;
         p.sy *= 1 + 0.14 * huff + Math.sin(at * 9) * 0.02 * huff;
-        if (tg) c.wantFacing = Math.sign(tg.x - c.x) || c.wantFacing;
+        if (tg) {
+          c.wantFacing = Math.sign(tg.x - c.x) || c.wantFacing;
+          p.look = ctx.point(tg, TOGEPI_FACE.x, TOGEPI_FACE.y); // glaring at it, whatever the cursor's doing
+        }
         if (at >= DOODLE_AT) {
-          // Scribbling away
+          // Scribbling away, eyes on the marker as it goes round Togepi's face
           p.raiseL = 45 + Math.sin(at * 30) * 10;
           p.raiseR = 45 + Math.cos(at * 30) * 10;
+          if (tg && c.action!.data.near) {
+            const k = clamp((at - DOODLE_AT) / (DOODLE_MS / 1000), 0, 1) * (DOODLE_PATH.length - 1);
+            const i = Math.min(DOODLE_PATH.length - 2, Math.floor(k));
+            const [ax, ay] = DOODLE_PATH[i], [bx, by] = DOODLE_PATH[i + 1];
+            p.look = ctx.point(tg, ax + (bx - ax) * (k - i), ay + (by - ay) * (k - i));
+          }
         }
       } else {
         // Satisfied
@@ -216,8 +228,28 @@ export const jigglypuff: CharacterDef = {
   soles: [{ x: 57, y: 393 }, { x: 272, y: 393 }],
   shadow: { cx: 165, cy: 392, rx: 135, ry: 10 },
   eyes: [
-    { x: 96, y: 174, lid: { rx: 50, ry: 60, tilt: 8, fill: "url(#jp-lid-l)", tight: true }, arc: 30, stroke: 8 },
-    { x: 242, y: 216, lid: { rx: 54, ry: 60, tilt: -4, fill: "url(#jp-lid-r)", tight: true }, arc: 32, stroke: 8 },
+    {
+      x: 96, y: 174, lid: { rx: 50, ry: 60, tilt: 8, fill: "url(#jp-lid-l)", tight: true }, arc: 30, stroke: 8,
+      look: {
+        cut: { x: 103, y: 173.8, rx: 32, ry: 34, tilt: 15 }, ink: true, range: [11, 10],
+        shine: {
+          x: 114.6, y: 153.5, rx: 10.5, ry: 8.9, tilt: -48, range: [13, 12], under: "#007C8A",
+          within: { x: 102.7, y: 174.4, rx: 29.8, ry: 31, tilt: 3.6 }, cover: { x: 103, y: 173.8, rx: 32, ry: 34, tilt: 15 },
+        },
+        socket: { x: 95.4, y: 172.7, rx: 38.4, ry: 45.5, tilt: 12, fill: "url(#jp-sclera)", stroke: "#9A8A8B" },
+      },
+    },
+    {
+      x: 242, y: 216, lid: { rx: 54, ry: 60, tilt: -4, fill: "url(#jp-lid-r)", tight: true }, arc: 32, stroke: 8,
+      look: {
+        cut: { x: 251.6, y: 214.7, rx: 31, ry: 35.5, tilt: -17 }, ink: true, range: [11, 10],
+        shine: {
+          x: 265.4, y: 196.1, rx: 8.5, ry: 10.4, tilt: -9.5, range: [13, 12], under: "#007988",
+          within: { x: 251.5, y: 215.2, rx: 28.1, ry: 33.2, tilt: -21.3 }, cover: { x: 251.6, y: 214.7, rx: 31, ry: 35.5, tilt: -17 },
+        },
+        socket: { x: 241.1, y: 215.1, rx: 41.7, ry: 45.9, tilt: 9.5, fill: "url(#jp-sclera)", stroke: "#9A8A8B" },
+      },
+    },
   ],
   cheeks: [{ x: 92, y: 240, rx: 20, ry: 10 }, { x: 262, y: 268, rx: 18, ry: 9 }],
   mouth: MOUTH,
@@ -236,6 +268,13 @@ export const jigglypuff: CharacterDef = {
   droop: [18, 12],
   defs: (
     <>
+      {/* Eye whites, lit from the top right like the artwork's: repainted under the irises as they move */}
+      <radialGradient id="jp-sclera" cx="0.62" cy="0.3" r="0.8">
+        <stop offset="0" stopColor="#FFFFFF" />
+        <stop offset="0.5" stopColor="#FDFCFC" />
+        <stop offset="0.8" stopColor="#F1ECEC" />
+        <stop offset="1" stopColor="#E4DADA" />
+      </radialGradient>
       {/* Eyelids follow the skin's shading around each eye: light from the top right / top left */}
       <linearGradient id="jp-lid-l" x1="0" y1="1" x2="1" y2="0">
         <stop offset="0" stopColor="#ECC1CA" />

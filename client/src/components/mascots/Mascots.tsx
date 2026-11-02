@@ -8,11 +8,11 @@
    re-renders while animating
    ============================================================ */
 
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef, type SVGProps } from "react";
 import { jigglypuff } from "./jigglypuff";
 import { SHAPES, makePathSpawner, makeSpawner, rand } from "./particles";
 import { togepi } from "./togepi";
-import type { CharacterDef, CharacterId, CharacterState, Ctx, LimbDef, LimbKey, Pose } from "./types";
+import type { CharacterDef, CharacterId, CharacterState, Ctx, Ellipse, EyeDef, LimbDef, LimbKey, Pose } from "./types";
 
 /** DOM order: Jigglypuff is drawn behind Togepi when they overlap */
 const CHARACTERS: CharacterDef[] = [jigglypuff, togepi];
@@ -24,6 +24,10 @@ const APPEAR_DELAY_MS = 2000;
 const APPEAR_STAGGER_MS = 350;
 const INTRO_LINE_MS = 2500;
 const SLEEP_AFTER_MS = 7000;
+/** How far (px) the cursor has to be from an eye for it to look all the way that way */
+const LOOK_REACH = 160;
+/** Where an eye's shine rests: this fraction of the way from the middle of the eye to its top */
+const SHINE_LIFT = 0.3;
 /** Jigglypuff likes to keep this much space (px) between itself and Togepi… */
 const BUDDY_GAP = 14;
 /** …and they're never allowed closer than this (leaves room for limbs swinging past the image edge) */
@@ -68,6 +72,11 @@ function LimbGroup({ def, limb }: { def: CharacterDef; limb: LimbDef }) {
   );
 }
 
+const ell = (e: Ellipse, props: SVGProps<SVGEllipseElement> = {}) => (
+  <ellipse cx={e.x} cy={e.y} rx={e.rx} ry={e.ry} transform={`rotate(${e.tilt} ${e.x} ${e.y})`} {...props} />
+);
+const lid = (e: EyeDef, tight = e.lid.tight) => ell({ x: e.x, y: e.y, ...e.lid }, { fill: e.lid.fill, mask: `url(#mascot-feather${tight ? "-tight" : ""})` });
+
 /* The artwork is one flat image: limbs are cut out of it and animated separately, and the face
    changes (closed / happy eyes, blush, character overlays) are painted over it */
 function CharacterArt({ def }: { def: CharacterDef }) {
@@ -91,6 +100,32 @@ function CharacterArt({ def }: { def: CharacterDef }) {
             <path key={l.k} d={l.cut} fill="#000" />
           ))}
         </mask>
+        {def.eyes.map((e, i) => e.look && (
+          <Fragment key={i}>
+            <clipPath id={`${def.id}-look-clip-${i}`}>{ell(e.look.cut)}</clipPath>
+            <mask id={`${def.id}-look-${i}`} maskUnits="userSpaceOnUse" x="0" y="0" width={def.w} height={def.h}>
+              {e.look.ink
+                ? <image href={def.src} width={def.w} height={def.h} filter="url(#mascot-ink)" clipPath={`url(#${def.id}-look-clip-${i})`} />
+                : ell(e.look.cut, { fill: "#fff", filter: "url(#mascot-blur)" })}
+            </mask>
+            {e.look.socket && <clipPath id={`${def.id}-socket-${i}`}>{ell(e.look.socket)}</clipPath>}
+            {e.look.shine && (
+              <>
+                {/* Where the patch over the old shine may paint: the eye itself plus the shine's spot */}
+                <mask id={`${def.id}-patch-mask-${i}`} maskUnits="userSpaceOnUse" x="0" y="0" width={def.w} height={def.h}>
+                  {e.look.ink
+                    ? <image href={def.src} width={def.w} height={def.h} filter="url(#mascot-ink)" clipPath={`url(#${def.id}-look-clip-${i})`} />
+                    : ell(e.look.shine.within, { fill: "#fff" })}
+                  {ell({ ...e.look.shine, rx: e.look.shine.rx + 1.5, ry: e.look.shine.ry + 1.5 }, { fill: "#fff" })}
+                </mask>
+                <clipPath id={`${def.id}-shine-${i}`}>{ell(e.look.shine.within)}</clipPath>
+                <clipPath id={`${def.id}-patch-${i}`}>
+                  {ell(e.look.shine.cover ?? { ...e.look.shine.within, rx: e.look.shine.within.rx + 0.8, ry: e.look.shine.within.ry + 0.8 })}
+                </clipPath>
+              </>
+            )}
+          </Fragment>
+        ))}
         {def.defs}
       </defs>
 
@@ -115,15 +150,35 @@ function CharacterArt({ def }: { def: CharacterDef }) {
             <LimbGroup key={l.k} def={def} limb={l} />
           ))}
 
+          {/* Eyes that follow the cursor: the cut-out slides over a fresh eye white, or over the lid's skin */}
+          <g data-t="look">
+            {def.eyes.map((e, i) => e.look && (
+              <g key={i} clipPath={e.look.socket ? `url(#${def.id}-socket-${i})` : undefined}>
+                {e.look.socket ? ell(e.look.socket, { fill: e.look.socket.fill }) : lid(e, true)}
+                <g data-t={`pupil${i}`}>
+                  <image href={def.src} width={def.w} height={def.h} mask={`url(#${def.id}-look-${i})`} />
+                  {e.look.shine && (
+                    <>
+                      <g clipPath={`url(#${def.id}-patch-${i})`} mask={`url(#${def.id}-patch-mask-${i})`} style={{ mixBlendMode: "darken" }}>
+                        {ell({ ...e.look.shine, rx: e.look.shine.rx + 4, ry: e.look.shine.ry + 4 }, { fill: e.look.shine.under, filter: "url(#mascot-blur)" })}
+                      </g>
+                      <g clipPath={`url(#${def.id}-shine-${i})`}>
+                        <g data-t={`shine${i}`}>{ell(e.look.shine, { fill: "#fff" })}</g>
+                      </g>
+                    </>
+                  )}
+                </g>
+                {e.look.socket?.stroke && ell(e.look.socket, { fill: "none", stroke: e.look.socket.stroke, strokeWidth: 2.2 })}
+              </g>
+            ))}
+          </g>
           <g data-t="blush" style={{ opacity: 0 }}>
             {def.cheeks.map((c, i) => (
               <ellipse key={i} cx={c.x} cy={c.y} rx={c.rx} ry={c.ry} fill="url(#mascot-blush)" />
             ))}
           </g>
           <g data-t="lids" style={{ opacity: 0 }}>
-            {def.eyes.map((e, i) => (
-              <ellipse key={i} cx={e.x} cy={e.y} rx={e.lid.rx} ry={e.lid.ry} transform={`rotate(${e.lid.tilt} ${e.x} ${e.y})`} fill={e.lid.fill} mask={`url(#mascot-feather${e.lid.tight ? "-tight" : ""})`} />
-            ))}
+            {def.eyes.map((e, i) => <Fragment key={i}>{lid(e)}</Fragment>)}
           </g>
           {(["closed", "happy"] as const).map((mode) => (
             <g key={mode} data-t={mode} style={{ opacity: 0 }} stroke="#1A1410" strokeLinecap="round" fill="none">
@@ -152,6 +207,11 @@ interface Rig {
   contacts: SVGElement[];
   limbs: Partial<Record<LimbKey, { el: SVGElement; pivot: readonly [number, number] }>>;
   lids: SVGElement;
+  look: SVGElement;
+  /** Per eye (null if it doesn't follow the cursor): the moving cut-out and how far it's moved */
+  pupils: ({ el: SVGElement; x: number; y: number; cx: number; cy: number; shine: SVGElement | null } | null)[];
+  /** Which way the artwork was mirrored last frame (-1 mirrored, 1 as drawn) */
+  mirror: number;
   happyEyes: SVGElement;
   closedEyes: SVGElement;
   blush: SVGElement;
@@ -197,7 +257,16 @@ export default function Mascots() {
         c, root, q, limbs, bubble,
         art: root.querySelector("svg")!,
         all: q("all")!, shadow: q("shadow")!, contacts: def.soles.map((_, j) => q(`contact${j}`)!),
-        lids: q("lids")!, happyEyes: q("happy")!, closedEyes: q("closed")!, blush: q("blush")!, hit: q("hit")!,
+        lids: q("lids")!, look: q("look")!,
+        pupils: def.eyes.map((e, j) => {
+          if (!e.look) return null;
+          // The artwork's own irises glance off to one side, and that glance would flip with the body when
+          // it turns, so gaze is measured from the middle of the eye white instead
+          const { cut, socket } = e.look;
+          return { el: q(`pupil${j}`)!, x: 0, y: 0, cx: socket ? socket.x - cut.x : 0, cy: socket ? socket.y - cut.y : 0, shine: q(`shine${j}`) };
+        }),
+        mirror: 1,
+        happyEyes: q("happy")!, closedEyes: q("closed")!, blush: q("blush")!, hit: q("hit")!,
         bubbleText: bubble.firstElementChild as HTMLSpanElement,
         bubbleTail: bubble.lastElementChild as HTMLSpanElement,
         bubbleUntil: 0,
@@ -230,6 +299,8 @@ export default function Mascots() {
     tg.x = tg.tx = clamp(window.innerWidth * 0.86, ...bounds(tg));
     jp.x = jp.tx = clamp(tg.x - buddyGap(), ...bounds(jp));
     let mx = tg.x;
+    let my = 0;
+    let pointerSeen = false;
     /** Where the cursor last moved to while Togepi was sung to sleep — Jigglypuff follows it on her own */
     let jpChase: number | null = null;
 
@@ -240,7 +311,7 @@ export default function Mascots() {
       const dx = ax - level.x, dy = ay - level.y;
       const lx = level.x + dx * Math.cos(a) - dy * Math.sin(a);
       const ly = level.y + dx * Math.sin(a) + dy * Math.cos(a);
-      const fx2 = c.facing > 0 ? w - lx : lx;
+      const fx2 = c.facing >= 0 ? w - lx : lx; // same rule as the flip in draw()
       return { x: c.x + c.offset - c.W / 2 + (fx2 / w) * c.W, y: window.innerHeight - 4 - c.H + (ly / h) * c.H };
     };
 
@@ -305,6 +376,8 @@ export default function Mascots() {
     /* ── Input ── */
     const onPointerMove = (e: PointerEvent) => {
       mx = e.clientX;
+      my = e.clientY;
+      pointerSeen = true;
       // Togepi stays put while the cursor is on either mascot, so it doesn't walk onto Jigglypuff
       if (e.pointerType === "mouse" && !tg.hovered && !jp.hovered) {
         tg.tx = clamp(mx, ...bounds(tg));
@@ -600,6 +673,46 @@ export default function Mascots() {
       // A foot's contact shadow fades as it lifts off the ground
       r.contacts[0].style.opacity = clamp(1 - p.liftL / 12, 0, 1).toFixed(2);
       r.contacts[1].style.opacity = clamp(1 - p.liftR / 12, 0, 1).toFixed(2);
+      /* Eyes follow the cursor (each on its own, so they cross a little when it's right in front of them) */
+      r.look.style.opacity = p.eye === "open" ? "1" : "0";
+      // Offsets are in artwork units, so when the artwork mirrors mid-turn they mirror too: keep the
+      // eyes looking the same way on screen instead of swinging across
+      const mirror = Math.sign(flip);
+      if (mirror !== r.mirror) {
+        r.mirror = mirror;
+        for (const pu of r.pupils) if (pu) pu.x = 2 * pu.cx - pu.x;
+      }
+      def.eyes.forEach((e, i) => {
+        const pu = r.pupils[i];
+        if (!pu || !e.look) return;
+        const target = p.look ?? (pointerSeen ? { x: mx, y: my } : null);
+        if (target && p.eye !== "open") return; // they stay put while shut, rather than recentring every blink
+        let gx = 0, gy = 0;
+        if (target) {
+          const at = point(c, e.x, e.y);
+          // Viewport → artwork direction: undo the facing flip, then the levelling lean
+          const sx = (target.x - at.x) * mirror, sy = target.y - (at.y - r.hop);
+          const a = (-def.level.angle * Math.PI) / 180;
+          const dx = sx * Math.cos(a) - sy * Math.sin(a), dy = sx * Math.sin(a) + sy * Math.cos(a);
+          const d = Math.hypot(dx, dy) || 1;
+          const reach = p.look ? 1 : Math.min(1, d / LOOK_REACH); // something it's been told to watch: a good hard look
+          gx = pu.cx + (dx / d) * reach * e.look.range[0];
+          gy = pu.cy + (dy / d) * reach * e.look.range[1];
+        }
+        const k = reduce ? 1 : Math.min(1, dt * 14);
+        pu.x += (gx - pu.x) * k;
+        pu.y += (gy - pu.y) * k;
+        pu.el.setAttribute("transform", `translate(${pu.x.toFixed(2)} ${pu.y.toFixed(2)})`);
+        const sh = e.look.shine;
+        if (sh && pu.shine) {
+          // It rests a little above the middle of the eye (not off to one side as drawn, which would flip
+          // with the body) and leads the eye the way it's looking
+          const nx = (pu.x - pu.cx) / e.look.range[0], ny = (pu.y - pu.cy) / e.look.range[1];
+          const x = sh.within.x - sh.x + nx * sh.range[0];
+          const y = sh.within.y - sh.within.ry * SHINE_LIFT - sh.y + ny * sh.range[1];
+          pu.shine.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+        }
+      });
       r.lids.style.opacity = p.eye === "open" ? "0" : "1";
       r.happyEyes.style.opacity = p.eye === "happy" ? "1" : "0";
       r.closedEyes.style.opacity = p.eye === "closed" ? "1" : "0";
@@ -656,6 +769,14 @@ export default function Mascots() {
           </filter>
           <filter id="mascot-soft-sm" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2.5" />
+          </filter>
+          <filter id="mascot-blur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.2" />
+          </filter>
+          {/* White where the artwork is clearly coloured (green-blue outweighs red), black where it's white,
+              grey or pink: cuts a teal iris, shading and all, out of its eye white */}
+          <filter id="mascot-ink" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="-6 6 0 0 -0.15  -6 6 0 0 -0.15  -6 6 0 0 -0.15  0 0 0 0 1" />
           </filter>
           <radialGradient id="mascot-blush">
             <stop offset="0" stopColor="#FF8DA1" stopOpacity="0.85" />

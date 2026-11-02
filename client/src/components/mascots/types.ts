@@ -19,6 +19,14 @@ export interface LimbDef {
   patch?: SVGProps<SVGPathElement>;
 }
 
+export interface Ellipse {
+  x: number;
+  y: number;
+  rx: number;
+  ry: number;
+  tilt: number;
+}
+
 export interface EyeDef {
   x: number;
   y: number;
@@ -28,6 +36,28 @@ export interface EyeDef {
   /** Half-width of the closed / happy eye arcs */
   arc: number;
   stroke: number;
+  /** The part of the eye that follows the cursor: cut out of the artwork and slid up to `range`
+      (artwork units) toward it */
+  look?: {
+    cut: Ellipse;
+    /** Keep only the coloured pixels of the cut, so an iris moves without the eye white around it */
+    ink?: boolean;
+    range: [number, number];
+    /** The eye white it slides around in, repainted underneath so the iris leaves no copy behind.
+        Without one, the eyelid's skin covers the eye's old spot */
+    socket?: Ellipse & { fill: string; /** Redrawn outline, so the iris tucks neatly under the rim */ stroke?: string };
+    /** The white shine on the eye. It's lifted off, rests just above the middle of `within` (the dark
+        of the eye, which it never leaves) and slides up to `range` toward where it's looking. `under`
+        (the eye's colour) paints over its old spot, darkening only, so shading such as a darker rim
+        round an iris shows through untouched */
+    shine?: Ellipse & {
+      range: [number, number];
+      under: string;
+      within: Ellipse;
+      /** Where `under` may paint (default: just round `within`) */
+      cover?: Ellipse;
+    };
+  };
 }
 
 export type EyeMode = "open" | "happy" | "closed";
@@ -56,6 +86,8 @@ export interface Pose {
   offset: number;
   /** Rotation about the body's centre (Rollout), deg */
   spin: number;
+  /** Something to look at instead of the cursor (viewport coordinates) */
+  look?: Pt;
 }
 
 export interface Action {
