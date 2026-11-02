@@ -10,6 +10,11 @@ import { SHAPES, rand } from "./particles";
 import type { CharacterDef, MoveDef } from "./types";
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+/** 0 → 1 with a little overshoot */
+const popIn = (t: number) => {
+  const k = clamp(t, 0, 1) - 1;
+  return 1 + 2.70158 * k * k * k + 1.70158 * k * k;
+};
 const smooth = (t: number) => {
   const k = clamp(t, 0, 1);
   return k * k * (3 - 2 * k);
@@ -31,6 +36,11 @@ const DOODLE_MS = 1700;
 const TOGEPI_FACE = { x: 180, y: 105 };
 
 const MOUTH = { x: 154, y: 239 };
+/** The mic sits in the right hand: it turns with the right arm, about the arm's pivot */
+const ARM_R_PIVOT = { x: 248, y: 284 };
+const MIC_GRIP = { x: 250, y: 338 };
+/** How high the mic arm is held, deg: brings the mic's head up beside the mouth */
+const MIC_HOLD = 35;
 
 const moves: Record<string, MoveDef> = {
   sing: {
@@ -79,7 +89,7 @@ const moves: Record<string, MoveDef> = {
         p.mouth = "sing";
         p.rot = Math.sin(at * 5) * 6;
         p.raiseL = 20 + Math.sin(at * 5) * 14;
-        p.raiseR = 20 - Math.sin(at * 5) * 14;
+        p.raiseR = MIC_HOLD + Math.sin(at * 5) * 4; // the mic hand stays by her mouth, bobbing to the beat
         p.sy *= 1 + Math.sin(at * 10) * 0.015;
       } else if (at < DONE_AT) {
         // Puffs up in a huff, glaring at the sleeping audience
@@ -89,6 +99,7 @@ const moves: Record<string, MoveDef> = {
         p.mouth = "pout";
         p.sx *= 1 + 0.16 * huff + Math.sin(at * 9) * 0.02 * huff;
         p.sy *= 1 + 0.14 * huff + Math.sin(at * 9) * 0.02 * huff;
+        if (at < DOODLE_AT) p.raiseR = MIC_HOLD; // still clutching the mic
         if (tg) {
           c.wantFacing = Math.sign(tg.x - c.x) || c.wantFacing;
           p.look = ctx.point(tg, TOGEPI_FACE.x, TOGEPI_FACE.y); // glaring at it, whatever the cursor's doing
@@ -286,6 +297,20 @@ export const jigglypuff: CharacterDef = {
         <stop offset="0.5" stopColor="#F8D0DA" />
         <stop offset="1" stopColor="#ECBEC8" />
       </linearGradient>
+      {/* Mic: a silver mesh head on a dark handle */}
+      <radialGradient id="jp-mic-head" cx="0.35" cy="0.3" r="0.75">
+        <stop offset="0" stopColor="#FFFFFF" />
+        <stop offset="0.45" stopColor="#C9CDD4" />
+        <stop offset="1" stopColor="#6E737C" />
+      </radialGradient>
+      <linearGradient id="jp-mic-handle" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stopColor="#4A4A55" />
+        <stop offset="0.4" stopColor="#2A2A32" />
+        <stop offset="1" stopColor="#141418" />
+      </linearGradient>
+      <clipPath id="jp-mic-mesh">
+        <circle cx="0" cy="-121" r="17" />
+      </clipPath>
       <linearGradient id="jp-patch-r" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stopColor="#F4C7D1" />
         <stop offset="1" stopColor="#E2B3BC" />
@@ -303,6 +328,21 @@ export const jigglypuff: CharacterDef = {
         <ellipse cx={MOUTH.x} cy={MOUTH.y + 10} rx="8" ry="5" fill="#F27E95" />
       </g>
       <path data-x="mouthPout" style={{ opacity: 0 }} d="M138,243 Q146,236 154,243 Q162,250 170,243" stroke="#5B3A44" strokeWidth="5" strokeLinecap="round" fill="none" />
+      {/* Her mic, drawn upright from the grip and leaned so its head ends up beside her mouth */}
+      <g data-x="mic" style={{ opacity: 0 }}>
+        <g transform={`translate(${MIC_GRIP.x} ${MIC_GRIP.y}) rotate(-20)`}>
+          <path d="M-7,-14 L-9,-100 Q0,-104 9,-100 L7,-14 Q0,-10 -7,-14 Z" fill="url(#jp-mic-handle)" />
+          <path d="M-4,-18 L-5.5,-96" stroke="#fff" strokeOpacity="0.25" strokeWidth="2.5" strokeLinecap="round" />
+          <rect x="-9.5" y="-98" width="19" height="6" rx="1.5" fill="#E0384B" />
+          <path d="M-11,-101 L11,-101 L9,-106 L-9,-106 Z" fill="#8C9099" />
+          <circle cx="0" cy="-121" r="17" fill="url(#jp-mic-head)" />
+          <g clipPath="url(#jp-mic-mesh)" stroke="#5E636B" strokeOpacity="0.45" strokeWidth="1.1">
+            {[-12, -6, 0, 6, 12].map((o) => <path key={`v${o}`} d={`M${o},-140 L${o},-102`} />)}
+            {[-133, -127, -121, -115, -109].map((o) => <path key={`h${o}`} d={`M-18,${o} L18,${o}`} />)}
+          </g>
+          <circle cx="0" cy="-121" r="17" fill="none" stroke="#545861" strokeWidth="1.5" />
+        </g>
+      </g>
       {/* Angry brows */}
       <g data-x="brows" style={{ opacity: 0 }} stroke="#5B3A44" strokeWidth="9" strokeLinecap="round">
         <path d="M60,118 L124,138" />
@@ -320,11 +360,22 @@ export const jigglypuff: CharacterDef = {
     c.lastMove = key;
     ctx.useMove(c, key);
   },
-  frame: (_ctx, _c, p, q) => {
+  frame: (ctx, c, p, q) => {
     const set = (k: string, on: number) => {
       const el = q(k);
       if (el) el.style.opacity = on.toFixed(2);
     };
+    // The mic pops into her hand when she starts singing, and away when the marker comes out
+    const mic = q("mic");
+    if (mic) {
+      const at = c.action?.key === "sing" ? (ctx.now - c.action.start) / 1000 : -1;
+      const pop = at < 0 ? 0 : Math.min(popIn(at / 0.3), clamp((DOODLE_AT - at) / 0.2, 0, 1));
+      mic.style.opacity = pop > 0 ? "1" : "0";
+      mic.setAttribute(
+        "transform",
+        `rotate(${(-p.raiseR).toFixed(2)} ${ARM_R_PIVOT.x} ${ARM_R_PIVOT.y}) translate(${MIC_GRIP.x} ${MIC_GRIP.y}) scale(${pop.toFixed(3)}) translate(${-MIC_GRIP.x} ${-MIC_GRIP.y})`,
+      );
+    }
     set("mouthCover", p.mouth === "smile" ? 0 : 1);
     set("mouthSing", p.mouth === "sing" ? 1 : 0);
     set("mouthPout", p.mouth === "pout" ? 1 : 0);
