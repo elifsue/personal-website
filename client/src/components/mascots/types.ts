@@ -12,8 +12,14 @@ export interface LimbDef {
   pivot: [number, number];
   /** Outline of the limb; also cut out of the body so a moved limb leaves no frozen copy */
   cut: string;
+  /** What's cut out of the body, when that's less than `cut`: a limb drawn behind the body can reach
+      into it a little, so when it swings out the gap at its base is filled with matching colour */
+  hole?: string;
   /** Skin-coloured filler behind the base, so turning never opens a gap at the joint */
   joint?: SVGProps<SVGEllipseElement>;
+  /** Paint on top of the limb that moves with it: repaints part of it that something in front hides
+      in the artwork (it'd otherwise carry that along) */
+  over?: SVGProps<SVGPathElement>;
   /** Limbs that overlap the body in the artwork are drawn in front of it */
   front?: boolean;
   /** For front limbs: body-coloured paint over the hole they leave in the body when they move */
