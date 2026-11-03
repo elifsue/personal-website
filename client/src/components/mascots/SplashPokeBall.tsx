@@ -14,16 +14,17 @@ import { SHAPES } from "./particles";
 const T = 1.8;
 const BALL = 64;
 const LINE_W = 220;
-/** Where each Pokémon lands: beside the ball, standing on the line */
+/** Where each Pokémon lands: beside the ball, its feet on the line (this far below the ball's middle) */
 const LAND_X = 84;
-const LAND_Y = 23;
+const LINE_Y = 48;
 
 /** Seconds into the timeline → keyframe percentage */
 const k = (s: number) => `${((s / T) * 100).toFixed(2)}%`;
 
 const POKEMON = [
-  { id: "togepi", src: "/images/togepi/togepi.png", w: 46, h: 48, side: 1, out: 1.02 },
-  { id: "jigglypuff", src: "/images/jigglypuff/jigglypuff.png", w: 50, h: 50, side: -1, out: 1.07 },
+  // Sized as in the Pokédex: Togepi is 0.3 m tall, Jigglypuff 0.5 m
+  { id: "togepi", src: "/images/togepi/togepi.png", w: 32, h: 34, side: 1, out: 1.02 },
+  { id: "jigglypuff", src: "/images/jigglypuff/jigglypuff.png", w: 56, h: 56, side: -1, out: 1.07 },
 ] as const;
 
 const FLOATERS = [
@@ -32,7 +33,8 @@ const FLOATERS = [
 ] as const;
 
 /* Out of the ball in an arc, down onto the line with a squash, then a happy hop together */
-const pokemonKeyframes = (id: string, side: number, t0: number) => {
+const pokemonKeyframes = (id: string, side: number, t0: number, h: number) => {
+  const LAND_Y = LINE_Y - h / 2;
   const at = (x: number, y: number, s = 1) => `transform: translate(${x}px, ${y}px) scale(${s})`;
   return `
   @keyframes spb-fly-${id} {
@@ -96,7 +98,7 @@ const CSS = `
     100% { opacity: 0; transform: translate(${f.x + f.dx}px, -26px); }
   }`,
   ).join("")}
-  ${POKEMON.map((p) => pokemonKeyframes(p.id, p.side, p.out)).join("")}
+  ${POKEMON.map((p) => pokemonKeyframes(p.id, p.side, p.out, p.h)).join("")}
 `;
 
 function Monogram() {
@@ -142,7 +144,7 @@ export default function SplashPokeBall() {
         <div className="relative" style={{ width: BALL, height: BALL }}>
           <Monogram />
           {POKEMON.map((p) => (
-            <div key={p.id} className="absolute" style={{ ...pokemonBox(p), transform: `translate(${p.side * LAND_X}px, ${LAND_Y}px)` }}>
+            <div key={p.id} className="absolute" style={{ ...pokemonBox(p), transform: `translate(${p.side * LAND_X}px, ${LINE_Y - p.h / 2}px)` }}>
               {pokemonImg(p)}
             </div>
           ))}

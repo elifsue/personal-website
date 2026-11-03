@@ -235,7 +235,8 @@ export const togepi: CharacterDef = {
   src: "/images/togepi/togepi.png",
   w: 380,
   h: 400,
-  width: { desktop: 96, mobile: 74 },
+  /** 0.3 m tall in the Pokédex: three fifths of Jigglypuff's 0.5 m (see jigglypuff.tsx) */
+  width: { desktop: 64, mobile: 50 },
   feet: { x: 190, y: 396 },
   center: { x: 190, y: 250 },
   // Three-quarter view: its back (left) sole sits 17px higher, so lean it level about the front sole
