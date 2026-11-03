@@ -122,6 +122,7 @@ function LimbGroup({ def, limb }: { def: CharacterDef; limb: LimbDef }) {
     <g data-t={limb.k}>
       {limb.joint && <ellipse {...limb.joint} />}
       <image href={def.src} width={def.w} height={def.h} clipPath={`url(#${def.id}-clip-${limb.k})`} />
+      {limb.over && <path {...limb.over} />}
     </g>
   );
 }
@@ -151,7 +152,7 @@ function CharacterArt({ def }: { def: CharacterDef }) {
         <mask id={`${def.id}-body`} maskUnits="userSpaceOnUse" x="0" y="0" width={def.w} height={def.h}>
           <rect width={def.w} height={def.h} fill="#fff" />
           {def.limbs.map((l) => (
-            <path key={l.k} d={l.cut} fill="#000" />
+            <path key={l.k} d={l.hole ?? l.cut} fill="#000" />
           ))}
         </mask>
         {def.eyes.map((e, i) => e.look && (
@@ -229,13 +230,14 @@ function CharacterArt({ def }: { def: CharacterDef }) {
               </g>
             ))}
           </g>
+          <g data-t="lids" style={{ opacity: 0 }}>
+            {def.eyes.map((e, i) => <Fragment key={i}>{lid(e)}</Fragment>)}
+          </g>
+          {/* Over the lids, which reach down over the cheeks when the eyes close */}
           <g data-t="blush" style={{ opacity: 0 }}>
             {def.cheeks.map((c, i) => (
               <ellipse key={i} cx={c.x} cy={c.y} rx={c.rx} ry={c.ry} fill="url(#mascot-blush)" />
             ))}
-          </g>
-          <g data-t="lids" style={{ opacity: 0 }}>
-            {def.eyes.map((e, i) => <Fragment key={i}>{lid(e)}</Fragment>)}
           </g>
           {(["closed", "happy"] as const).map((mode) => (
             <g key={mode} data-t={mode} style={{ opacity: 0 }} stroke="#1A1410" strokeLinecap="round" fill="none">
@@ -1429,7 +1431,7 @@ export default function Mascots() {
         p.tiltR = Math.max(0, -s) * 12 * c.amp;
         p.raiseL += -s * 22 * c.amp;
         p.raiseR += s * 22 * c.amp;
-        p.ears += Math.sin(c.phase * 2) * 6 * c.amp;
+        p.ears += Math.sin(c.phase * 2) * 4 * c.amp;
       }
       if (c.sleep > 0.01) {
         p.sy *= 1 - 0.04 * c.sleep + Math.sin(secs * 2.2) * 0.012 * c.sleep; // slow breathing
@@ -1450,7 +1452,7 @@ export default function Mascots() {
         p.raiseR += (30 + Math.sin(secs * 13 + Math.PI) * 18) * c.happy;
         p.tiltL += h * 14 * c.happy;
         p.tiltR += h * 14 * c.happy;
-        p.ears += Math.sin(secs * 12) * 8 * c.happy;
+        p.ears += Math.sin(secs * 12) * 6 * c.happy;
       }
       if (c.happy > 0.5) p.eye = "happy";
 
