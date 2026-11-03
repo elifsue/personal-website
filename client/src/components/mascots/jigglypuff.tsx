@@ -231,7 +231,9 @@ export const jigglypuff: CharacterDef = {
   src: "/images/jigglypuff/jigglypuff.png",
   w: 396,
   h: 398,
-  width: { desktop: 100, mobile: 78 },
+  /** Sized against Togepi as in the Pokédex: Jigglypuff is 0.5 m tall to Togepi's 0.3 m (both pictures
+      are filled top to bottom, so their heights on screen keep that 5:3) */
+  width: { desktop: 112, mobile: 86 },
   feet: { x: 165, y: 394 },
   center: { x: 178, y: 225 },
   // Three-quarter view: its back (left) sole sits 22px higher, so lean it level about the front sole
