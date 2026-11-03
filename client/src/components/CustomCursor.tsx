@@ -78,8 +78,10 @@ export default function CustomCursor() {
       if (ibeamRef.current) ibeamRef.current.style.opacity = "1";
     };
 
-    /* ── mouse move ── */
-    const handleMouseMove = (e: MouseEvent) => {
+    /* ── mouse move ── (pointer events, not mouse events: a drag that calls preventDefault() on
+       pointerdown, like picking up one of the mascots, stops the browser sending mousemove until it ends) */
+    const handleMouseMove = (e: PointerEvent) => {
+      if (e.pointerType === "touch") return;
       mouseX = e.clientX;
       mouseY = e.clientY;
 
@@ -178,10 +180,10 @@ export default function CustomCursor() {
     };
     animateRing();
 
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("pointermove", handleMouseMove);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("pointermove", handleMouseMove);
       cancelAnimationFrame(animId);
     };
   }, []);
