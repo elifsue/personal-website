@@ -191,6 +191,9 @@ function CharacterArt({ def }: { def: CharacterDef }) {
         ))}
       </g>
 
+      {/* A soft shadow all round it, so it stands out from whatever it's in front of (outside the moving
+          group, so the shadow always falls the same way however it turns) */}
+      <g filter="url(#mascot-lift)">
       <g data-t="all">
         <g transform={`rotate(${def.level.angle} ${def.level.x} ${def.level.y})`}>
           {back.map((l) => (
@@ -243,6 +246,7 @@ function CharacterArt({ def }: { def: CharacterDef }) {
           ))}
           {def.overlays}
         </g>
+      </g>
       </g>
 
       {/* Static hit area, so hopping doesn't make hover flicker on and off */}
@@ -1726,6 +1730,12 @@ export default function Mascots() {
       {/* Shared SVG defs (blurs, blush, the feathered mask used by eyelids and patches) */}
       <svg width="0" height="0" className="absolute" aria-hidden>
         <defs>
+          {/* Around the artwork: a tight shadow that outlines it, and a wider, fainter one beneath (artwork units,
+              which are about a quarter of a pixel on screen) */}
+          <filter id="mascot-lift" x="-25%" y="-25%" width="150%" height="150%" colorInterpolationFilters="sRGB">
+            <feDropShadow dx="0" dy="4" stdDeviation="7" floodColor="#1C1917" floodOpacity="0.7" result="near" />
+            <feDropShadow in="near" dx="0" dy="18" stdDeviation="26" floodColor="#1C1917" floodOpacity="0.32" />
+          </filter>
           <filter id="mascot-soft" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="7" />
           </filter>
