@@ -22,6 +22,11 @@ const PHOTOS: StackPhoto[] = [
     caption: "Experiencing Latency in Vision - UAL",
   },
   {
+    src: `${IMG}/about/meta-london-office-visit.jpg`,
+    alt: "Elifsu Ateş with arms spread wide under a META LON banner at Meta's London office",
+    caption: "Meta London Office Visit",
+  },
+  {
     src: `${IMG}/about/university-of-greenwich-graduation.webp`,
     alt: "Elifsu Ateş at University of Greenwich graduation",
     caption: "University of Greenwich Graduation",
