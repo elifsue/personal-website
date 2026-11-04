@@ -45,6 +45,7 @@ const CAPTURE_CLICK_MS = CAPTURE_PAUSE_MS + 3 * CAPTURE_WOBBLE_GAP_MS;
 const HINT_RELEASE = "Who's inside? 👀";
 const HINT_RECALL = "Come back! ✨";
 const INTRO_LINE_MS = 2500;
+const INTRO_SAY_MS = 2300; // how long each intro line stays up
 const SLEEP_AFTER_MS = 7000;
 /** How far (px) the cursor has to be from an eye for it to look all the way that way */
 const LOOK_REACH = 160;
@@ -503,6 +504,7 @@ export default function Mascots() {
         }, move.dur);
       },
       forceSleep: (c, ms) => {
+        if (rigOf(c).bubbleUntil) return; // never sent to sleep mid-sentence
         c.forcedSleepUntil = performance.now() + ms;
         c.action = null;
       },
@@ -512,6 +514,7 @@ export default function Mascots() {
     };
 
     let introOver = false; // the intros stop once the visitor starts playing
+    let introUntil = 0; // when the last intro line ends
 
     /* ── Input ── */
     /** A press on a mascot, which becomes a drag once the pointer moves far enough */
@@ -638,16 +641,18 @@ export default function Mascots() {
       };
     });
 
-    /* ── Intros, one after the other ── */
-    const startIntros = (delay: number) => {
+    /* ── Intros: each says hello in turn, then each tells the rest of its lines ── */
+    let introRun = 0; // lines still due from an earlier release are dropped
+    const startIntros = (delay: number, full: boolean) => {
       let introAt = delay;
-      for (const id of UPDATE_ORDER) {
-        const c = world[id];
-        for (const line of c.def.intro(touch)) {
-          later(() => { if (!introOver && !c.action && now > c.forcedSleepUntil) say(c, line, 2300); }, introAt);
-          introAt += INTRO_LINE_MS;
-        }
+      const run = ++introRun;
+      const lines = UPDATE_ORDER.map((id) => world[id].def.intro(touch).map((line) => ({ c: world[id], line })));
+      const order = [...lines.map((l) => l[0]), ...(full ? lines.flatMap((l) => l.slice(1)) : [])];
+      for (const { c, line } of order) {
+        later(() => { if (run === introRun && !introOver && !c.action && now > c.forcedSleepUntil) say(c, line, INTRO_SAY_MS); }, introAt);
+        introAt += INTRO_LINE_MS;
       }
+      introUntil = performance.now() + introAt - INTRO_LINE_MS + INTRO_SAY_MS;
     };
 
     /* ── The Poké Ball: rolls in after the loading screen and lets them out when clicked. While they're out
@@ -795,11 +800,10 @@ export default function Mascots() {
         setLid(false);
         rollBall(dockX(), dockSize(), BALL_DOCK_MS, () => ballReady("out"));
       }, reduce ? 0 : RELEASE_MS);
-      if (!introsPlayed) {
-        introsPlayed = true;
-        introOver = false;
-        startIntros(RELEASE_MS + 500);
-      }
+      // The full intros the first time they're let out; after that, just their hellos
+      introOver = false;
+      startIntros(RELEASE_MS + 500, !introsPlayed);
+      introsPlayed = true;
     };
     const release = () => {
       if (ballState !== "waiting") return;
@@ -1408,6 +1412,8 @@ export default function Mascots() {
 
       /* Moods */
       c.happy += ((c.hovered && !busy ? 1 : 0) - c.happy) * Math.min(1, dt * 10);
+      // Talking keeps it awake, and so does the intro, a conversation the other one is listening to
+      if (r.bubbleUntil || (!introOver && t < introUntil)) c.lastActive = t;
       const wantSleep = forcedAsleep || (!busy && !c.hovered && c.v === 0 && t - c.lastActive > SLEEP_AFTER_MS) ? 1 : 0;
       c.sleep += (wantSleep - c.sleep) * Math.min(1, dt * (wantSleep ? (forcedAsleep ? 3 : 1.5) : 8));
 
