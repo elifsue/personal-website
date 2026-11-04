@@ -44,8 +44,8 @@ const CAPTURE_WOBBLE_GAP_MS = 1050;
 const CAPTURE_CLICK_MS = CAPTURE_PAUSE_MS + 3 * CAPTURE_WOBBLE_GAP_MS;
 const HINT_RELEASE = "Who's inside? 👀";
 const HINT_RECALL = "Come back! ✨";
-const INTRO_LINE_MS = 2500;
-const INTRO_SAY_MS = 2300; // how long each intro line stays up
+const INTRO_LINE_MS = 2000;
+const INTRO_SAY_MS = 2000; // how long each intro line stays up
 const SLEEP_AFTER_MS = 7000;
 /** How far (px) the cursor has to be from an eye for it to look all the way that way */
 const LOOK_REACH = 160;
