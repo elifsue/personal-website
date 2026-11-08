@@ -16,7 +16,7 @@ import { SHAPES, makePathSpawner, makeSpawner, rand } from "./particles";
 import { makePageFx, type PageFx, type Stop } from "./pageFx";
 import { makePerches, topAt, type Surface } from "./perches";
 import { togepi } from "./togepi";
-import type { Action, CharacterDef, CharacterId, CharacterState, Ctx, Ellipse, EyeDef, LimbDef, LimbKey, Pose } from "./types";
+import type { Action, CharacterDef, CharacterId, CharacterState, Ctx, Ellipse, EyeDef, LimbDef, LimbKey, Pose, Pt } from "./types";
 
 /** DOM order: Jigglypuff is drawn behind Togepi when they overlap */
 const CHARACTERS: CharacterDef[] = [jigglypuff, togepi];
@@ -87,6 +87,43 @@ const RPS_RESULT_MS = 1500;
 const RPS_FINAL_MS = 2700;
 const RPS_TO_WIN = 3;
 const RPS_MAX_ROUNDS = 12;
+/* Snack time: a berry drops from the top of the screen, they race to it, the one who gets there first
+   splits it and tosses half to the other, and they munch their halves. Timings in ms; sizes in px */
+const BERRY_PX = 32;
+const SNACK_SPLIT_MS = 1100;
+const SNACK_TOSS_MS = 650;
+const BITE_MS = 520;
+const BITES = 4;
+const SNACK_FULL_MS = 2400;
+/** Bounces off the ground: how much of its speed it keeps, and how many times */
+const BERRY_BOUNCE = 0.38;
+const BERRY_BOUNCES = 2;
+/** Eating, how far each arm's raised (deg, raiseL/raiseR) so both hands come up to its mouth, then which way
+    (+1/-1) each one turns to push the food in with every bite */
+const EAT_ARMS: Record<CharacterId, [number, number, number, number]> = {
+  togepi: [30, 70, 1, 1],
+  jigglypuff: [105, -85, -1, 1],
+};
+const BERRIES = [
+  { name: "Oran Berry", emoji: "🫐", body: "#4174D6", shade: "#2B4E9C", inside: "#F4E6A8" },
+  { name: "Pecha Berry", emoji: "🍑", body: "#FF8FB3", shade: "#DD5F88", inside: "#FFF0CC" },
+  { name: "Sitrus Berry", emoji: "🍋", body: "#F4C83F", shade: "#D49F1A", inside: "#FFF7DA" },
+];
+type Berry = (typeof BERRIES)[number];
+/** A whole berry: round, shaded, with a shine, a stalk and a leaf (24-unit box) */
+const berrySvg = (b: Berry, s: number) =>
+  `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="display:block;overflow:visible">`
+  + `<circle cx="12" cy="14" r="8.5" fill="${b.body}" stroke="${b.shade}" stroke-width="1"/>`
+  + `<path d="M5.2 17.5a8.5 8.5 0 0 0 13.6 0a9 7 0 0 1-13.6 0z" fill="${b.shade}" opacity=".45"/>`
+  + `<ellipse cx="9" cy="10.5" rx="2.4" ry="1.6" fill="#fff" opacity=".55" transform="rotate(-30 9 10.5)"/>`
+  + `<path d="M12 6c0-1.6.4-2.8 1.2-3.8" stroke="#6B4A2B" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+  + `<path d="M12.6 4.6c2.2-1.8 4.6-1.6 6 .2c-2.1 1.6-4.4 1.6-6-.2z" fill="#5DBB63" stroke="#3E8E45" stroke-width=".7"/></svg>`;
+/** Half a berry, cut side up */
+const halfSvg = (b: Berry, s: number) =>
+  `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="display:block;overflow:visible">`
+  + `<path d="M3.5 13a8.5 8.5 0 0 0 17 0z" fill="${b.body}" stroke="${b.shade}" stroke-width="1"/>`
+  + `<ellipse cx="12" cy="13" rx="8.5" ry="2.6" fill="${b.inside}" stroke="${b.shade}" stroke-width=".8"/>`
+  + `<ellipse cx="12" cy="13" rx="3" ry="1" fill="${b.shade}" opacity=".35"/></svg>`;
 const HANDS = ["✊", "✋", "✌️"];
 const CHANT = ["Rock… ✊", "Paper… ✋", "Scissors… ✌️"];
 const JINX = ["Jinx! 😆", "Great minds… 😮", "Again! Again!"];
@@ -644,6 +681,7 @@ export default function Mascots() {
         if (e.type === "pointerup" && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 12) {
           endGame(performance.now(), false); // a tap sends Togepi off, so any game's over
           endRps(performance.now(), false);
+          endSnack(performance.now(), false);
           abortHide(performance.now());
           tg.tx = clamp(e.clientX, ...floorBounds(tg));
           if (now < tg.forcedSleepUntil) jpChase = e.clientX;
@@ -671,6 +709,7 @@ export default function Mascots() {
       endGame(performance.now(), false, true); // the ball's put straight back in its corner
       clearHide();
       endRps(performance.now(), false);
+      endSnack(performance.now(), false);
       perches.reset();
       resize();
       measureCeiling();
@@ -880,7 +919,7 @@ export default function Mascots() {
       }, reduce ? 0 : RELEASE_MS);
       // The full intros the first time they're let out; after that, just their hellos
       introOver = false;
-      played.ball = played.hide = played.rps = false; // fresh out of the ball: every game before a nap
+      played.ball = played.hide = played.rps = played.snack = false; // fresh out of the ball: every game before a nap
       startIntros(RELEASE_MS + 500, !introsPlayed);
       introsPlayed = true;
     };
@@ -1097,9 +1136,9 @@ export default function Mascots() {
     );
     let nextGameAt = 0;
     /** Which games they've played since they last woke up: they play every one before they settle down for a nap */
-    const played = { ball: false, hide: false, rps: false };
+    const played = { ball: false, hide: false, rps: false, snack: false };
     /** Still a game to play before they can nap (none with reduced motion, where they don't play) */
-    const gamesOwed = () => !reduce && !(played.ball && played.hide && played.rps);
+    const gamesOwed = () => !reduce && !(played.ball && played.hide && played.rps && played.snack);
     /** A game's over. Played to the end, it counts; cut short, it doesn't, and they try again once they've
         been left alone a moment (see playTick) */
     const gameOver = (t: number, which: keyof typeof played, done: boolean) => {
@@ -1254,17 +1293,17 @@ export default function Mascots() {
       if (reduce) return;
       if (loose) looseTick(dt);
       if (!game) {
-        if (loose || hide || rps || !gamesOwed() || t < nextGameAt || jpChase !== null) return;
+        if (loose || hide || rps || snack || !gamesOwed() || t < nextGameAt || jpChase !== null) return;
         if (introUntil && !introOver && t < introUntil) return;
         if (![tg, jp].every((c) => canPlay(c, t) && c.v === 0 && !rigOf(c).bubbleUntil && t - c.lastActive > PLAY_AFTER_MS)) return;
         // Which game: one they haven't played yet, at random (the kickabout only if the ball's there to play
         // with). If none of them can be played just now, they have another go in a bit
         const ballOk = ballFree() && Math.abs(ballAtX - dockX()) <= 1;
-        const starts = { ball: startBall, hide: startHide, rps: startRps };
+        const starts = { ball: startBall, hide: startHide, rps: startRps, snack: startSnack };
         const left = (Object.keys(starts) as (keyof typeof starts)[]).filter((k) => !played[k] && (k !== "ball" || ballOk));
         for (const k of left.sort(() => Math.random() - 0.5)) if (starts[k](t)) break;
         if (!game) {
-          if (!hide && !rps) nextGameAt = t + 2000;
+          if (!hide && !rps && !snack) nextGameAt = t + 2000;
           return;
         }
       }
@@ -1574,7 +1613,7 @@ export default function Mascots() {
         const visitor = hider.hovered && (h.hiding === "in" || h.hiding === "hidden");
         const moved = pointerSeen && Math.hypot(mx - h.mx0, my - h.my0) > PLAY_QUIT_DIST;
         const scrolled = !!spot.el && Math.abs(window.scrollY - h.scroll0) > 2; // its hiding place has moved away
-        if (visitor || moved || scrolled || jpChase !== null || game || rps || ![hider, seeker].every((c) => canPlay(c, t))) {
+        if (visitor || moved || scrolled || jpChase !== null || game || rps || snack || ![hider, seeker].every((c) => canPlay(c, t))) {
           // Found already: it's just over (rather than talking and cheering over whatever's happening now)
           if (h.phase === "found" && !visitor) return finishHide(t, false);
           abortHide(t, visitor);
@@ -1841,7 +1880,7 @@ export default function Mascots() {
       const g = rps;
       if (!g) return;
       // Anything else going on, and it's over
-      if (game || hide || jpChase !== null || ![g.L, g.R].every((c) => canPlay(c, t)) || (pointerSeen && Math.hypot(mx - g.mx0, my - g.my0) > PLAY_QUIT_DIST)) {
+      if (game || hide || snack || jpChase !== null || ![g.L, g.R].every((c) => canPlay(c, t)) || (pointerSeen && Math.hypot(mx - g.mx0, my - g.my0) > PLAY_QUIT_DIST)) {
         endRps(t, false);
         return;
       }
@@ -1948,6 +1987,306 @@ export default function Mascots() {
         p.raiseL = p.raiseR = 55;
         p.hop += Math.sin(Math.min(1, since / 300) * Math.PI) * 8;
         p.eye = "open";
+      }
+    };
+
+    /* ── Snack time: a berry drops out of the sky, bouncing to a stop between them. They race for it; the
+       first one there picks it up, splits it, and tosses half to the other. Then they munch their halves,
+       and Jigglypuff puffs right up, full. Anything the visitor does ends it (the berry rolls away) ── */
+    let snack: {
+      phase: "drop" | "race" | "split" | "toss" | "eat" | "full";
+      at: number;
+      /** When it last moved the berry (for its fall) */
+      last: number;
+      berry: Berry;
+      /** The berry (or the first half), and the other half once it's split; where it is (its middle, on the
+          screen), how fast it's falling, and how often it's bounced */
+      el: HTMLDivElement;
+      half: HTMLDivElement | null;
+      x: number;
+      y: number;
+      vy: number;
+      bounces: number;
+      /** Where each one waits for it, the one that got there first, and where the tossed half set off from */
+      spots: Map<CharacterState, number>;
+      winner: CharacterState | null;
+      tossFrom: Pt;
+      mx0: number;
+      my0: number;
+    } | null = null;
+    const berryEl = (html: string) => {
+      const el = document.createElement("div");
+      // (outlined, so a pink berry still shows up against Jigglypuff, a yellow one against Togepi)
+      el.style.cssText = "position:absolute;left:0;top:0;will-change:transform;pointer-events:none;filter:drop-shadow(0 0 1px rgba(28,25,23,.55)) drop-shadow(0 2px 2px rgba(28,25,23,.25))";
+      el.innerHTML = html;
+      fx.appendChild(el);
+      return el;
+    };
+    const placeBerry = (el: HTMLElement, at: Pt, scale = 1, rot = 0) => {
+      el.style.transform = `translate(${(at.x - BERRY_PX / 2).toFixed(1)}px, ${(at.y - BERRY_PX / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+    };
+    /** Where it holds something: up in front of its tummy, or at its mouth to eat it */
+    const handsOf = (c: CharacterState) => {
+      const at = point(c, c.def.center.x, c.def.center.y);
+      return { x: at.x + (Math.sign(other(c).x - c.x) || 1) * c.W * 0.08, y: at.y - rigOf(c).hop };
+    };
+    const mouthOf = (c: CharacterState) => {
+      const at = point(c, c.def.mouth.x, c.def.mouth.y);
+      return { x: at.x + (Math.sign(other(c).x - c.x) || 1) * c.W * 0.05, y: at.y - rigOf(c).hop + BERRY_PX * 0.12 };
+    };
+    const startSnack = (t: number) => {
+      const [a, b] = floorBounds(tg), [a2, b2] = floorBounds(jp);
+      const lo = Math.max(a, a2), hi = Math.min(b, b2);
+      // Room for one of them either side of it
+      const room = Math.max(tg.W, jp.W) / 2 + BERRY_PX * 0.6 + 4;
+      if (hi - lo < room * 2 + 20) return false;
+      // A little way off (so it's a race): off to one side of them, or the other if there's no room that way
+      // or it'd land on one of them
+      const mid = (tg.x + jp.x) / 2;
+      const clear = (x: number) => x >= lo + room && x <= hi - room && [tg, jp].every((c) => Math.abs(x - c.x) > c.W / 2 + BERRY_PX);
+      const dir = Math.random() < 0.5 ? -1 : 1;
+      let x = mid + dir * rand(220, 380);
+      if (!clear(x)) x = mid - dir * rand(220, 380);
+      x = clamp(x, lo + room, hi - room);
+      const berry = BERRIES[Math.floor(Math.random() * BERRIES.length)];
+      const el = berryEl(berrySvg(berry, BERRY_PX));
+      snack = {
+        phase: "drop", at: t, last: t, berry, el, half: null, x, y: -BERRY_PX, vy: 0, bounces: 0, spots: new Map(), winner: null,
+        tossFrom: { x: 0, y: 0 }, mx0: mx, my0: my,
+      };
+      placeBerry(el, { x, y: -BERRY_PX });
+      const spotter = Math.random() < 0.5 ? tg : jp;
+      const an = /^[AEIOU]/.test(berry.name) ? "An" : "A";
+      say(spotter, `${spotter === tg ? "Toge?" : "Puff!"} ${an} ${berry.name}! ${berry.emoji}`, 1500);
+      return true;
+    };
+    /** Over: the berry rolls away out of sight (unless they've eaten it), and back to normal */
+    const endSnack = (t: number, done: boolean) => {
+      const g = snack;
+      if (!g) return;
+      snack = null;
+      for (const el of [g.el, g.half]) {
+        if (!el) continue;
+        if (done || reduce) {
+          el.remove();
+          continue;
+        }
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        el.animate([{ opacity: 1, translate: "0 0" }, { opacity: 0, translate: `${dir * 60}px 0` }], { duration: 450, easing: "ease-in" }).onfinish = () => el.remove();
+      }
+      gameOver(t, "snack", done);
+      tg.lastActive = jp.lastActive = t;
+      if (tg.tx === tgSent) standStill(tg);
+      if (jp.crouchAt) standStill(jp);
+    };
+    /** When each one bites: in turn, half a bite apart */
+    const biteAt = (c: CharacterState, since: number) => since - (c === snack?.winner ? 0 : BITE_MS / 2);
+    /** How many bites it's had */
+    const bitesOf = (c: CharacterState, since: number) => {
+      const b = biteAt(c, since);
+      return clamp(Math.floor(b / BITE_MS) + (b >= 0 ? 1 : 0), 0, BITES);
+    };
+    /** Where the berry goes, once they've moved and been drawn this frame (held, it goes with them) */
+    const placeSnack = (t: number) => {
+      const g = snack;
+      if (!g) return;
+      const since = t - g.at;
+      const rest = groundY() - BERRY_PX / 2;
+      const w = g.winner;
+      if (g.phase === "drop") placeBerry(g.el, { x: g.x, y: g.y });
+      else if (g.phase === "race" || !w) placeBerry(g.el, { x: g.x, y: rest });
+      else if (g.phase === "split") {
+        // Picked up, and held up
+        const k = Math.min(1, since / 250);
+        const hands = handsOf(w);
+        placeBerry(g.el, { x: g.x + (hands.x - g.x) * k, y: rest + (hands.y - rest) * k });
+      } else if (g.phase === "toss" && g.half) {
+        // Half tossed over in an arc, turning as it goes
+        placeBerry(g.el, handsOf(w));
+        const k = Math.min(1, since / SNACK_TOSS_MS);
+        const to = handsOf(other(w));
+        const arc = Math.sin(Math.PI * k) * 60;
+        placeBerry(g.half, { x: g.tossFrom.x + (to.x - g.tossFrom.x) * k, y: g.tossFrom.y + (to.y - g.tossFrom.y) * k - arc }, 1, 360 * k * Math.sign(to.x - g.tossFrom.x));
+      } else if (g.phase === "eat" && g.half) {
+        // At their mouths, smaller with every bite
+        placeBerry(g.el, mouthOf(w), 1 - bitesOf(w, since) / BITES);
+        placeBerry(g.half, mouthOf(other(w)), 1 - bitesOf(other(w), since) / BITES);
+      }
+    };
+    const snackTick = (t: number) => {
+      const g = snack;
+      if (!g) return;
+      // Anything else going on, and it's over
+      if (game || hide || rps || jpChase !== null || ![tg, jp].every((c) => canPlay(c, t)) || (pointerSeen && Math.hypot(mx - g.mx0, my - g.my0) > PLAY_QUIT_DIST)) {
+        endSnack(t, false);
+        return;
+      }
+      tg.lastActive = jp.lastActive = t; // too busy to nod off
+      const dt = Math.min(0.05, (t - g.last) / 1000);
+      g.last = t;
+      const since = t - g.at;
+      const next = (phase: NonNullable<typeof snack>["phase"]) => {
+        g.phase = phase;
+        g.at = t;
+      };
+      const rest = groundY() - BERRY_PX / 2;
+      if (g.phase === "drop") {
+        // Falls, and bounces to a stop
+        g.vy += GRAVITY * dt;
+        g.y += g.vy * dt;
+        if (g.y >= rest) {
+          g.y = rest;
+          spawn(SHAPES.dust(rand(9, 12)), { x: g.x, y: groundY() }, 0, -8, { dur: 420 });
+          if (g.bounces < BERRY_BOUNCES && !reduce) {
+            g.vy = -g.vy * BERRY_BOUNCE;
+            g.bounces++;
+          } else {
+            g.vy = 0;
+            // One either side of it, in the order they're already in (so neither has to get past the other)
+            const [left, right] = tg.x <= jp.x ? [tg, jp] : [jp, tg];
+            g.spots.set(left, g.x - (left.W * 0.5 + BERRY_PX * 0.6));
+            g.spots.set(right, g.x + (right.W * 0.5 + BERRY_PX * 0.6));
+            next("race");
+          }
+        }
+        for (const c of [tg, jp]) {
+          c.tx = c.x;
+          goDown(c, c.x, t);
+        }
+        return;
+      }
+      for (const c of [tg, jp]) goDown(c, g.spots.get(c)!, t);
+      const there = (c: CharacterState) => grounded(c) && c.v === 0 && Math.abs(c.x - g.spots.get(c)!) <= c.def.walk.startDist + 2;
+      if (g.phase === "race") {
+        const first = [tg, jp].find(there);
+        if (first) {
+          g.winner = first;
+          say(first, first === tg ? "Got it! Toge-toge! ✨" : "Got it! Puff! 💗", 1100);
+          next("split");
+        } else if (since > 12000) endSnack(t, false); // couldn't get to it
+      } else if (g.phase === "split") {
+        // Picked up, and held up while the other one catches up…
+        const w = g.winner!;
+        if (since >= SNACK_SPLIT_MS && (there(other(w)) || since > 5000)) {
+          // …then split in two, and half tossed over
+          g.el.innerHTML = halfSvg(g.berry, BERRY_PX);
+          g.half = berryEl(halfSvg(g.berry, BERRY_PX));
+          g.tossFrom = handsOf(w);
+          for (let i = 0; i < 4; i++) spawn(SHAPES.sparkle(rand(8, 11)), g.tossFrom, rand(-18, 18), rand(-20, -36), { dur: 600, delay: i * 40 });
+          say(w, w === tg ? "Let's share! 🤝" : "Half for you! 💗", 1300);
+          next("toss");
+        }
+      } else if (g.phase === "toss") {
+        const catcher = other(g.winner!);
+        if (since >= SNACK_TOSS_MS) {
+          say(catcher, catcher === tg ? "Toge! Thank you! 🍽️" : "Puff! Thank you! 🍽️", 1100);
+          next("eat");
+        }
+      } else if (g.phase === "eat") {
+        // Up to their mouths, a bite at a time (crumbs with each one)
+        for (const [c, el] of [[g.winner!, g.el], [other(g.winner!), g.half!]] as const) {
+          const bites = bitesOf(c, since);
+          const crumbed = el.dataset.bites ?? "0";
+          if (String(bites) !== crumbed) {
+            el.dataset.bites = String(bites);
+            if (bites > 0) {
+              const at = mouthOf(c);
+              for (let i = 0; i < 3; i++) spawn(`<span style="display:block;width:5px;height:5px;border-radius:50%;background:${g.berry.body}"></span>`, at, rand(-22, 22), rand(8, 26), { dur: 520, delay: i * 30 });
+            }
+          }
+        }
+        if (since >= BITE_MS * (BITES + 0.5)) {
+          g.el.remove();
+          g.half?.remove();
+          // Full: Jigglypuff puffs right up, Togepi sparkles
+          for (let i = 0; i < 8; i++) spawn(SHAPES.sparkle(rand(10, 14)), point(tg, tg.def.center.x, tg.def.center.y), Math.cos((i / 8) * Math.PI * 2) * 40, Math.sin((i / 8) * Math.PI * 2) * 36, { dur: 800, delay: 150 });
+          say(jp, "Puff~! So yummy! 💗", 1300);
+          next("full");
+        } else if (since >= BITE_MS && !rigOf(tg).bubbleUntil && !rigOf(jp).bubbleUntil && !g.el.dataset.nom) {
+          g.el.dataset.nom = "1";
+          say(Math.random() < 0.5 ? tg : jp, "Nom nom nom… 😋", 1300);
+        }
+      } else if (g.phase === "full") {
+        if (since >= 1400 && !g.el.dataset.thanks) {
+          g.el.dataset.thanks = "1";
+          say(tg, "Toge-priii! ✨", 900);
+        }
+        if (since >= SNACK_FULL_MS) endSnack(t, true);
+      }
+    };
+    /** Facing while snacking: the berry while it's coming down, each other once they've got it */
+    const snackFacing = (c: CharacterState) => {
+      const g = snack;
+      if (!g || g.phase === "race") return 0;
+      return Math.sign((g.phase === "drop" ? g.x : other(c).x) - c.x);
+    };
+    /** Snack time's poses, on top of the usual ones */
+    const snackPose = (c: CharacterState, p: Pose, t: number) => {
+      const g = snack;
+      if (!g || c.action) return;
+      const since = t - g.at;
+      const berryAt = { x: g.x, y: g.phase === "drop" ? g.y : groundY() - BERRY_PX / 2 };
+      if (g.phase === "drop") {
+        // Eyes on it all the way down, arms up, bouncing on its toes
+        p.look = berryAt;
+        p.raiseL = p.raiseR = 35;
+        p.hop += Math.abs(Math.sin(since / 140)) * 4;
+        return;
+      }
+      if (g.phase === "race") {
+        p.look = berryAt;
+        return;
+      }
+      const w = g.winner!;
+      if (g.phase === "split") {
+        p.look = handsOf(w);
+        if (c === w) {
+          p.raiseL = p.raiseR = 55; // holding it up
+          p.eye = "happy";
+        } else {
+          p.raiseL = p.raiseR = 30 + Math.sin(since / 90) * 8; // can't wait
+        }
+      } else if (g.phase === "toss") {
+        if (c === w) {
+          const k = Math.min(1, since / 200);
+          p.raiseL = 55 + 25 * k;
+          p.raiseR = 55;
+          p.look = handsOf(other(c));
+        } else {
+          p.raiseL = p.raiseR = 70; // arms up to catch it
+          p.look = handsOf(c);
+        }
+      } else if (g.phase === "eat") {
+        // Both hands up at its mouth, chomping (pushing it in a little with each bite)
+        p.look = eyesOn(other(c));
+        const [armL, armR, inL, inR] = EAT_ARMS[c.def.id];
+        p.raiseL = armL;
+        p.raiseR = armR;
+        const b = biteAt(c, since);
+        if (b >= 0 && b < BITE_MS * BITES) {
+          const f = (b % BITE_MS) / BITE_MS;
+          const push = Math.sin(f * Math.PI) * 8; // (a little further up and in, toward its mouth)
+          p.raiseL += inL * push;
+          p.raiseR += inR * push;
+          if (f < 0.35) p.mouth = "sing";
+          const chew = Math.sin(f * Math.PI);
+          p.sy *= 1 - 0.04 * chew;
+          p.sx *= 1 + 0.02 * chew;
+          p.eye = "happy";
+          p.blush = Math.max(p.blush, 0.5);
+        }
+      } else if (g.phase === "full") {
+        p.look = eyesOn(other(c));
+        p.eye = "happy";
+        p.blush = 1;
+        if (c === jp) {
+          // Puffs right up, round and full, then lets it out
+          const k = since < 500 ? smooth(since / 500) : since < SNACK_FULL_MS - 600 ? 1 : 1 - smooth((since - (SNACK_FULL_MS - 600)) / 500);
+          p.sx *= 1 + 0.2 * k;
+          p.sy *= 1 + 0.15 * k;
+          p.raiseL = p.raiseR = 35 * k;
+          p.hop += Math.sin(since / 220) * 3 * k;
+        } else cheer(p, since / 1000);
       }
     };
 
@@ -2207,7 +2546,7 @@ export default function Mascots() {
          with Togepi still coming, it hops over Togepi's head to the other side */
       let crowded = false;
       if (c === jp && t >= tg.forcedSleepUntil) jpChase = null;
-      if (c === jp && (game || hide || rps)) {
+      if (c === jp && (game || hide || rps || snack)) {
         // Playing: the game says where she goes (down off whatever she's on, if need be)
         mayHop = true;
       } else if (c === jp && !busy && !forcedAsleep && jpChase !== null) {
@@ -2291,7 +2630,8 @@ export default function Mascots() {
       const toEdge = !!c.perch && mayHop && past !== 0 && Math.abs(dist) > STOP_DIST;
       const walking = !busy && !c.hovered && !reduce && !forcedAsleep && (crowded || toEdge || Math.abs(c.v) > 1 || Math.abs(dist) > def.walk.startDist);
       if (walking) {
-        const maxSpeed = def.walk.maxSpeed * (crowded ? 1.4 : 1) * (hide?.hider === c && hide.hiding === "go" ? HIDE_RUN : 1); // (hurrying off to hide)
+        const maxSpeed = def.walk.maxSpeed * (crowded ? 1.4 : 1) * (hide?.hider === c && hide.hiding === "go" ? HIDE_RUN : 1) // (hurrying off to hide)
+          * (snack?.phase === "race" ? HIDE_RUN : 1); // (or racing for the berry)
         const want = Math.sign(dist) * Math.min(maxSpeed, Math.sqrt(2 * DECEL * Math.max(0, Math.abs(dist) - STOP_DIST)));
         const rate = (Math.abs(want) > Math.abs(c.v) ? ACCEL : DECEL) * (crowded ? 1.6 : 1);
         c.v += clamp(want - c.v, -rate * dt, rate * dt);
@@ -2374,6 +2714,7 @@ export default function Mascots() {
       else if (playFacing(c)) c.wantFacing = playFacing(c);
       else if (hideFacing(c)) c.wantFacing = hideFacing(c);
       else if (rps) c.wantFacing = Math.sign(other(c).x - c.x) || c.wantFacing;
+      else if (snack) c.wantFacing = snackFacing(c) || c.wantFacing;
       else if (!busy && !c.leapStart && c.sleep < 0.5 && Math.abs(mx - c.x) > c.W) c.wantFacing = Math.sign(mx - c.x);
       c.facing = c.wantFacing; // turns round instantly
 
@@ -2454,6 +2795,7 @@ export default function Mascots() {
       playPose(c, p, t);
       hidePose(c, p, t, dt);
       rpsPose(c, p, t);
+      snackPose(c, p, t);
 
       /* Flying out of the Poké Ball: an arc from the ball over to its spot, growing as it goes */
       const flight = Number.isNaN(r.fromX) ? 1 : Math.min(1, (t - r.appearAt) / RELEASE_MS);
@@ -2680,11 +3022,13 @@ export default function Mascots() {
       playTick(t, dt);
       hideTick(t);
       rpsTick(t);
+      snackTick(t);
       for (const r of ordered) move(r, t, dt);
       separate(t);
       for (const r of ordered) draw(r, t, dt);
+      placeSnack(t);
       hideClip();
-      if (tg.sleep > 0.9 && jp.sleep > 0.9) played.ball = played.hide = played.rps = false; // fast asleep: all of them again when they wake
+      if (tg.sleep > 0.9 && jp.sleep > 0.9) played.ball = played.hide = played.rps = played.snack = false; // fast asleep: all of them again when they wake
       ballTick(dt);
       scrollPrev = scrollNow;
     };
