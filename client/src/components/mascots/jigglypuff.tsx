@@ -152,6 +152,7 @@ const moves: Record<string, MoveDef> = {
       const side = tg ? Math.sign(c.x - tg.x) || 1 : maxX - c.x > c.x - minX ? 1 : -1;
       c.action!.data.side = side;
       c.action!.data.dist = Math.max(0, Math.min(180, side > 0 ? maxX - c.x : c.x - minX));
+      ctx.page.roll(c.x, side, 2400); // (the page rolls along with her)
     },
     tick: (ctx, c, at) => {
       const d = c.action!.data;
@@ -177,6 +178,7 @@ const moves: Record<string, MoveDef> = {
   rest: {
     name: "Rest",
     dur: 2800,
+    start: (ctx) => ctx.page.nap(2800), // (the page dozes off with her)
     tick: (ctx, c, at) => {
       const d = c.action!.data;
       if (at > 0.4 && at >= (d.z ?? 0)) {
@@ -193,6 +195,7 @@ const moves: Record<string, MoveDef> = {
   pound: {
     name: "Pound",
     dur: 1300,
+    start: (ctx) => ctx.page.pound([500, 1050]), // (the page thumps as she lands)
     tick: (ctx, c, at) => {
       const d = c.action!.data;
       // Two bounces; stars burst out on each landing
@@ -242,6 +245,7 @@ const moves: Record<string, MoveDef> = {
     start: (ctx, c) => {
       const from = ctx.point(c, 178, 225);
       for (let i = 0; i < 6; i++) ctx.spawn(SHAPES.sparkle(rand(10, 15)), from, rand(-60, 60), rand(-30, -80), { dur: 900, delay: 300 + i * 80 });
+      ctx.page.curl(1700); // (the page curls up safe too)
     },
     pose: (p, at) => {
       const k = smooth(at / 0.25) * smooth((1.7 - at) / 0.3);

@@ -1,6 +1,6 @@
 /* ============================================================
    PAGE EFFECTS — what the mascots' moves (Togepi's Metronome
-   moves, Jigglypuff's Sing) do to the whole page while they
+   moves, Jigglypuff's moves) do to the whole page while they
    play: the page (everything in <main>), the
    cards and pictures on screen, and a see-through layer over it
    all (under the mascots) for tints, flashes and weather.
@@ -50,6 +50,14 @@ export interface PageFx {
   quake: (ms: number) => Stop;
   /** Everything on the page drops to the bottom of the screen in a heap, then floats back up */
   gravity: (ms: number) => Stop;
+  /** The page rolls along with Rollout (from `x`, `dir` the way she rolls off; she comes back halfway through) */
+  roll: (x: number, dir: number, ms: number) => Stop;
+  /** A nap: the page breathes slowly, drowsy and drooping, then stretches awake */
+  nap: (ms: number) => Stop;
+  /** A thump each time she lands (ms from now), every card jumping */
+  pound: (landings: number[]) => Stop;
+  /** Everything huddles up small and safe behind a soft pink glow, then relaxes */
+  curl: (ms: number) => Stop;
   /** Stops everything and tidies up (the mascots are going away) */
   dispose: () => void;
 }
@@ -62,6 +70,7 @@ type Scope = { anims: Animation[]; timers: number[]; els: Element[] };
 const MAX_CARDS = 28;
 const SOLID = new Set(["IMG", "VIDEO", "IFRAME", "CANVAS", "svg"]);
 
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const vw = () => document.documentElement.clientWidth;
 const vh = () => window.innerHeight;
 const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
@@ -405,6 +414,73 @@ export function makePageFx(reduce: boolean, spawnRaw: Spawn, sidebar: () => numb
         ], ms, rand(0, 260), "linear");
       }
       if (reduce) tint("rgba(28,25,23,0.08)", ms);
+    },
+
+    roll: (x: number, dir: number, ms: number) => {
+      // The page leans and drifts the way she rolls, then back as she comes back
+      movePage([
+        { transform: "none" },
+        { transform: `translateX(${dir * 10}px) rotate(${dir * 0.5}deg)`, offset: 0.5 },
+        { transform: "none" },
+      ], ms, 0.5, 1);
+      // Each card rocks over as she goes past (the nearer to her, the sooner), and back on the way back
+      for (const c of cards()) {
+        const k = clamp(Math.abs(c.r.left + c.r.width / 2 - x) / vw(), 0, 1);
+        move(c.el, [
+          { transform: "none" },
+          { transform: `translateX(${dir * 8}px) rotate(${dir * 4}deg)`, offset: 0.3 },
+          { transform: `translateX(${-dir * 4}px) rotate(${-dir * 2}deg)`, offset: 0.7 },
+          { transform: "none" },
+        ], ms * 0.8, ms * 0.12 * k);
+      }
+    },
+
+    nap: (ms: number) => {
+      tint("rgba(120,100,170,0.14)", ms, { filter: "brightness(0.94)" });
+      // Slow breaths, in and out
+      movePage([
+        { transform: "none" }, { transform: "scale(0.992)" }, { transform: "none" }, { transform: "scale(0.992)" }, { transform: "none" },
+      ], ms, 0.5, 0.6);
+      const cs = cards();
+      cs.forEach((c, i) => move(c.el, [
+        { transform: "none" },
+        { transform: `translateY(4px) rotate(${(i % 2 ? 1 : -1) * rand(1, 2)}deg)`, offset: 0.3 },
+        { transform: `translateY(5px) rotate(${(i % 2 ? 1 : -1) * rand(1, 2)}deg)`, offset: 0.8 },
+        { transform: "translateY(-5px) scale(1.02)", offset: 0.92 }, // a stretch as it wakes
+        { transform: "none" },
+      ], ms, i * 25));
+      if (reduce) return;
+      cs.sort(() => Math.random() - 0.5).slice(0, 4).forEach((c, i) =>
+        spawn(SHAPES.z(rand(14, 20)), topOf(c), rand(8, 18), -44, { dur: 1600, delay: 400 + i * 420, sway: 6 }));
+    },
+
+    pound: (landings: number[]) => {
+      const cs = cards();
+      landings.forEach((at, n) => {
+        const k = n ? 0.6 : 1; // each landing a little softer
+        movePage([{ transform: "none" }, { transform: `translateY(${7 * k}px)` }, { transform: `translateY(${-2 * k}px)` }, { transform: "none" }], 300, 0.5, 1, at);
+        for (const c of cs) move(c.el, [
+          { transform: "none" }, { transform: `translateY(${-10 * k}px)`, offset: 0.35 }, { transform: squash(c, 1.03, 1 - 0.04 * k), offset: 0.7 }, { transform: "none" },
+        ], 380, at + rand(0, 50));
+        if (!reduce) later(() => cs.sort(() => Math.random() - 0.5).slice(0, 4).forEach((c) =>
+          spawn(SHAPES.star(rand(10, 14)), topOf(c), rand(-26, 26), rand(-18, -36), { dur: 600, rot: rand(90, 270) })), at);
+      });
+    },
+
+    curl: (ms: number) => {
+      // Huddled in toward the middle of the screen, a little smaller, then let go with a bounce
+      for (const c of cards()) {
+        const dx = (vw() / 2 - (c.r.left + c.r.width / 2)) * 0.04, dy = (vh() / 2 - (c.r.top + c.r.height / 2)) * 0.04;
+        move(c.el, [
+          { transform: "none" },
+          { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.95)`, offset: 0.18 },
+          { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.95)`, offset: 0.78 },
+          { transform: "scale(1.02)", offset: 0.9 },
+          { transform: "none" },
+        ], ms);
+      }
+      // …safe behind a soft pink glow round the edges of the screen
+      overlay("box-shadow:inset 0 0 90px 10px rgba(255,140,175,.38)", [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }], ms);
     },
   };
 
