@@ -28,6 +28,44 @@ const wakeToDoodle = (ctx: Ctx, c: CharacterState) => {
   ctx.useMove(c, "surprised", "Toge?! 😱");
 };
 
+/** Not something Metronome can turn into */
+const NOT_IN_POOL = ["metronome", "surprised"];
+/** What it says when Metronome turns into these (otherwise "It turned into …!") */
+const TURNED_INTO: Record<string, string> = {
+  splash: "Splash! …But nothing happened.",
+  celebrate: "It turned into Celebrate! 🎉",
+  teleport: "It turned into Teleport! ✨",
+};
+const smooth = (t: number) => {
+  const k = clamp(t, 0, 1);
+  return k * k * (3 - 2 * k);
+};
+/** Jigglypuff, when she's close by, up where Togepi is, and free to be tickled */
+const ticklish = (ctx: Ctx, c: CharacterState) => {
+  const jp = ctx.world.jigglypuff;
+  return jp && !jp.action && !jp.held && jp.sleep < 0.5 && ctx.now >= jp.forcedSleepUntil && ctx.sameLevel(c, jp) && Math.abs(jp.x - c.x) < 220 ? jp : null;
+};
+/** Some place on what it's standing on, well away from where it is now (or as far as it can get) */
+const elsewhere = (ctx: Ctx, c: CharacterState) => {
+  const [a, b] = ctx.bounds(c);
+  for (let i = 0; i < 10; i++) {
+    const x = rand(a, b);
+    if (Math.abs(x - c.x) > 160) return x;
+  }
+  return c.x - a > b - c.x ? a : b;
+};
+const CONFETTI = ["#FF7A93", "#FFD43B", "#4DABF7", "#69DB7C", "#B197FC", "#FFA94D"];
+/** Teleport: gone at this point (seconds), and back here */
+const BLINK_OUT = 0.45;
+const BLINK_IN = 0.55;
+/** Celebrate: when the confetti pops (seconds) */
+const POP_AT = 0.75;
+/** Rain Dance: when the cloud rolls in (seconds) */
+const RAIN_AT = 0.8;
+/** Bounce timeline, seconds: crouch → in the air → landed */
+const SPRING = 0.2;
+const TOUCHDOWN = 1.05;
+
 const moves: Record<string, MoveDef> = {
   metronome: {
     name: "Metronome",
@@ -42,10 +80,16 @@ const moves: Record<string, MoveDef> = {
       p.raiseR = up - wag;
     },
     end: (ctx, c) => {
-      const pool = Object.keys(moves).filter((k) => k !== "metronome" && k !== "surprised" && k !== c.lastMove);
+      // Now and then it just turns into Metronome again, and has another go
+      if (c.lastMove !== "metronome" && Math.random() < 0.1) {
+        c.lastMove = "metronome";
+        ctx.useMove(c, "metronome", "…It turned into Metronome?!");
+        return;
+      }
+      const pool = Object.keys(moves).filter((k) => !NOT_IN_POOL.includes(k) && k !== c.lastMove && (k !== "tickle" || ticklish(ctx, c)));
       const key = pool[Math.floor(Math.random() * pool.length)];
       c.lastMove = key;
-      ctx.useMove(c, key, key === "splash" ? "Splash! …But nothing happened." : `It turned into ${moves[key].name}!`);
+      ctx.useMove(c, key, TURNED_INTO[key] ?? `It turned into ${moves[key].name}!`);
     },
   },
   swift: {
@@ -218,7 +262,221 @@ const moves: Record<string, MoveDef> = {
       if (at > 0.9) p.eye = "closed";
     },
   },
+  /* ── More of what Metronome can turn into ── */
+  teleport: {
+    name: "Teleport",
+    dur: 1500,
+    start: (ctx, c) => {
+      const at = ctx.point(c, 190, 220);
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        ctx.spawn(SHAPES.sparkle(rand(10, 14)), at, Math.cos(a) * 34, Math.sin(a) * 34, { dur: 700, delay: 250 });
+      }
+    },
+    tick: (ctx, c, at) => {
+      const d = c.action!.data;
+      if (at >= BLINK_OUT && !d.moved) {
+        // Gone… and somewhere else
+        d.moved = 1;
+        c.x = c.tx = elsewhere(ctx, c);
+        c.v = 0;
+        const to = ctx.point(c, 190, 220);
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          ctx.spawn(SHAPES.sparkle(rand(10, 14)), { x: to.x + Math.cos(a) * 34, y: to.y + Math.sin(a) * 34 }, -Math.cos(a) * 30, -Math.sin(a) * 30, { dur: 600 });
+        }
+      }
+    },
+    pose: (p, at) => {
+      // Spins down to nothing, then pops back up wherever it's got to
+      p.raiseL = p.raiseR = 55;
+      if (at < BLINK_OUT) {
+        const k = smooth(at / BLINK_OUT);
+        p.shrink = 1 - 0.97 * k;
+        p.spin = 360 * k;
+        p.eye = "closed";
+      } else if (at < BLINK_IN) {
+        p.shrink = 0.03;
+      } else {
+        const k = Math.min(1, (at - BLINK_IN) / 0.45);
+        p.shrink = 0.03 + 0.97 * easeOutBack(k);
+        p.spin = 360 * (1 - smooth(k));
+        p.eye = k < 1 ? "happy" : "open";
+      }
+    },
+  },
+  rainDance: {
+    name: "Rain Dance",
+    dur: 2700,
+    start: (ctx, c) => {
+      // Says what it turned into only briefly: the cloud comes where the speech bubble is
+      ctx.say(c, "It turned into Rain Dance!", RAIN_AT * 1000);
+      // A little rain cloud right over its head, drizzling on it
+      const head = ctx.point(c, 190, 0);
+      ctx.spawn(SHAPES.cloud(62), { x: head.x, y: head.y - 34 }, 0, -6, { dur: 1900, delay: RAIN_AT * 1000 });
+      for (let i = 0; i < 16; i++) {
+        ctx.spawn(SHAPES.sweat(rand(7, 9)), { x: head.x + rand(-20, 20), y: head.y - 22 }, rand(-2, 2), rand(30, 42), { dur: 480, delay: RAIN_AT * 1000 + 300 + i * 85 });
+      }
+    },
+    tick: (ctx, c, at) => {
+      const d = c.action!.data;
+      if (at >= RAIN_AT + 1.75 && !d.shake) {
+        // …and shakes itself dry
+        d.shake = 1;
+        const mid = ctx.point(c, 190, 200);
+        for (let i = 0; i < 6; i++) {
+          const side = i % 2 ? 1 : -1;
+          ctx.spawn(SHAPES.sweat(rand(7, 10)), mid, side * rand(30, 50), rand(-28, -6), { dur: 500, delay: i * 30, rot: side * 70 });
+        }
+      }
+    },
+    pose: (p, at, c, ctx) => {
+      if (at < RAIN_AT) {
+        // A little rain dance: sways, arms waving, calling the cloud in
+        p.rot = Math.sin(at * 9) * 7;
+        p.raiseL = 40 + Math.sin(at * 9) * 25;
+        p.raiseR = 40 - Math.sin(at * 9) * 25;
+        p.eye = "closed";
+      } else if (at < RAIN_AT + 1.7) {
+        // Peers up at the cloud, arms up over its head
+        const k = Math.min(1, (at - RAIN_AT) / 0.3);
+        const head = ctx.point(c, 190, 0);
+        p.look = { x: head.x, y: head.y - 60 };
+        p.raiseL = p.raiseR = 62 * k;
+        p.sy *= 1 - 0.03 * k;
+      } else {
+        const k = at - RAIN_AT - 1.7;
+        p.rot = Math.sin(k * 45) * 7 * Math.max(0, 1 - k / 0.4);
+        p.raiseL = p.raiseR = 20;
+        p.eye = "closed";
+      }
+    },
+  },
+  celebrate: {
+    name: "Celebrate",
+    dur: 1900 + POP_AT * 1000,
+    start: (ctx, c) => {
+      // Says it only briefly while it winds up: the confetti bursts out where the speech bubble is
+      ctx.say(c, TURNED_INTO.celebrate, POP_AT * 1000 + 250);
+      // Confetti bursting out to both sides, then fluttering down around it
+      const head = ctx.point(c, 190, 0);
+      const pop = POP_AT * 1000;
+      for (let i = 0; i < 32; i++) {
+        const side = i % 2 ? 1 : -1;
+        ctx.spawn(SHAPES.confetti(rand(14, 18), CONFETTI[i % CONFETTI.length]), { x: head.x + side * 10, y: head.y + 6 }, side * rand(50, 160), rand(-120, -30), {
+          dur: rand(1100, 1500), delay: pop + rand(0, 150), rot: rand(-500, 500),
+        });
+      }
+      for (let i = 0; i < 26; i++) {
+        const side = i % 2 ? 1 : -1;
+        ctx.spawn(SHAPES.confetti(rand(13, 17), CONFETTI[(i + 3) % CONFETTI.length]), { x: head.x + side * rand(40, 160), y: head.y - rand(40, 100) }, rand(-15, 15), rand(100, 160), {
+          dur: rand(1300, 1800), delay: pop + rand(400, 800), sway: rand(-16, 16), rot: rand(-400, 400),
+        });
+      }
+    },
+    pose: (p, at) => {
+      if (at < POP_AT) {
+        // Crouches, bursting with it…
+        const k = smooth(at / POP_AT);
+        p.sy *= 1 - 0.1 * k;
+        p.sx *= 1 + 0.06 * k;
+        p.raiseL = p.raiseR = -10 * k;
+        p.eye = "happy";
+        return;
+      }
+      // …then two happy hops, arms waving
+      at -= POP_AT;
+      const h = at < 1.2 ? Math.abs(Math.sin(at * Math.PI * (2 / 1.2))) : 0;
+      p.hop = h * 16;
+      p.sy *= 1 + 0.05 * h;
+      p.raiseL = 70 + Math.sin(at * 16) * 16;
+      p.raiseR = 70 - Math.sin(at * 16) * 16;
+      p.tiltL = p.tiltR = 12 * h;
+      p.eye = "happy";
+      p.blush = 0.8;
+    },
+  },
+  bounce: {
+    name: "Bounce",
+    dur: 1500,
+    tick: (ctx, c, at) => {
+      const d = c.action!.data;
+      if (at >= TOUCHDOWN && !d.landed) {
+        d.landed = 1;
+        ctx.spawn(SHAPES.dust(15), ctx.point(c, 120, 390), -14, -8, { dur: 500 });
+        ctx.spawn(SHAPES.dust(15), ctx.point(c, 260, 390), 14, -8, { dur: 500 });
+      }
+    },
+    pose: (p, at, c) => {
+      if (at < SPRING) {
+        // Crouches…
+        const k = at / SPRING;
+        p.sy *= 1 - 0.16 * k;
+        p.sx *= 1 + 0.1 * k;
+        p.raiseL = p.raiseR = -12 * k;
+      } else if (at < TOUCHDOWN) {
+        // …springs right up, somersaulting at the top…
+        const k = (at - SPRING) / (TOUCHDOWN - SPRING);
+        p.hop = Math.sin(Math.PI * k) * 110;
+        p.spin = 360 * smooth((k - 0.25) / 0.5) * (c.facing > 0 ? 1 : -1);
+        p.sy *= 1 + 0.1 * Math.max(0, 1 - k * 4);
+        p.raiseL = p.raiseR = 75;
+        p.tiltL = p.tiltR = 20;
+        p.eye = "happy";
+      } else {
+        // …and lands with a squash
+        const s = Math.sin(Math.min(1, (at - TOUCHDOWN) / 0.25) * Math.PI);
+        p.sy *= 1 - 0.18 * s;
+        p.sx *= 1 + 0.14 * s;
+        p.raiseL = p.raiseR = 40;
+      }
+    },
+  },
+  tickle: {
+    name: "Tickle",
+    dur: 1800,
+    tick: (ctx, c, at) => {
+      const d = c.action!.data;
+      const jp = ctx.world.jigglypuff;
+      if (jp) c.wantFacing = Math.sign(jp.x - c.x) || c.wantFacing;
+      if (at >= 0.35 && !d.giggle) {
+        d.giggle = 1;
+        const victim = ticklish(ctx, c);
+        if (victim) ctx.useMove(victim, "giggle", "Puff-hee-hee! 🤭");
+      }
+    },
+    pose: (p, at, c, ctx) => {
+      // Leans in toward her, wiggling its arms
+      const jp = ctx.world.jigglypuff;
+      const dir = jp ? Math.sign(jp.x - c.x) || 1 : 1;
+      p.rot = 6 * dir * Math.min(1, at / 0.25);
+      p.raiseL = 45 + Math.sin(at * 42) * 20;
+      p.raiseR = 45 - Math.sin(at * 42) * 20;
+      p.eye = "happy";
+    },
+  },
+  dazzlingGleam: {
+    name: "Dazzling Gleam",
+    dur: 1900,
+    start: (ctx, c) => {
+      // A rainbow over its head, and a burst of sparkles
+      const head = ctx.point(c, 190, 0);
+      ctx.spawn(SHAPES.rainbow(130), { x: head.x, y: head.y - 10 }, 0, -14, { dur: 1800 });
+      const mid = ctx.point(c, 190, 200);
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        ctx.spawn(SHAPES.sparkle(rand(10, 15)), mid, Math.cos(a) * 70, Math.sin(a) * 60, { dur: 900, delay: 100 + (i % 2) * 120 });
+      }
+      ctx.flash(c);
+    },
+    pose: (p, at) => {
+      p.hop = Math.sin(Math.min(1, at / 1.6) * Math.PI) * 8;
+      p.raiseL = p.raiseR = 68 * Math.min(1, at / 0.2);
+      p.eye = "happy";
+    },
+  },
 };
+
 
 /* Jigglypuff's marker doodle: glasses round the eyes and swirls on the cheeks */
 const DOODLE = [

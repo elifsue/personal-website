@@ -32,6 +32,17 @@ export const SHAPES = {
   /** Three short anime shock lines, fanning out to the right (rotate for the other side) */
   shock: (s = 22) => svg(`<g stroke="#1C1917" stroke-width="2.2" stroke-linecap="round"><path d="M4 6l7 3"/><path d="M4 12h8"/><path d="M4 18l7-3"/></g>`, s),
   z: (s = 14) => `<span style="display:block;font:500 ${s}px 'DM Mono',monospace;color:#6B6560">z</span>`,
+  /** Rain Dance's little rain cloud */
+  cloud: (s = 60) => svg(`<path d="M7 18h10.5a4.5 4.5 0 0 0 .6-8.96A6 6 0 0 0 6.6 8.2 4.9 4.9 0 0 0 7 18z" fill="#DCE3EC" stroke="#9AA7B8" stroke-width="1"/><path d="M8.5 11.5a3 3 0 0 1 3-2.5" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round"/>`, s),
+  /** A scrap of Celebrate's confetti */
+  confetti: (s = 9, color = "#FF7A93") => svg(`<rect x="7" y="3" width="10" height="18" rx="2" fill="${color}"/>`, s),
+  /** Dazzling Gleam's rainbow: arcs filling the top half of the box */
+  rainbow: (s = 120) => svg(
+    ["#FF6B6B", "#FFA94D", "#FFD43B", "#69DB7C", "#4DABF7", "#B197FC"]
+      .map((c, i) => { const r = 10.5 - i * 1.3; return `<path d="M${12 - r} 20a${r} ${r} 0 0 1 ${2 * r} 0" stroke="${c}" stroke-width="1.35" fill="none" opacity=".9"/>`; })
+      .join(""),
+    s,
+  ),
 };
 
 export const rand = (a: number, b: number) => a + Math.random() * (b - a);
