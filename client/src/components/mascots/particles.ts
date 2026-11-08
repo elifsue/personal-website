@@ -34,6 +34,9 @@ export const SHAPES = {
   z: (s = 14) => `<span style="display:block;font:500 ${s}px 'DM Mono',monospace;color:#6B6560">z</span>`,
   /** Rain Dance's little rain cloud */
   cloud: (s = 60) => svg(`<path d="M7 18h10.5a4.5 4.5 0 0 0 .6-8.96A6 6 0 0 0 6.6 8.2 4.9 4.9 0 0 0 7 18z" fill="#DCE3EC" stroke="#9AA7B8" stroke-width="1"/><path d="M8.5 11.5a3 3 0 0 1 3-2.5" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round"/>`, s),
+  /** Rock, paper or scissors, held up on a little card */
+  hand: (emoji: string, s = 26) =>
+    `<span style="display:flex;align-items:center;justify-content:center;width:${s * 1.6}px;height:${s * 1.6}px;border-radius:30%;background:#FFFDF8;border:1px solid rgba(196,98,45,.3);box-shadow:0 3px 8px rgba(28,25,23,.15);font-size:${s}px;line-height:1">${emoji}</span>`,
   /** A scrap of Celebrate's confetti */
   confetti: (s = 9, color = "#FF7A93") => svg(`<rect x="7" y="3" width="10" height="18" rx="2" fill="${color}"/>`, s),
   /** Dazzling Gleam's rainbow: arcs filling the top half of the box */
@@ -53,21 +56,32 @@ export interface SpawnOpts {
   rot?: number;
   scale?: number;
   sway?: number;
+  /** Pops up and stays put, all there until right at the end (instead of drifting off as it fades) */
+  hold?: boolean;
 }
 
-export type Spawn = (html: string, from: { x: number; y: number }, dx: number, dy: number, opts?: SpawnOpts) => void;
+export type Spawn = (html: string, from: { x: number; y: number }, dx: number, dy: number, opts?: SpawnOpts) => Animation;
 
 /** Creates a spawner that floats particles from a point by (dx, dy), fading in and out */
 export function makeSpawner(layer: HTMLElement, reduce: boolean): Spawn {
   return (html, from, dx, dy, opts = {}) => {
-    const { dur = 1200, delay = 0, rot = 0, scale = 1, sway = 0 } = opts;
+    const { dur = 1200, delay = 0, rot = 0, scale = 1, sway = 0, hold = false } = opts;
     const el = document.createElement("div");
     el.innerHTML = html;
     el.style.cssText = `position:absolute;left:${from.x}px;bottom:${fromBottom(from.y)}px;will-change:transform,opacity;opacity:0`;
     layer.appendChild(el);
     // Centred on the point (it's anchored by its bottom edge, hence +50%)
     const t = (px: number, py: number, s: number, r: number) => `translate(-50%,50%) translate(${px}px,${py}px) scale(${s}) rotate(${r}deg)`;
-    const anim = el.animate(
+    const anim = hold ? el.animate(
+      [
+        { transform: t(0, 0, 0.3, 0), opacity: 0 },
+        { transform: t(dx * 0.6, dy * 0.6, scale * 1.12, rot), opacity: 1, offset: 0.08 },
+        { transform: t(dx, dy, scale, rot), opacity: 1, offset: 0.14 },
+        { transform: t(dx, dy, scale, rot), opacity: 1, offset: 0.88 },
+        { transform: t(dx, dy, scale * 0.9, rot), opacity: 0 },
+      ],
+      { duration: dur, delay, easing: "linear", fill: "both" },
+    ) : el.animate(
       [
         { transform: t(0, 0, 0.3, 0), opacity: 0 },
         { transform: t(dx * 0.2 + sway, dy * 0.2, scale, rot * 0.2), opacity: 1, offset: 0.18 },
@@ -77,6 +91,7 @@ export function makeSpawner(layer: HTMLElement, reduce: boolean): Spawn {
       { duration: reduce ? 600 : dur, delay, easing: "cubic-bezier(.2,.7,.3,1)", fill: "both" },
     );
     anim.onfinish = () => el.remove();
+    return anim;
   };
 }
 

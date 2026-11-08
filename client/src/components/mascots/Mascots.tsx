@@ -78,6 +78,17 @@ const HIDE_HOP_MS = 420;
 const REVEAL_POP = 0.3;
 const REVEAL_GIGGLE = 0.85;
 const REVEAL_END = 2.3;
+/* Rock, paper, scissors (ms): each word of the chant, the hands held out, the result, and the win at the end.
+   First to three wins (a tie doesn't count), or whoever's ahead after this many goes, if the ties drag on */
+const RPS_BEAT_MS = 480;
+const RPS_SHOW_MS = 1100;
+const RPS_RESULT_MS = 1500;
+const RPS_FINAL_MS = 2700;
+const RPS_TO_WIN = 3;
+const RPS_MAX_ROUNDS = 12;
+const HANDS = ["✊", "✋", "✌️"];
+const CHANT = ["Rock… ✊", "Paper… ✋", "Scissors… ✌️"];
+const JINX = ["Jinx! 😆", "Great minds… 😮", "Again! Again!"];
 /** How far (px) the cursor has to be from an eye for it to look all the way that way */
 const LOOK_REACH = 160;
 /** Where an eye's shine rests: this fraction of the way from the middle of the eye to its top */
@@ -607,6 +618,7 @@ export default function Mascots() {
       if (tap && e.pointerId === tap.id) {
         if (e.type === "pointerup" && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 12) {
           endGame(performance.now(), false); // a tap sends Togepi off, so any game's over
+          endRps(performance.now(), false);
           abortHide(performance.now());
           tg.tx = clamp(e.clientX, ...floorBounds(tg));
           if (now < tg.forcedSleepUntil) jpChase = e.clientX;
@@ -633,6 +645,7 @@ export default function Mascots() {
     const onResize = () => {
       endGame(performance.now(), false, true); // the ball's put straight back in its corner
       clearHide();
+      endRps(performance.now(), false);
       perches.reset();
       resize();
       measureCeiling();
@@ -842,7 +855,7 @@ export default function Mascots() {
       }, reduce ? 0 : RELEASE_MS);
       // The full intros the first time they're let out; after that, just their hellos
       introOver = false;
-      played.ball = played.hide = false; // fresh out of the ball: both games before a nap
+      played.ball = played.hide = played.rps = false; // fresh out of the ball: every game before a nap
       startIntros(RELEASE_MS + 500, !introsPlayed);
       introsPlayed = true;
     };
@@ -1058,10 +1071,10 @@ export default function Mascots() {
       [tg, jp].map((c) => [c, { kick: -1e9, trap: -1e9, jump: -1e9, cheer: -1e9 }]),
     );
     let nextGameAt = 0;
-    /** Which games they've played since they last woke up: they play both before they settle down for a nap */
-    const played = { ball: false, hide: false };
+    /** Which games they've played since they last woke up: they play every one before they settle down for a nap */
+    const played = { ball: false, hide: false, rps: false };
     /** Still a game to play before they can nap (none with reduced motion, where they don't play) */
-    const gamesOwed = () => !reduce && !(played.ball && played.hide);
+    const gamesOwed = () => !reduce && !(played.ball && played.hide && played.rps);
     /** A game's over. Played to the end, it counts; cut short, it doesn't, and they try again once they've
         been left alone a moment (see playTick) */
     const gameOver = (t: number, which: keyof typeof played, done: boolean) => {
@@ -1201,32 +1214,34 @@ export default function Mascots() {
       turnBall(step);
       setBall(ballAtX + step, ballAtSize);
     };
+    /** A kickabout: they spread out a pass apart, around where they are now (if there's room) */
+    const startBall = (t: number) => {
+      const [L, R] = tg.x < jp.x ? [tg, jp] : [jp, tg];
+      const [lMin] = floorBounds(L), [, rMax] = floorBounds(R);
+      const gap = Math.min(clamp(window.innerWidth * 0.2, 170, 260), rMax - lMin);
+      if (gap < (L.W + R.W) / 2 + 70) return false;
+      const mid = clamp((L.x + R.x) / 2, lMin + gap / 2, rMax - gap / 2);
+      game = { phase: "gather", at: t, L, R, spots: [mid - gap / 2, mid + gap / 2], holder: null, passes: Math.random() < 0.5 ? 3 : 5, kicks: 0, shot: null, mx0: mx, my0: my };
+      say(tg, "Let's play ball! ⚽", 1600);
+      return true;
+    };
     const playTick = (t: number, dt: number) => {
       if (reduce) return;
       if (loose) looseTick(dt);
       if (!game) {
-        if (loose || hide || !gamesOwed() || t < nextGameAt || jpChase !== null) return;
+        if (loose || hide || rps || !gamesOwed() || t < nextGameAt || jpChase !== null) return;
         if (introUntil && !introOver && t < introUntil) return;
         if (![tg, jp].every((c) => canPlay(c, t) && c.v === 0 && !rigOf(c).bubbleUntil && t - c.lastActive > PLAY_AFTER_MS)) return;
-        // Which game: whichever they haven't played yet, otherwise hide and seek half the time (and whenever
-        // the ball isn't there to play with)
+        // Which game: one they haven't played yet, at random (the kickabout only if the ball's there to play
+        // with). If none of them can be played just now, they have another go in a bit
         const ballOk = ballFree() && Math.abs(ballAtX - dockX()) <= 1;
-        if (played.hide && !ballOk) return; // the ball's not free for the other game (they nod off a bit later)
-        if (played.ball || (!played.hide && (!ballOk || Math.random() < 0.5))) {
-          if (startHide(t)) return;
-          if (played.ball || !ballOk) {
-            nextGameAt = t + 2000; // nowhere to hide just now: have another look in a bit
-            return;
-          }
+        const starts = { ball: startBall, hide: startHide, rps: startRps };
+        const left = (Object.keys(starts) as (keyof typeof starts)[]).filter((k) => !played[k] && (k !== "ball" || ballOk));
+        for (const k of left.sort(() => Math.random() - 0.5)) if (starts[k](t)) break;
+        if (!game) {
+          if (!hide && !rps) nextGameAt = t + 2000;
+          return;
         }
-        // Room to spread out a little: they stand a pass apart, around where they are now
-        const [L, R] = tg.x < jp.x ? [tg, jp] : [jp, tg];
-        const [lMin] = floorBounds(L), [, rMax] = floorBounds(R);
-        const gap = Math.min(clamp(window.innerWidth * 0.2, 170, 260), rMax - lMin);
-        if (gap < (L.W + R.W) / 2 + 70) return;
-        const mid = clamp((L.x + R.x) / 2, lMin + gap / 2, rMax - gap / 2);
-        game = { phase: "gather", at: t, L, R, spots: [mid - gap / 2, mid + gap / 2], holder: null, passes: Math.random() < 0.5 ? 3 : 5, kicks: 0, shot: null, mx0: mx, my0: my };
-        say(tg, "Let's play ball! ⚽", 1600);
       }
       const g = game;
       // Anything else going on, and it's over
@@ -1534,7 +1549,7 @@ export default function Mascots() {
         const visitor = hider.hovered && (h.hiding === "in" || h.hiding === "hidden");
         const moved = pointerSeen && Math.hypot(mx - h.mx0, my - h.my0) > PLAY_QUIT_DIST;
         const scrolled = !!spot.el && Math.abs(window.scrollY - h.scroll0) > 2; // its hiding place has moved away
-        if (visitor || moved || scrolled || jpChase !== null || game || ![hider, seeker].every((c) => canPlay(c, t))) {
+        if (visitor || moved || scrolled || jpChase !== null || game || rps || ![hider, seeker].every((c) => canPlay(c, t))) {
           // Found already: it's just over (rather than talking and cheering over whatever's happening now)
           if (h.phase === "found" && !visitor) return finishHide(t, false);
           abortHide(t, visitor);
@@ -1744,6 +1759,171 @@ export default function Mascots() {
       const x0 = h.spot.left - box.left, x1 = h.spot.right - box.left, y0 = coverTop(h) - box.top, y1 = groundY() + 400 - box.top;
       const px = (v: number) => `${v.toFixed(1)}px`;
       root.style.clipPath = `polygon(evenodd, -4000px -4000px, 4000px -4000px, 4000px 4000px, -4000px 4000px, -4000px -4000px, ${px(x0)} ${px(y0)}, ${px(x1)} ${px(y0)}, ${px(x1)} ${px(y1)}, ${px(x0)} ${px(y1)}, ${px(x0)} ${px(y0)})`;
+    };
+
+    /* ── Rock, paper, scissors: they come face to face, chant, and throw out their hands (shown in little
+       cards between them). The winner of each go cheers and the loser sulks; a tie, and they go again.
+       First to three wins. Anything the visitor does ends it ── */
+    let rps: {
+      phase: "gather" | "chant" | "show" | "result" | "final";
+      at: number;
+      L: CharacterState;
+      R: CharacterState;
+      spots: [number, number];
+      /** Who calls out the chant this go (they take turns) */
+      caller: CharacterState;
+      beat: number;
+      round: number;
+      hands: Map<CharacterState, number>;
+      score: Map<CharacterState, number>;
+      /** Who won this go (or the whole thing, at the end): null for a tie, or a draw */
+      winner: CharacterState | null;
+      sulked: boolean;
+      /** The cards with their hands on, while they're up */
+      cards: Animation[];
+      mx0: number;
+      my0: number;
+    } | null = null;
+    /** Face to face, close enough for their hands to meet in the middle, around where they are now */
+    const startRps = (t: number) => {
+      const [L, R] = tg.x < jp.x ? [tg, jp] : [jp, tg];
+      const [lMin] = floorBounds(L), [, rMax] = floorBounds(R);
+      const gap = (L.W + R.W) / 2 + 110;
+      if (rMax - lMin < gap) return false;
+      const mid = clamp((L.x + R.x) / 2, lMin + gap / 2, rMax - gap / 2);
+      const caller = Math.random() < 0.5 ? tg : jp;
+      rps = {
+        phase: "gather", at: t, L, R, spots: [mid - gap / 2, mid + gap / 2], caller, beat: -1, round: 1,
+        hands: new Map(), score: new Map([[tg, 0], [jp, 0]]), winner: null, sulked: false, cards: [], mx0: mx, my0: my,
+      };
+      say(caller, caller === tg ? "Rock, paper, scissors? ✊✋✌️" : "Puff! Rock, paper, scissors? ✊✋✌️", 1600);
+      return true;
+    };
+    /** Over: back to normal, Togepi staying where it is (unless something's sent it elsewhere since) */
+    const endRps = (t: number, done: boolean) => {
+      const g = rps;
+      if (!g) return;
+      rps = null;
+      g.cards.forEach((a) => a.finish()); // (cut short: put away at once)
+      gameOver(t, "rps", done);
+      g.L.lastActive = g.R.lastActive = t;
+      if (tg.tx === tgSent) standStill(tg);
+      if (jp.crouchAt) standStill(jp);
+    };
+    /** Where its card goes: just in front of it, at about the height of its hands */
+    const handAt = (c: CharacterState) => ({ x: c.x + (Math.sign(other(c).x - c.x) || 1) * (c.W * 0.5 + 24), y: groundY() - c.H * 0.55 });
+    const rpsTick = (t: number) => {
+      const g = rps;
+      if (!g) return;
+      // Anything else going on, and it's over
+      if (game || hide || jpChase !== null || ![g.L, g.R].every((c) => canPlay(c, t)) || (pointerSeen && Math.hypot(mx - g.mx0, my - g.my0) > PLAY_QUIT_DIST)) {
+        endRps(t, false);
+        return;
+      }
+      g.L.lastActive = g.R.lastActive = t; // too busy playing to nod off
+      goDown(g.L, g.spots[0], t);
+      goDown(g.R, g.spots[1], t);
+      const since = t - g.at;
+      const next = (phase: NonNullable<typeof rps>["phase"]) => {
+        g.phase = phase;
+        g.at = t;
+      };
+      if (g.phase === "gather") {
+        const there = (c: CharacterState, x: number) => grounded(c) && c.v === 0 && Math.abs(c.x - x) <= c.def.walk.startDist + 2;
+        if (since > 400 && !rigOf(g.caller).bubbleUntil && there(g.L, g.spots[0]) && there(g.R, g.spots[1])) next("chant");
+        else if (since > 12000) endRps(t, false); // couldn't get there
+      } else if (g.phase === "chant") {
+        const beat = Math.floor(since / RPS_BEAT_MS);
+        if (beat > g.beat && beat < CHANT.length) {
+          g.beat = beat;
+          say(g.caller, CHANT[beat], RPS_BEAT_MS - 30);
+        }
+        if (beat >= CHANT.length) {
+          // …and out come their hands
+          g.cards = [];
+          for (const c of [tg, jp]) {
+            const hand = Math.floor(Math.random() * HANDS.length);
+            g.hands.set(c, hand);
+            g.cards.push(spawn(SHAPES.hand(HANDS[hand]), handAt(c), 0, -8, { dur: RPS_SHOW_MS + RPS_RESULT_MS * 0.8, hold: true }));
+          }
+          next("show");
+        }
+      } else if (g.phase === "show" && since >= RPS_SHOW_MS) {
+        const a = g.hands.get(g.L)!, b = g.hands.get(g.R)!;
+        // Each beats the one before it: paper wraps rock, scissors cut paper, rock blunts scissors
+        g.winner = a === b ? null : (a - b + 3) % 3 === 1 ? g.L : g.R;
+        if (g.winner) {
+          const w = g.winner, l = other(w);
+          g.score.set(w, g.score.get(w)! + 1);
+          say(w, `${HANDS[g.hands.get(w)!]} beats ${HANDS[g.hands.get(l)!]}! ${w === tg ? "Toge! ✨" : "Puff! 🎵"}`, RPS_RESULT_MS - 100);
+        } else say(g.caller, JINX[Math.floor(Math.random() * JINX.length)], RPS_RESULT_MS - 100);
+        next("result");
+      } else if (g.phase === "result" && since >= RPS_RESULT_MS) {
+        const ts = g.score.get(tg)!, js = g.score.get(jp)!;
+        if (Math.max(ts, js) >= RPS_TO_WIN || g.round >= RPS_MAX_ROUNDS) {
+          // All over: the winner crows about it (or, all square, they call it a draw)
+          g.winner = ts === js ? null : ts > js ? tg : jp;
+          g.sulked = false;
+          if (g.winner) say(g.winner, `I win, ${Math.max(ts, js)}–${Math.min(ts, js)}! 🏆`, 1300);
+          else say(g.caller, "Call it a draw! 🤝", 1600);
+          if (g.winner) for (const dx of [-1, 0, 1]) spawn(SHAPES.star(rand(10, 13)), point(g.winner, g.winner.def.w / 2, 0), dx * 22, -26 + Math.abs(dx) * 6, { dur: 900 });
+          next("final");
+        } else {
+          g.round++;
+          g.beat = -1;
+          g.caller = other(g.caller);
+          g.winner = null;
+          next("chant");
+        }
+      } else if (g.phase === "final") {
+        if (g.winner && !g.sulked && since >= 1400) {
+          g.sulked = true;
+          const l = other(g.winner);
+          say(l, l === tg ? "Toge… 😣" : "Hmph! Rematch later! 😤", 1200);
+        }
+        if (since >= RPS_FINAL_MS) endRps(t, true);
+      }
+    };
+    /** Rock, paper, scissors' poses, on top of the usual ones */
+    const rpsPose = (c: CharacterState, p: Pose, t: number) => {
+      const g = rps;
+      if (!g || c.action) return;
+      const dir = Math.sign(other(c).x - c.x) || 1;
+      const since = t - g.at;
+      if (g.phase === "gather") {
+        p.look = lookAhead(c);
+        return;
+      }
+      p.look = eyesOn(other(c));
+      if (g.phase === "chant") {
+        // Fist up, and down on each word, bobbing along
+        const f = (since % RPS_BEAT_MS) / RPS_BEAT_MS;
+        const up = (1 + Math.cos(f * Math.PI * 2)) / 2;
+        p.raiseL = 15 + 55 * up;
+        p.hop += 5 * (1 - up);
+        p.rot += 3 * dir;
+      } else if (g.phase === "show") {
+        // Hand thrust out, leaning in to see what the other one's got
+        p.raiseL = 42;
+        p.rot += 5 * dir * Math.min(1, since / 120);
+        p.look = handAt(other(c));
+        p.eye = "open";
+      } else if (g.winner === c) cheer(p, since / 1000);
+      else if (g.winner) {
+        // Lost: slumps, sulking
+        p.eye = "closed";
+        p.mouth = "pout";
+        p.sy *= 0.95;
+        p.raiseL = p.raiseR = -10;
+        p.rot -= 4 * dir;
+        p.ears -= 6;
+      } else if (g.phase === "final") cheer(p, since / 1000);
+      else {
+        // A tie: both taken aback
+        p.raiseL = p.raiseR = 55;
+        p.hop += Math.sin(Math.min(1, since / 300) * Math.PI) * 8;
+        p.eye = "open";
+      }
     };
 
     window.addEventListener("pointermove", onBallDragMove, { passive: true });
@@ -2002,7 +2182,7 @@ export default function Mascots() {
          with Togepi still coming, it hops over Togepi's head to the other side */
       let crowded = false;
       if (c === jp && t >= tg.forcedSleepUntil) jpChase = null;
-      if (c === jp && (game || hide)) {
+      if (c === jp && (game || hide || rps)) {
         // Playing: the game says where she goes (down off whatever she's on, if need be)
         mayHop = true;
       } else if (c === jp && !busy && !forcedAsleep && jpChase !== null) {
@@ -2168,6 +2348,7 @@ export default function Mascots() {
       else if (Math.abs(c.v) > 6) c.wantFacing = Math.sign(c.v);
       else if (playFacing(c)) c.wantFacing = playFacing(c);
       else if (hideFacing(c)) c.wantFacing = hideFacing(c);
+      else if (rps) c.wantFacing = Math.sign(other(c).x - c.x) || c.wantFacing;
       else if (!busy && !c.leapStart && c.sleep < 0.5 && Math.abs(mx - c.x) > c.W) c.wantFacing = Math.sign(mx - c.x);
       c.facing = c.wantFacing; // turns round instantly
 
@@ -2175,7 +2356,7 @@ export default function Mascots() {
       c.happy += ((c.hovered && !busy ? 1 : 0) - c.happy) * Math.min(1, dt * 10);
       // Talking keeps it awake, and so does the intro, a conversation the other one is listening to
       if (r.bubbleUntil || (!introOver && t < introUntil)) c.lastActive = t;
-      // Left alone they nod off, but not before they've played both games (unless one can't be played: then
+      // Left alone they nod off, but not before they've played every game (unless one can't be played: then
       // a little later). Once asleep, they stay asleep
       const idle = t - c.lastActive;
       const sleepy = idle > SLEEP_AFTER_MS && (c.sleep > 0.5 || !gamesOwed() || idle > SLEEP_AFTER_MS + GAMES_GRACE_MS);
@@ -2247,6 +2428,7 @@ export default function Mascots() {
       }
       playPose(c, p, t);
       hidePose(c, p, t, dt);
+      rpsPose(c, p, t);
 
       /* Flying out of the Poké Ball: an arc from the ball over to its spot, growing as it goes */
       const flight = Number.isNaN(r.fromX) ? 1 : Math.min(1, (t - r.appearAt) / RELEASE_MS);
@@ -2471,11 +2653,12 @@ export default function Mascots() {
       scrollNow = window.scrollY;
       playTick(t, dt);
       hideTick(t);
+      rpsTick(t);
       for (const r of ordered) move(r, t, dt);
       separate(t);
       for (const r of ordered) draw(r, t, dt);
       hideClip();
-      if (tg.sleep > 0.9 && jp.sleep > 0.9) played.ball = played.hide = false; // fast asleep: both again when they wake
+      if (tg.sleep > 0.9 && jp.sleep > 0.9) played.ball = played.hide = played.rps = false; // fast asleep: all of them again when they wake
       ballTick(dt);
       scrollPrev = scrollNow;
     };
