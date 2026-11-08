@@ -47,11 +47,12 @@ const HINT_RECALL = "Come back! ✨";
 const INTRO_LINE_MS = 2000;
 const INTRO_SAY_MS = 2000; // how long each intro line stays up
 const SLEEP_AFTER_MS = 7000;
-/* The kickabout: how long they're left alone before they start one, how long before another (or after
-   one's cut short), and how far the pointer can wander before they stop to follow it */
+/* Games: how long they're left alone before they start one, how soon they try again after one's cut short,
+   how far the pointer can wander before they stop to follow it, and how much longer than usual they stay
+   up waiting for a game that hasn't been played yet (when it can't be, they nod off after all) */
 const PLAY_AFTER_MS = 3500;
-const PLAY_COOLDOWN_MS = 45000;
-const PLAY_RETRY_MS = 20000;
+const PLAY_RETRY_MS = 2000;
+const GAMES_GRACE_MS = 8000;
 const PLAY_QUIT_DIST = 120;
 const SERVE_WOBBLE_MS = 500;
 /** How fast the ball rolls home to its corner when a kickabout's cut short (px/s) */
@@ -63,6 +64,20 @@ const KICK_FOLLOW_MS = 300;
 const TRAP_MS = 280;
 const HEADER_MS = 520;
 const CHEER_MS = 1400;
+/* Hide and seek: when the seeker starts counting and how long each number takes (s), how long it looks
+   round each wrong guess (ms), how long hopping in behind or back out takes (ms), and the reveal (s):
+   the hider pops out, then they both cheer, then it's over */
+const COUNT_FROM = 1;
+const COUNT_STEP = 1;
+/** It counts on (until the hider's hidden) up to this, then comes looking anyway */
+const COUNT_MAX = 10;
+/** The hider hurries off to hide this much faster than it walks */
+const HIDE_RUN = 1.7;
+const LOOK_MS = 1100;
+const HIDE_HOP_MS = 420;
+const REVEAL_POP = 0.3;
+const REVEAL_GIGGLE = 0.85;
+const REVEAL_END = 2.3;
 /** How far (px) the cursor has to be from an eye for it to look all the way that way */
 const LOOK_REACH = 160;
 /** Where an eye's shine rests: this fraction of the way from the middle of the eye to its top */
@@ -487,7 +502,8 @@ export default function Mascots() {
       const c = r.c;
       const bw = r.bubble.offsetWidth;
       const cx = c.x + c.offset;
-      const left = clamp(cx - bw / 2, 12, document.documentElement.clientWidth - bw - 12);
+      // Kept on the screen, and clear of the sidebar (it's drawn over the mascots and their bubbles)
+      const left = clamp(cx - bw / 2, sidebar() + 12, document.documentElement.clientWidth - bw - 12);
       r.bubble.style.left = `${left}px`;
       // Pinned to the bottom of the screen like the mascots, so it stays with them when a phone's
       // address bar hides or shows
@@ -590,7 +606,8 @@ export default function Mascots() {
     const onPointerUp = (e: PointerEvent) => {
       if (tap && e.pointerId === tap.id) {
         if (e.type === "pointerup" && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 12) {
-          endGame(performance.now(), false); // a tap sends Togepi off, so the kickabout's over
+          endGame(performance.now(), false); // a tap sends Togepi off, so any game's over
+          abortHide(performance.now());
           tg.tx = clamp(e.clientX, ...floorBounds(tg));
           if (now < tg.forcedSleepUntil) jpChase = e.clientX;
         }
@@ -615,6 +632,7 @@ export default function Mascots() {
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     const onResize = () => {
       endGame(performance.now(), false, true); // the ball's put straight back in its corner
+      clearHide();
       perches.reset();
       resize();
       measureCeiling();
@@ -824,6 +842,7 @@ export default function Mascots() {
       }, reduce ? 0 : RELEASE_MS);
       // The full intros the first time they're let out; after that, just their hellos
       introOver = false;
+      played.ball = played.hide = false; // fresh out of the ball: both games before a nap
       startIntros(RELEASE_MS + 500, !introsPlayed);
       introsPlayed = true;
     };
@@ -1039,6 +1058,16 @@ export default function Mascots() {
       [tg, jp].map((c) => [c, { kick: -1e9, trap: -1e9, jump: -1e9, cheer: -1e9 }]),
     );
     let nextGameAt = 0;
+    /** Which games they've played since they last woke up: they play both before they settle down for a nap */
+    const played = { ball: false, hide: false };
+    /** Still a game to play before they can nap (none with reduced motion, where they don't play) */
+    const gamesOwed = () => !reduce && !(played.ball && played.hide);
+    /** A game's over. Played to the end, it counts; cut short, it doesn't, and they try again once they've
+        been left alone a moment (see playTick) */
+    const gameOver = (t: number, which: keyof typeof played, done: boolean) => {
+      if (done) played[which] = true;
+      nextGameAt = t + (done ? 0 : PLAY_RETRY_MS);
+    };
     const other = (c: CharacterState) => (c === tg ? jp : tg);
     const ballMid = () => window.innerHeight - ground - ballLift - ballAtSize / 2;
     /** Where the ball sits to be kicked: just in front of its feet, on the side facing the other one */
@@ -1055,11 +1084,44 @@ export default function Mascots() {
       ballBody.style.transform = "";
       return a > 0.5 ? ballBody.animate([{ transform: spun(a) }, { transform: spun(a > 180 ? 360 : 0) }], { duration: 200, easing: "ease-out" }) : null;
     };
-    /** Free to play: out on the ground, awake, idle, not being handled or doing anything else */
+    /** Free to play: awake, not being handled or doing anything else. It can be up on something (or on its
+        way down off it): it hops down to the ground to play */
     const canPlay = (c: CharacterState, t: number) => {
       const r = rigOf(c);
-      return t >= r.appearAt + RELEASE_MS && r.recallAt === Infinity && !c.held && !c.perch && !aloft(c) && !c.action && !c.leapStart && !c.crouchAt
-        && !c.hovered && t >= c.forcedSleepUntil && c.sleep < 0.2;
+      return t >= r.appearAt + RELEASE_MS && r.recallAt === Infinity && !c.held && !c.action && !c.hovered && t >= c.forcedSleepUntil && c.sleep < 0.2;
+    };
+    /** Down on the ground (not up on something, jumping or about to) */
+    const grounded = (c: CharacterState) => !c.perch && !aloft(c) && !c.crouchAt;
+    /** Heads for x on the ground. Up on something, it gets down first: off the end, if x is out past it
+        (and there's room down there), otherwise with a hop straight down off the front of it */
+    const goDown = (c: CharacterState, x: number, t: number) => {
+      const r = rigOf(c), s = r.surface;
+      c.tx = x;
+      if (c === tg) tgSent = x;
+      if (!c.perch || !s || c.crouchAt) return;
+      const [a, b] = walkRange(c, s), [fa, fb] = floorBounds(c);
+      const pad = c.def.walk.startDist + 30;
+      if (x < a && a - fa > c.W * 0.5) c.tx = Math.min(x, a - pad);
+      else if (x > b && fb - b > c.W * 0.5) c.tx = Math.max(x, b + pad);
+      else {
+        c.crouchAt = t;
+        r.jump = { x: clamp(c.x + clamp(x - c.x, -140, 140), fa, fb), to: null };
+      }
+      if (c === tg) tgSent = c.tx;
+    };
+    /** What goDown last sent Togepi to */
+    let tgSent = NaN;
+    /** A game's over: it stays where it is (or wherever it's about to land), and doesn't hop down after all */
+    const standStill = (c: CharacterState) => {
+      const r = rigOf(c);
+      if (c.crouchAt) {
+        c.crouchAt = 0;
+        r.jump = null;
+      }
+      if (aloft(c) && c.jumping) {
+        const secs = (c.lv + Math.sqrt(c.lv * c.lv + 2 * GRAVITY * Math.max(0, c.lift))) / GRAVITY;
+        c.tx = clamp(c.x + c.vx * secs, ...floorBounds(c));
+      } else c.tx = c.x;
     };
     const ballFree = () => ballState === "out" && !ballDrag?.started && !ballFly;
     /** How high it jumps to head the ball */
@@ -1093,10 +1155,11 @@ export default function Mascots() {
       const g = game;
       if (!g) return;
       game = null;
-      nextGameAt = t + (done ? PLAY_COOLDOWN_MS : PLAY_RETRY_MS);
+      gameOver(t, "ball", done);
       g.L.lastActive = g.R.lastActive = t;
       // Stays where it is rather than going back to its spot, unless something's already sent it elsewhere
-      if (tg.tx === g.spots[0] || tg.tx === g.spots[1]) tg.tx = tg.x;
+      if (tg.tx === tgSent || tg.tx === g.spots[0] || tg.tx === g.spots[1]) standStill(tg);
+      if (jp.crouchAt) standStill(jp); // (she goes back to following Togepi about)
       if (ballDrag?.started || ballFly) {
         // Picked up: the throw has it now (spinning its own way, about its bottom)
         ballSpin = 0;
@@ -1142,9 +1205,20 @@ export default function Mascots() {
       if (reduce) return;
       if (loose) looseTick(dt);
       if (!game) {
-        if (loose || t < nextGameAt || !ballFree() || Math.abs(ballAtX - dockX()) > 1 || jpChase !== null) return;
+        if (loose || hide || !gamesOwed() || t < nextGameAt || jpChase !== null) return;
         if (introUntil && !introOver && t < introUntil) return;
         if (![tg, jp].every((c) => canPlay(c, t) && c.v === 0 && !rigOf(c).bubbleUntil && t - c.lastActive > PLAY_AFTER_MS)) return;
+        // Which game: whichever they haven't played yet, otherwise hide and seek half the time (and whenever
+        // the ball isn't there to play with)
+        const ballOk = ballFree() && Math.abs(ballAtX - dockX()) <= 1;
+        if (played.hide && !ballOk) return; // the ball's not free for the other game (they nod off a bit later)
+        if (played.ball || (!played.hide && (!ballOk || Math.random() < 0.5))) {
+          if (startHide(t)) return;
+          if (played.ball || !ballOk) {
+            nextGameAt = t + 2000; // nowhere to hide just now: have another look in a bit
+            return;
+          }
+        }
         // Room to spread out a little: they stand a pass apart, around where they are now
         const [L, R] = tg.x < jp.x ? [tg, jp] : [jp, tg];
         const [lMin] = floorBounds(L), [, rMax] = floorBounds(R);
@@ -1161,16 +1235,16 @@ export default function Mascots() {
         return;
       }
       g.L.lastActive = g.R.lastActive = t; // too busy playing to nod off
-      g.L.tx = g.spots[0];
-      g.R.tx = g.spots[1];
+      goDown(g.L, g.spots[0], t);
+      goDown(g.R, g.spots[1], t);
       const since = (t - g.at) / 1000;
       if (g.phase === "gather") {
-        const there = (c: CharacterState, x: number) => c.v === 0 && Math.abs(c.x - x) <= c.def.walk.startDist + 2;
+        const there = (c: CharacterState, x: number) => grounded(c) && c.v === 0 && Math.abs(c.x - x) <= c.def.walk.startDist + 2;
         if (since > 0.4 && there(g.L, g.spots[0]) && there(g.R, g.spots[1])) {
           g.phase = "serve";
           g.at = t;
           wobble(SERVE_WOBBLE_MS);
-        } else if (since > 6) endGame(t, false); // couldn't get there
+        } else if (since > 12) endGame(t, false); // couldn't get there
       } else if (g.phase === "serve") {
         // Wobbles in its corner, then hops out over the nearer one to land at its feet
         if (since * 1000 >= SERVE_WOBBLE_MS) {
@@ -1238,6 +1312,11 @@ export default function Mascots() {
         endGame(t, true);
       }
     };
+    /** Where its eyes go while it's playing: the middle of someone, or where it's walking to (or, standing
+        still, at the other one) */
+    const eyesOn = (c: CharacterState) => point(c, c.def.center.x, c.def.center.y);
+    const lookAhead = (c: CharacterState) =>
+      Math.abs(c.tx - c.x) > 8 ? { x: c.x + Math.sign(c.tx - c.x) * 220, y: groundY() - c.H * 0.5 } : eyesOn(other(c));
     /** Facing while playing: toward the other one (0 when not playing) */
     const playFacing = (c: CharacterState) => (game && (c === game.L || c === game.R) ? Math.sign(other(c).x - c.x) : 0);
     /** The kickabout's poses, on top of the usual ones: eyes on the ball, kicks, traps, a jump and a cheer.
@@ -1246,7 +1325,12 @@ export default function Mascots() {
       if (!game || (c !== game.L && c !== game.R)) return;
       const m = plays.get(c)!;
       const dir = Math.sign(other(c).x - c.x) || 1;
-      p.look = { x: ballAtX, y: ballMid() };
+      // Where they're going while they spread out, then the ball. After the goal, the scorer turns to the
+      // other one, who watches the ball land first
+      const ball = { x: ballAtX, y: ballMid() };
+      if (game.phase === "gather") p.look = lookAhead(c);
+      else if (game.phase === "cheer") p.look = c === game.L || t - plays.get(game.L)!.cheer > 400 ? eyesOn(other(c)) : ball;
+      else p.look = ball;
       const kick = t - m.kick;
       if (kick > -KICK_WIND_MS && kick < KICK_FOLLOW_MS) {
         let tilt: number, lift: number, lean: number, env: number;
@@ -1297,6 +1381,369 @@ export default function Mascots() {
         p.eye = "happy";
         p.blush = Math.max(p.blush, 0.8);
       }
+    };
+
+    /* ── Hide and seek: left alone for a bit (instead of a kickabout, now and then), one hides behind
+       something solid at the bottom of the screen (a card or a picture, with only its ears showing over
+       the top) or round the edge of the screen (behind the sidebar on desktop) while the other counts,
+       then comes looking: a wrong guess or two, then "Found you!". Anything the visitor does ends it;
+       the hider pops back out (hovering it while it's hiding counts as finding it) ── */
+    /** Where it hides: behind `el` at x (its top edge `top`, from `left` to `right`), or, with no `el`,
+        round the edge of the screen at `line` (`side` -1 left, 1 right), standing at x */
+    type Hideout = { el: Element | null; x: number; top: number; left: number; right: number; line: number; side: number };
+    let hide: {
+      phase: "count" | "seek" | "found" | "out";
+      at: number;
+      hider: CharacterState;
+      seeker: CharacterState;
+      spot: Hideout;
+      /** The hider getting there, getting in behind, hidden, coming back out, and done */
+      hiding: "go" | "in" | "hidden" | "out" | "done";
+      hidAt: number;
+      /** Its extra height and sideways shift now (px), so every move eases on from where it is */
+      hop: number;
+      off: number;
+      /** Where those were when it started coming out */
+      hop0: number;
+      off0: number;
+      /** Cropped where it's behind something */
+      clip: boolean;
+      counted: number;
+      giggled: boolean;
+      /** Didn't get hidden in time, and was found standing about */
+      caught: boolean;
+      /** Wrong guesses to check first, which one it's on, and when it got there to look round */
+      decoys: number[];
+      di: number;
+      lookAt: number;
+      /** Where the seeker ends up, next to the hiding place */
+      reveal: number;
+      mx0: number;
+      my0: number;
+      scroll0: number;
+      /** What it last told Togepi to walk to, so it's not overridden afterwards if something else has since */
+      tgTx: number;
+    } | null = null;
+    const groundY = () => window.innerHeight - ground;
+    /** Where the top of its hiding place is now: the page may have scrolled since (it carries it along) */
+    const coverTop = (h: NonNullable<typeof hide>) => h.spot.top - (window.scrollY - h.scroll0);
+    /** How far down (artwork px from the top) its eyes go: peeking, it shows that much */
+    const eyeLine = (c: CharacterState) => (Math.max(...c.def.eyes.map((e) => e.y + e.lid.ry * 0.5)) / c.def.h) * c.H;
+    /** Everywhere on the screen it could hide right now */
+    const hideouts = (c: CharacterState): Hideout[] => {
+      const [a, b] = floorBounds(c);
+      const gy = groundY();
+      // Things it could crouch down behind, tall enough to hide most of it but not so tall it can't peek over
+      const found = new Map<Element, Surface>();
+      for (let x = a; x <= b; x += 16) {
+        const hit = perches.coverAt(x, gy, gy - c.H * 0.72, gy - c.H * 0.3);
+        if (hit && !found.has(hit.el)) found.set(hit.el, hit.surface);
+      }
+      const boxes: Hideout[] = [];
+      found.forEach((s, el) => {
+        const lo = Math.max(a, s.left + c.W * 0.5), hi = Math.min(b, s.right - c.W * 0.5);
+        if (hi < lo) return; // too narrow to hide behind
+        const x = (lo + hi) / 2;
+        if (perches.coverAt(x, gy, -Infinity, Infinity)?.el !== el) return;
+        boxes.push({ el, x, top: topAt(s, x), left: s.left, right: s.right, line: 0, side: 0 });
+      });
+      // …or round the edge of the screen (the corner with the Poké Ball in it is taken)
+      const edges: Hideout[] = [{ el: null, x: a, top: 0, left: 0, right: 0, line: sidebar(), side: -1 }];
+      if (!dockReserved) edges.push({ el: null, x: b, top: 0, left: 0, right: 0, line: document.documentElement.clientWidth, side: 1 });
+      return [...boxes, ...edges];
+    };
+    /** Anywhere on the screen it could hide, picked at random (not right where it is, or under the seeker's nose) */
+    const pickHideout = (c: CharacterState, from: CharacterState): Hideout | null => {
+      const ok = hideouts(c).filter((h) => Math.abs(h.x - c.x) >= 100 && Math.abs(h.x - from.x) >= 140);
+      return ok.length ? ok[Math.floor(Math.random() * ok.length)] : null;
+    };
+    const startHide = (t: number) => {
+      // Either can hide, but if one has nowhere to (the corner on its side is taken, say), the other does
+      let hider = Math.random() < 0.5 ? tg : jp;
+      let spot = pickHideout(hider, other(hider));
+      if (!spot) {
+        hider = other(hider);
+        spot = pickHideout(hider, other(hider));
+      }
+      if (!spot) return false;
+      const seeker = other(hider);
+      const [sa, sb] = floorBounds(seeker);
+      // A wrong guess or two first, well away from the hiding place (and on its own side of it)
+      const decoys: number[] = [];
+      const mySide = Math.sign(seeker.x - spot.x) || 1;
+      for (let i = 0, want = Math.random() < 0.5 ? 1 : 2; i < 20 && decoys.length < want; i++) {
+        const x = clamp(seeker.x + rand(-250, 250), sa, sb); // not off miles away
+        if (Math.sign(x - spot.x) === mySide && Math.abs(x - spot.x) > 160 && Math.abs(x - (decoys[decoys.length - 1] ?? seeker.x)) > 90) decoys.push(x);
+      }
+      // It ends up right beside where the hider comes back out (not so close they bump into each other)
+      const toSeeker = spot.el ? Math.sign(seeker.x - spot.x) || 1 : -spot.side;
+      const reveal = clamp(spot.x + toSeeker * (minGap() + 12), sa, sb);
+      hide = {
+        phase: "count", at: t, hider, seeker, spot, hiding: "go", hidAt: t, hop: 0, off: 0, hop0: 0, off0: 0, clip: false, counted: 0, giggled: false, caught: false,
+        decoys, di: 0, lookAt: 0, reveal, mx0: mx, my0: my, scroll0: window.scrollY, tgTx: NaN,
+      };
+      say(hider, hider === tg ? "Hide and seek! You count! 🙈" : "Hide and seek! Puff, you're it! 🙈", 1300);
+      return true;
+    };
+    const setClip = (on: boolean) => {
+      if (!hide || hide.clip === on) return;
+      hide.clip = on;
+      if (!on) rigOf(hide.hider).root.style.clipPath = "";
+    };
+    /** Over: back to normal. Togepi stays put rather than heading on to wherever the game had it going,
+        unless something's sent it elsewhere since */
+    const finishHide = (t: number, done: boolean) => {
+      const h = hide;
+      if (!h) return;
+      rigOf(h.hider).root.style.clipPath = "";
+      hide = null;
+      gameOver(t, "hide", done);
+      h.hider.lastActive = h.seeker.lastActive = t;
+      if (tg.tx === h.tgTx) standStill(tg);
+      if (jp.crouchAt) standStill(jp);
+    };
+    /** Over at once (picked up, called back, the window resized), with no coming back out */
+    const clearHide = () => finishHide(performance.now(), false);
+    /** Cut short: the hider comes back out (pleased with itself, if it was the visitor who found it) */
+    const abortHide = (t: number, foundByVisitor = false) => {
+      const h = hide;
+      if (!h || h.phase === "out") return;
+      h.phase = "out";
+      h.at = t;
+      if (h.hiding === "go") return finishHide(t, false);
+      h.tgTx = NaN; // (whatever Togepi's sent to from now on, it goes)
+      if (h.hiding === "in" || h.hiding === "hidden") {
+        h.hiding = "out";
+        h.hidAt = t;
+        h.hop0 = h.hop;
+        h.off0 = h.off;
+      }
+      if (foundByVisitor) say(h.hider, h.hider === tg ? "Toge-hehe! You found me! ✨" : "Puff! You found me! 😆", 1500);
+    };
+
+    const hideTick = (t: number) => {
+      const h = hide;
+      if (!h) return;
+      const { hider, seeker, spot } = h;
+      // Picked up or called back: no time for anything else
+      if (hider.held || seeker.held || rigOf(hider).recallAt !== Infinity || rigOf(seeker).recallAt !== Infinity) {
+        clearHide();
+        return;
+      }
+      if (h.phase !== "out") {
+        const visitor = hider.hovered && (h.hiding === "in" || h.hiding === "hidden");
+        const moved = pointerSeen && Math.hypot(mx - h.mx0, my - h.my0) > PLAY_QUIT_DIST;
+        const scrolled = !!spot.el && Math.abs(window.scrollY - h.scroll0) > 2; // its hiding place has moved away
+        if (visitor || moved || scrolled || jpChase !== null || game || ![hider, seeker].every((c) => canPlay(c, t))) {
+          // Found already: it's just over (rather than talking and cheering over whatever's happening now)
+          if (h.phase === "found" && !visitor) return finishHide(t, false);
+          abortHide(t, visitor);
+        }
+      }
+      if (!hide) return;
+      if (h.phase !== "out") hider.lastActive = seeker.lastActive = t; // too busy to nod off
+      const since = (t - h.at) / 1000;
+
+      /* The hider */
+      const there = (c: CharacterState, x: number) => grounded(c) && c.v === 0 && Math.abs(c.x - x) <= Math.max(4, c.def.walk.startDist + 2);
+      if (h.hiding === "go") {
+        // The seeker's in the way: it takes a running jump clean over its head (and down, if they're up on something)
+        const dir = Math.sign(spot.x - hider.x);
+        const gap = (seeker.x - hider.x) * dir;
+        if (sameLevel(hider, seeker) && !aloft(hider) && !aloft(seeker) && !hider.crouchAt && gap > 0 && gap < minGap() + 40 && (spot.x - seeker.x) * dir > 0) {
+          const land = clamp(seeker.x + dir * (minGap() + 16), ...floorBounds(hider));
+          jumpTo(rigOf(hider), dir > 0 ? Math.min(land, spot.x) : Math.max(land, spot.x), 0, null, seeker.lift + seeker.H + 30);
+        }
+        goDown(hider, spot.x, t);
+        if (grounded(hider) && hider.v === 0 && Math.abs(hider.x - spot.x) <= hider.def.walk.startDist + 2) {
+          hider.x = spot.x; // (at most a step: it walks right up to it unless it was already that close)
+          h.hiding = "in";
+          h.hidAt = t;
+        }
+      } else if (h.phase !== "out") hider.tx = hider.x;
+      const inK = (t - h.hidAt) / HIDE_HOP_MS;
+      if (h.hiding === "in") {
+        if (spot.el && inK >= 0.5) setClip(true); // over the top of it and down behind
+        if (inK >= 1) h.hiding = "hidden";
+      } else if (h.hiding === "out") {
+        if (inK >= 0.5) setClip(false); // up over the top, and down in front
+        if (inK >= 1) h.hiding = "done";
+      }
+
+      /* The seeker, and how it's going */
+      if (h.phase !== "out") seeker.tx = seeker.x;
+      // Standing right where the hider wants to hide: it steps out of the way to count (to whichever side
+      // there's room, even if that means the hider has to jump over it)
+      if (h.phase === "count" && h.hiding === "go" && grounded(seeker) && Math.abs(seeker.x - spot.x) < minGap() + 6) {
+        const [sa, sb] = floorBounds(seeker);
+        const clear = minGap() + 12;
+        let side = Math.sign(seeker.x - spot.x) || -Math.sign(hider.x - spot.x) || 1;
+        if (spot.x + side * clear < sa || spot.x + side * clear > sb) side = -side;
+        seeker.tx = clamp(spot.x + side * clear, sa, sb);
+      }
+      if (h.phase === "count") {
+        // Counts (after the hider's said what's going on) to three at least, and on until it's hidden
+        const n = since >= COUNT_FROM ? Math.floor((since - COUNT_FROM) / COUNT_STEP) + 1 : 0;
+        if (n > h.counted) {
+          if (h.counted >= 3 && h.hiding === "hidden") {
+            h.phase = "seek";
+            h.at = t;
+            say(seeker, "Ready or not, here I come! 👀", 1600);
+          } else if (n > COUNT_MAX && h.hiding === "go") {
+            // It still hasn't got there: ready or not, here it comes, and it's caught out in the open
+            h.phase = "seek";
+            h.at = t;
+            h.caught = true;
+            h.hiding = "done";
+            h.decoys = [];
+            h.reveal = clamp(hider.x + (Math.sign(seeker.x - hider.x) || 1) * (minGap() + 12), ...floorBounds(seeker));
+            say(seeker, "Ready or not, here I come! 👀", 1600);
+          } else if (n <= COUNT_MAX) {
+            h.counted = n;
+            say(seeker, `${n}… 🙈`, 900);
+          }
+        }
+      } else if (h.phase === "seek") {
+        if (h.di < h.decoys.length) {
+          // Checks somewhere else first: gets there, looks round, wonders
+          const x = h.decoys[h.di];
+          if (!h.lookAt) {
+            goDown(seeker, x, t);
+            if (there(seeker, x)) {
+              h.lookAt = t;
+              if (h.di === h.decoys.length - 1) say(seeker, seeker === tg ? "Toge…? 🤔" : "Hmm… 🤔", 1100);
+            }
+          } else if (t - h.lookAt > LOOK_MS) {
+            h.di++;
+            h.lookAt = 0;
+          }
+        } else {
+          // (caught out in the open, it may still be coming to a stop: it goes to wherever it ends up)
+          if (h.caught) h.reveal = clamp(hider.x + (Math.sign(seeker.x - hider.x) || 1) * (minGap() + 12), ...floorBounds(seeker));
+          goDown(seeker, h.reveal, t);
+          if (there(seeker, h.reveal)) {
+            h.phase = "found";
+            h.at = t;
+            spawn(SHAPES.exclaim(26), point(seeker, seeker.def.w * 0.75, 0), 10, -30, { dur: 900, scale: 1.1, rot: 10 });
+            say(seeker, "Found you! 👉", 1300);
+          }
+        }
+      } else if (h.phase === "found") {
+        if (since >= REVEAL_POP && h.hiding === "hidden") {
+          h.hiding = "out";
+          h.hidAt = t;
+          h.hop0 = h.hop;
+          h.off0 = h.off;
+        }
+        if (since >= REVEAL_GIGGLE && !h.giggled) {
+          h.giggled = true;
+          say(hider, h.caught ? "Eep! I wasn't ready! 😅" : hider === tg ? "Toge-hehe! You found me! ✨" : "Aww, you found me! 😆", 1500);
+        }
+        if (since >= REVEAL_END) finishHide(t, true);
+      } else if (h.phase === "out" && (h.hiding === "done" || h.hiding === "go")) finishHide(t, false);
+      if (hide && h.phase !== "out") h.tgTx = tg.tx;
+    };
+    /** Facing while playing hide and seek (0: however it would anyway) */
+    const hideFacing = (c: CharacterState) => {
+      const h = hide;
+      if (!h) return 0;
+      const toOther = Math.sign(other(c).x + other(c).offset - c.x - c.offset);
+      if (c === h.seeker) {
+        if (h.phase === "count") return -toOther; // back turned, no peeking
+        if (h.phase === "seek" && h.lookAt) return Math.sin(((now - h.lookAt) / 1000) * Math.PI * 2.4) < 0 ? -1 : 1; // looking round
+        return h.phase === "found" ? toOther : 0;
+      }
+      if (h.hiding === "go") return 0;
+      return h.spot.el || h.caught ? toOther : -h.spot.side; // peeking out at the seeker / back into the screen
+    };
+    /** Hide and seek's poses, on top of the usual ones */
+    const hidePose = (c: CharacterState, p: Pose, t: number, dt: number) => {
+      const h = hide;
+      if (!h) return;
+      const busy = !!c.action; // doing a move: only where it is comes from here, the rest is the move's
+      const { spot } = h;
+      const ease = Math.min(1, dt * 9);
+      const since = (t - h.at) / 1000;
+      if (c === h.hider) {
+        // Where it's running to, then the seeker (cut short, it's back to whatever it'd look at anyway)
+        if (!busy && h.phase !== "out") p.look = h.hiding === "go" ? lookAhead(c) : eyesOn(h.seeker);
+        const k = clamp((t - h.hidAt) / HIDE_HOP_MS, 0, 1);
+        // Peeks out now and then while the seeker's looking, except when it's getting close
+        const near = Math.abs(h.seeker.x - c.x) < 150;
+        const peek = h.phase === "seek" && !near && ((t - h.hidAt) / 1000) % 2.6 < 0.9;
+        if (spot.el) {
+          // Behind something: crouched right down out of sight, or up just enough for its eyes to show over
+          const showing = c.H - (groundY() - coverTop(h)); // how much shows over the top standing up
+          const duck = -showing - 6;
+          const peekHop = eyeLine(c) - showing;
+          const over = groundY() - coverTop(h) + 6; // high enough for its feet to clear the top
+          if (h.hiding === "in") h.hop = k < 0.5 ? over * Math.sin(k * Math.PI) : duck + (over - duck) * Math.cos((k - 0.5) * Math.PI);
+          else if (h.hiding === "hidden") h.hop += ((peek ? peekHop : duck) - h.hop) * ease;
+          else if (h.hiding === "out") h.hop = k < 0.5 ? h.hop0 + (over - h.hop0) * Math.sin(k * Math.PI) : over * Math.cos((k - 0.5) * Math.PI);
+          else h.hop = 0;
+          p.hop += h.hop;
+        } else {
+          // Round the edge of the screen: all the way out of sight, or leaning back in to peek
+          // (all the way off the screen: the sidebar's see-through)
+          const hidden = (spot.side < 0 ? -(c.W / 2 + 4) : document.documentElement.clientWidth + c.W / 2 + 4) - c.x;
+          const peekOff = spot.line + spot.side * (c.W / 2 - c.W * 0.38) - c.x;
+          if (h.hiding === "in") h.off = hidden * smooth(k);
+          else if (h.hiding === "hidden") h.off += ((peek ? peekOff : hidden) - h.off) * ease;
+          else if (h.hiding === "out") h.off = h.off0 * (1 - smooth(k));
+          else h.off = 0;
+          p.offset += h.off;
+          if (h.hiding === "in" || h.hiding === "out") p.hop += Math.sin(k * Math.PI) * 10;
+        }
+        if (busy) return;
+        if (h.hiding === "hidden" || h.hiding === "in") {
+          p.raiseL += 20;
+          p.raiseR += 20;
+        }
+        if (h.phase === "found" && since >= REVEAL_GIGGLE) cheer(p, since - REVEAL_GIGGLE);
+      } else if (c === h.seeker && !busy) {
+        if (h.phase === "count") {
+          // Hands over its eyes, swaying as it counts
+          p.eye = "closed";
+          p.raiseL = p.raiseR = 85;
+          p.rot += Math.sin(since * Math.PI * 2) * 4;
+        } else if (h.phase === "seek") {
+          if (h.lookAt) {
+            // Looking round: scans whichever way it's turned
+            p.look = { x: c.x + c.facing * 200, y: groundY() - 40 };
+            p.raiseL += 15;
+            p.raiseR += 15;
+          } else if (h.di < h.decoys.length || h.caught) p.look = h.caught ? eyesOn(h.hider) : lookAhead(c);
+          // Last of all, straight for the hiding place: it's got a feeling
+          else p.look = spot.el ? { x: spot.x, y: coverTop(h) - 10 } : { x: spot.line, y: groundY() - 40 };
+        } else if (h.phase === "found") {
+          p.look = eyesOn(h.hider);
+          if (since < REVEAL_GIGGLE) {
+            // Points it out
+            const dir = Math.sign(h.hider.x + h.hider.offset - c.x) || 1;
+            p.rot += 6 * dir * Math.min(1, since / 0.15);
+            p.raiseL = p.raiseR = 60;
+            p.eye = "open";
+          } else cheer(p, since - REVEAL_GIGGLE);
+        }
+      }
+    };
+    /** Happy little hops, arms waving */
+    const cheer = (p: Pose, s: number) => {
+      p.hop += Math.abs(Math.sin(s * Math.PI * 3)) * 10;
+      p.raiseL = 70 + Math.sin(s * 14) * 16;
+      p.raiseR = 70 - Math.sin(s * 14) * 16;
+      p.eye = "happy";
+      p.blush = Math.max(p.blush, 0.8);
+    };
+    /** Behind something: crop away whatever's behind it (in the hider's own box, as it's drawn this frame) */
+    const hideClip = () => {
+      const h = hide;
+      if (!h || !h.clip || !h.spot.el) return;
+      const root = rigOf(h.hider).root;
+      const box = root.getBoundingClientRect();
+      const x0 = h.spot.left - box.left, x1 = h.spot.right - box.left, y0 = coverTop(h) - box.top, y1 = groundY() + 400 - box.top;
+      const px = (v: number) => `${v.toFixed(1)}px`;
+      root.style.clipPath = `polygon(evenodd, -4000px -4000px, 4000px -4000px, 4000px 4000px, -4000px 4000px, -4000px -4000px, ${px(x0)} ${px(y0)}, ${px(x1)} ${px(y0)}, ${px(x1)} ${px(y1)}, ${px(x0)} ${px(y1)}, ${px(x0)} ${px(y0)})`;
     };
 
     window.addEventListener("pointermove", onBallDragMove, { passive: true });
@@ -1371,12 +1818,13 @@ export default function Mascots() {
         spawn(SHAPES.dust(rand(12, 16)), { x: at.x, y: at.y - rise }, i ? 16 : -16, -10, { dur: 550 });
       });
     };
-    /** Takes off on an arc that comes down at x, `lift` px above the ground (beside `to`, if it's joining them) */
-    const jumpTo = (r: Rig, x: number, lift: number, to: CharacterState | null) => {
+    /** Takes off on an arc that comes down at x, `lift` px above the ground (beside `to`, if it's joining them),
+        topping out at least `over` px up */
+    const jumpTo = (r: Rig, x: number, lift: number, to: CharacterState | null, over = 0) => {
       const { c } = r;
       const from = c.lift;
       r.flight = { from: c.perch?.el ?? null, to };
-      const apex = clamp(Math.max(from, lift) + JUMP_CLEAR + Math.abs(x - c.x) * 0.12, Math.max(from, lift), Math.max(from, maxLift(c)));
+      const apex = clamp(Math.max(from, lift, over) + JUMP_CLEAR * (over ? 0 : 1) + Math.abs(x - c.x) * 0.12, Math.max(from, lift), Math.max(from, maxLift(c)));
       // (a few px extra: stepping the arc frame by frame tops out a little short of the exact peak)
       const up = Math.sqrt(2 * GRAVITY * (apex - from + 6));
       const secs = up / GRAVITY + Math.sqrt((2 * (apex - lift)) / GRAVITY);
@@ -1520,7 +1968,7 @@ export default function Mascots() {
         c.v = 0;
         c.amp += (0 - c.amp) * Math.min(1, dt * 8);
         c.lastActive = t;
-        if (busy || forcedAsleep || !r.jump) {
+        if (busy || forcedAsleep || c.hovered || !r.jump) {
           c.crouchAt = 0;
           r.jump = null;
         } else if (t - c.crouchAt >= CROUCH_MS) {
@@ -1554,8 +2002,9 @@ export default function Mascots() {
          with Togepi still coming, it hops over Togepi's head to the other side */
       let crowded = false;
       if (c === jp && t >= tg.forcedSleepUntil) jpChase = null;
-      if (c === jp && game) {
-        // Playing ball: the kickabout says where she stands
+      if (c === jp && (game || hide)) {
+        // Playing: the game says where she goes (down off whatever she's on, if need be)
+        mayHop = true;
       } else if (c === jp && !busy && !forcedAsleep && jpChase !== null) {
         /* While Togepi is sung to sleep, Jigglypuff follows the cursor herself. She stops beside Togepi
            rather than walking into it, and hops over it when the cursor is well past its far side */
@@ -1637,7 +2086,7 @@ export default function Mascots() {
       const toEdge = !!c.perch && mayHop && past !== 0 && Math.abs(dist) > STOP_DIST;
       const walking = !busy && !c.hovered && !reduce && !forcedAsleep && (crowded || toEdge || Math.abs(c.v) > 1 || Math.abs(dist) > def.walk.startDist);
       if (walking) {
-        const maxSpeed = def.walk.maxSpeed * (crowded ? 1.4 : 1);
+        const maxSpeed = def.walk.maxSpeed * (crowded ? 1.4 : 1) * (hide?.hider === c && hide.hiding === "go" ? HIDE_RUN : 1); // (hurrying off to hide)
         const want = Math.sign(dist) * Math.min(maxSpeed, Math.sqrt(2 * DECEL * Math.max(0, Math.abs(dist) - STOP_DIST)));
         const rate = (Math.abs(want) > Math.abs(c.v) ? ACCEL : DECEL) * (crowded ? 1.6 : 1);
         c.v += clamp(want - c.v, -rate * dt, rate * dt);
@@ -1718,6 +2167,7 @@ export default function Mascots() {
       if (air && Math.abs(c.vx) > 80) c.wantFacing = Math.sign(c.vx);
       else if (Math.abs(c.v) > 6) c.wantFacing = Math.sign(c.v);
       else if (playFacing(c)) c.wantFacing = playFacing(c);
+      else if (hideFacing(c)) c.wantFacing = hideFacing(c);
       else if (!busy && !c.leapStart && c.sleep < 0.5 && Math.abs(mx - c.x) > c.W) c.wantFacing = Math.sign(mx - c.x);
       c.facing = c.wantFacing; // turns round instantly
 
@@ -1725,7 +2175,11 @@ export default function Mascots() {
       c.happy += ((c.hovered && !busy ? 1 : 0) - c.happy) * Math.min(1, dt * 10);
       // Talking keeps it awake, and so does the intro, a conversation the other one is listening to
       if (r.bubbleUntil || (!introOver && t < introUntil)) c.lastActive = t;
-      const wantSleep = forcedAsleep || (!busy && !c.hovered && c.v === 0 && t - c.lastActive > SLEEP_AFTER_MS) ? 1 : 0;
+      // Left alone they nod off, but not before they've played both games (unless one can't be played: then
+      // a little later). Once asleep, they stay asleep
+      const idle = t - c.lastActive;
+      const sleepy = idle > SLEEP_AFTER_MS && (c.sleep > 0.5 || !gamesOwed() || idle > SLEEP_AFTER_MS + GAMES_GRACE_MS);
+      const wantSleep = forcedAsleep || (!busy && !c.hovered && c.v === 0 && sleepy) ? 1 : 0;
       c.sleep += (wantSleep - c.sleep) * Math.min(1, dt * (wantSleep ? (forcedAsleep ? 3 : 1.5) : 8));
 
       /* Pose — the whole artwork moves, pivoting on its feet; limbs move on top of that */
@@ -1792,6 +2246,7 @@ export default function Mascots() {
         p.sx *= 1 + 0.08 * squash;
       }
       playPose(c, p, t);
+      hidePose(c, p, t, dt);
 
       /* Flying out of the Poké Ball: an arc from the ball over to its spot, growing as it goes */
       const flight = Number.isNaN(r.fromX) ? 1 : Math.min(1, (t - r.appearAt) / RELEASE_MS);
@@ -2015,9 +2470,12 @@ export default function Mascots() {
       last = t;
       scrollNow = window.scrollY;
       playTick(t, dt);
+      hideTick(t);
       for (const r of ordered) move(r, t, dt);
       separate(t);
       for (const r of ordered) draw(r, t, dt);
+      hideClip();
+      if (tg.sleep > 0.9 && jp.sleep > 0.9) played.ball = played.hide = false; // fast asleep: both again when they wake
       ballTick(dt);
       scrollPrev = scrollNow;
     };

@@ -32,6 +32,9 @@ const TEXT_MIN_PX = 26;
 /** Narrower than this (px) and it's not worth standing on */
 const MIN_W = 32;
 const SOLID_TAGS = new Set(["IMG", "VIDEO", "CANVAS", "IFRAME", "svg"]);
+/** Something solid this close round something solid inside it is its frame (a polaroid round its photo):
+    hiding, it's the frame it hides behind (px) */
+const FRAME_MAX = 40;
 const NEVER = new Set(["HTML", "BODY", "MAIN"]);
 
 /* Any CSS colour → [r, g, b, a], by painting a pixel with it (handles oklch and friends too) */
@@ -248,6 +251,30 @@ export function makePerches() {
         if (covered(p, x, topAt(s, x))) return null;
       }
       return s;
+    },
+
+    /** Something solid standing on the ground at x (reaching down to `groundY`, flat-topped, with its top
+        between `topMin` and `topMax`, viewport px): somewhere to hide behind. See-through things in front
+        of it (text, layout boxes) don't count, but anything solid in front of it does */
+    coverAt(x: number, groundY: number, topMin: number, topMax: number): { el: Element; surface: Surface } | null {
+      const y = Math.min(groundY, window.innerHeight) - 3;
+      for (const el of document.elementsFromPoint(x, y)) {
+        if (info(el).kind !== "box" || !visible(el)) continue;
+        let s = boxTop(el);
+        if (!s || Math.abs(s.slope) > 0.05) return null;
+        let top = topAt(s, x);
+        let cover = el;
+        for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+          if (info(a).kind !== "box" || !visible(a)) continue;
+          const f = boxTop(a);
+          if (!f || Math.abs(f.slope) > 0.05 || topAt(f, x) < top - FRAME_MAX || topAt(f, x) > top || f.left < s.left - FRAME_MAX || f.right > s.right + FRAME_MAX) break;
+          cover = a;
+          s = f;
+          top = topAt(f, x);
+        }
+        return top >= topMin && top <= topMax && cover.getBoundingClientRect().bottom >= groundY - 2 ? { el: cover, surface: s } : null;
+      }
+      return null;
     },
 
     /** Feet at x went from y0 down to y1 (viewport px, y0 in this frame's scroll position): the top edge
