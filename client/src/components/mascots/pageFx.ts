@@ -1,6 +1,7 @@
 /* ============================================================
-   PAGE EFFECTS — what Togepi's Metronome moves do to the whole
-   page while they play: the page (everything in <main>), the
+   PAGE EFFECTS — what the mascots' moves (Togepi's Metronome
+   moves, Jigglypuff's Sing) do to the whole page while they
+   play: the page (everything in <main>), the
    cards and pictures on screen, and a see-through layer over it
    all (under the mascots) for tints, flashes and weather.
    Everything is added on top of whatever's already there (Web

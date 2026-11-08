@@ -49,6 +49,11 @@ const moves: Record<string, MoveDef> = {
     tick: (ctx, c, at) => {
       const d = c.action!.data;
       const tg = ctx.world.togepi;
+      // The whole page nods off to her song too (and jolts awake when she stops)
+      if (!d.lulled) {
+        d.lulled = 1;
+        ctx.page.lullaby(SONG_END * 1000);
+      }
       // A steady stream of notes while singing
       if (at < SONG_END && at >= (d.note ?? 0)) {
         d.note = at + 0.28;

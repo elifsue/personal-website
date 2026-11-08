@@ -563,28 +563,31 @@ export default function Mascots() {
     };
 
     /* ── Moves ── */
-    /** What Togepi's moves do to the whole page. Each effect belongs to the move that started it, and stops
-        if that move's cut short (picked up, sung to sleep…) */
+    /** What their moves do to the whole page. Each effect belongs to the move that started it (whichever
+        one's move started last: it's started from a move's start or tick), and stops if that move's cut short
+        (picked up, sung to sleep…) */
     const page = makePageFx(reduce, spawn, () => sidebar());
-    let pageOwner: { action: Action; stops: Stop[] } | null = null;
+    const pageOwners = new Map<CharacterState, { action: Action; stops: Stop[] }>();
     const ownedPage = {} as PageFx;
     for (const k of Object.keys(page) as (keyof PageFx)[]) {
       (ownedPage as unknown as Record<string, unknown>)[k] = (...args: unknown[]) => {
         const stop = (page[k] as (...a: unknown[]) => Stop)(...args);
-        const a = tg.action; // (only Togepi's moves use them)
-        if (a && k !== "dispose") {
-          if (pageOwner?.action !== a) pageOwner = { action: a, stops: [] };
-          pageOwner.stops.push(stop);
+        const by = [tg, jp].filter((c) => c.action).sort((a, b) => b.action!.start - a.action!.start)[0];
+        if (by && k !== "dispose") {
+          const o = pageOwners.get(by);
+          if (o?.action === by.action) o.stops.push(stop);
+          else pageOwners.set(by, { action: by.action!, stops: [stop] });
         }
         return stop;
       };
     }
-    /** The move that started the page effects has stopped: if it was cut short, so are they */
+    /** A move that started page effects has stopped: if it was cut short, so are they */
     const checkPage = (t: number) => {
-      const o = pageOwner;
-      if (!o || tg.action === o.action) return;
-      if (t < o.action.start + o.action.dur - 50) o.stops.forEach((s) => s());
-      pageOwner = null;
+      pageOwners.forEach((o, c) => {
+        if (c.action === o.action) return;
+        if (t < o.action.start + o.action.dur - 50) o.stops.forEach((s) => s());
+        pageOwners.delete(c);
+      });
     };
     const ctx: Ctx = {
       get now() { return now; },
