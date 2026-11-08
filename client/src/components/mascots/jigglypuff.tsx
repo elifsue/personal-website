@@ -208,6 +208,29 @@ const moves: Record<string, MoveDef> = {
       p.raiseL = p.raiseR = 40;
     },
   },
+  /* Knocked off her feet by Togepi's Earthquake: topples over away from it, lies there dizzy, and gets
+     back up (only ever started by Togepi's Earthquake) */
+  tumble: {
+    name: "Tumble",
+    dur: 1800,
+    start: (ctx, c) => {
+      const tg = ctx.world.togepi;
+      c.action!.data.side = tg ? Math.sign(c.x - tg.x) || 1 : 1;
+      const head = ctx.point(c, 178, 60);
+      for (let i = 0; i < 3; i++) ctx.spawn(SHAPES.star(rand(9, 12)), head, (i - 1) * 22, -26, { dur: 900, delay: 350 + i * 90 });
+    },
+    pose: (p, at, c) => {
+      const side = c.action?.data.side ?? 1;
+      // Over (with a little bounce as she hits the ground), lying there, then back up
+      const over = at < 0.35 ? popIn(at / 0.35) : at < 1.25 ? 1 : 1 - smooth((at - 1.25) / 0.4);
+      p.rot = side * 78 * over;
+      p.eye = at < 1.3 ? "closed" : "open";
+      p.mouth = "pout";
+      p.raiseL = p.raiseR = 50 * over;
+      p.tiltL = p.tiltR = 20 * over;
+      p.liftL = p.liftR = 12 * over;
+    },
+  },
   defenseCurl: {
     name: "Defense Curl",
     dur: 1700,

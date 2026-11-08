@@ -1,3 +1,4 @@
+import type { PageFx } from "./pageFx";
 import type { ReactNode, SVGProps } from "react";
 import type { Spawn } from "./particles";
 import type { Perch } from "./perches";
@@ -167,6 +168,8 @@ export interface CharacterState {
 
 export interface Ctx {
   now: number;
+  /** What its moves do to the whole page */
+  page: PageFx;
   reduce: boolean;
   touch: boolean;
   world: Record<CharacterId, CharacterState>;

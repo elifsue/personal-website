@@ -90,7 +90,7 @@ export function makeSpawner(layer: HTMLElement, reduce: boolean): Spawn {
       ],
       { duration: reduce ? 600 : dur, delay, easing: "cubic-bezier(.2,.7,.3,1)", fill: "both" },
     );
-    anim.onfinish = () => el.remove();
+    anim.onfinish = anim.oncancel = () => el.remove();
     return anim;
   };
 }

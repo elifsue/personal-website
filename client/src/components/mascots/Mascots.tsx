@@ -13,9 +13,10 @@
 import { Fragment, useEffect, useRef, type SVGProps } from "react";
 import { jigglypuff } from "./jigglypuff";
 import { SHAPES, makePathSpawner, makeSpawner, rand } from "./particles";
+import { makePageFx, type PageFx, type Stop } from "./pageFx";
 import { makePerches, topAt, type Surface } from "./perches";
 import { togepi } from "./togepi";
-import type { CharacterDef, CharacterId, CharacterState, Ctx, Ellipse, EyeDef, LimbDef, LimbKey, Pose } from "./types";
+import type { Action, CharacterDef, CharacterId, CharacterState, Ctx, Ellipse, EyeDef, LimbDef, LimbKey, Pose } from "./types";
 
 /** DOM order: Jigglypuff is drawn behind Togepi when they overlap */
 const CHARACTERS: CharacterDef[] = [jigglypuff, togepi];
@@ -525,9 +526,33 @@ export default function Mascots() {
     };
 
     /* ── Moves ── */
+    /** What Togepi's moves do to the whole page. Each effect belongs to the move that started it, and stops
+        if that move's cut short (picked up, sung to sleep…) */
+    const page = makePageFx(reduce, spawn, () => sidebar());
+    let pageOwner: { action: Action; stops: Stop[] } | null = null;
+    const ownedPage = {} as PageFx;
+    for (const k of Object.keys(page) as (keyof PageFx)[]) {
+      (ownedPage as unknown as Record<string, unknown>)[k] = (...args: unknown[]) => {
+        const stop = (page[k] as (...a: unknown[]) => Stop)(...args);
+        const a = tg.action; // (only Togepi's moves use them)
+        if (a && k !== "dispose") {
+          if (pageOwner?.action !== a) pageOwner = { action: a, stops: [] };
+          pageOwner.stops.push(stop);
+        }
+        return stop;
+      };
+    }
+    /** The move that started the page effects has stopped: if it was cut short, so are they */
+    const checkPage = (t: number) => {
+      const o = pageOwner;
+      if (!o || tg.action === o.action) return;
+      if (t < o.action.start + o.action.dur - 50) o.stops.forEach((s) => s());
+      pageOwner = null;
+    };
     const ctx: Ctx = {
       get now() { return now; },
       reduce, touch, world, spawn, spawnPath, say, point, later, bounds, sameLevel,
+      page: ownedPage,
       useMove: (c, key, text) => {
         const move = c.def.moves[key];
         if (!move) return;
@@ -2651,6 +2676,7 @@ export default function Mascots() {
       const dt = Math.min(0.05, (t - last) / 1000);
       last = t;
       scrollNow = window.scrollY;
+      checkPage(t);
       playTick(t, dt);
       hideTick(t);
       rpsTick(t);
@@ -2683,6 +2709,7 @@ export default function Mascots() {
       ball.removeEventListener("pointerenter", onBallEnter);
       ball.removeEventListener("pointerleave", onBallLeave);
       unbind.forEach((u) => u());
+      page.dispose();
       fx.replaceChildren();
     };
   }, []);

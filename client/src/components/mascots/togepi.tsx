@@ -34,6 +34,8 @@ const NOT_IN_POOL = ["metronome", "surprised"];
 const TURNED_INTO: Record<string, string> = {
   splash: "Splash! …But nothing happened.",
   celebrate: "It turned into Celebrate! 🎉",
+  earthquake: "It turned into Earthquake! 🌋",
+  gravity: "It turned into Gravity! 🪐",
   teleport: "It turned into Teleport! ✨",
 };
 const smooth = (t: number) => {
@@ -65,6 +67,12 @@ const RAIN_AT = 0.8;
 /** Bounce timeline, seconds: crouch → in the air → landed */
 const SPRING = 0.2;
 const TOUCHDOWN = 1.05;
+/** Earthquake: the stomp (seconds) and how long the ground shakes after it (ms); when Jigglypuff's knocked over (s) */
+const STOMP = 0.3;
+const QUAKE_MS = 1800;
+const KNOCKED = 0.8;
+/** Gravity, ms: everything comes down, sits in a heap, and floats back up */
+const GRAVITY_MS = 3000;
 
 const moves: Record<string, MoveDef> = {
   metronome: {
@@ -84,6 +92,7 @@ const moves: Record<string, MoveDef> = {
       if (c.lastMove !== "metronome" && Math.random() < 0.1) {
         c.lastMove = "metronome";
         ctx.useMove(c, "metronome", "…It turned into Metronome?!");
+        ctx.page.sway();
         return;
       }
       const pool = Object.keys(moves).filter((k) => !NOT_IN_POOL.includes(k) && k !== c.lastMove && (k !== "tickle" || ticklish(ctx, c)));
@@ -102,6 +111,7 @@ const moves: Record<string, MoveDef> = {
         const d = rand(90, 150);
         ctx.spawn(SHAPES.star(rand(14, 22)), from, Math.cos(a) * d, Math.sin(a) * d, { dur: 1100, delay: i * 25, rot: rand(180, 360) });
       }
+      ctx.page.swift(from); // …and off across the page
     },
     pose: (p, at) => {
       const j = Math.max(0, Math.sin(Math.min(1, at / 0.5) * Math.PI));
@@ -118,6 +128,7 @@ const moves: Record<string, MoveDef> = {
     start: (ctx, c) => {
       const from = ctx.point(c, 190, 40);
       for (let i = 0; i < 8; i++) ctx.spawn(SHAPES.heart(rand(12, 20)), from, rand(-70, 70), rand(-110, -170), { dur: 1600, delay: i * 110, sway: rand(-14, 14), rot: rand(-25, 25) });
+      ctx.page.blush();
     },
     pose: (p, at) => {
       p.eye = "happy";
@@ -138,6 +149,7 @@ const moves: Record<string, MoveDef> = {
       // The tables turn: Togepi's song sends Jigglypuff to sleep
       const jp = ctx.world.jigglypuff;
       if (jp) ctx.later(() => ctx.forceSleep(jp, 12000), 800);
+      ctx.page.lullaby(MOVE_MS); // (and the page nods off too, for a moment)
     },
     pose: (p, at) => {
       p.eye = "closed";
@@ -156,6 +168,7 @@ const moves: Record<string, MoveDef> = {
         ctx.spawn(SHAPES.bolt(rand(18, 26)), from, Math.cos(a) * 90, Math.sin(a) * 90, { dur: 700, delay: (i % 3) * 120, rot: (a * 180) / Math.PI + 90 });
       }
       ctx.flash(c);
+      ctx.page.thunder();
     },
     pose: (p, at) => {
       p.rot = Math.sin(at * 70) * 2;
@@ -168,6 +181,7 @@ const moves: Record<string, MoveDef> = {
     dur: MOVE_MS,
     start: (ctx, c) => {
       for (let i = 0; i < 10; i++) ctx.spawn(SHAPES.bubble(rand(10, 22)), ctx.point(c, MOUTH.x, MOUTH.y), rand(-60, 60), rand(-90, -170), { dur: 1600, delay: i * 120, sway: rand(-10, 10) });
+      ctx.page.underwater();
     },
     pose: (p, at) => {
       p.sy = 1 + Math.sin(at * 12) * 0.03;
@@ -181,6 +195,7 @@ const moves: Record<string, MoveDef> = {
     start: (ctx, c) => {
       const from = ctx.point(c, 190, 250);
       for (let i = 0; i < 6; i++) ctx.spawn(SHAPES.sparkle(rand(10, 15)), from, rand(-55, 55), rand(-20, -70), { dur: 900, delay: 150 + i * 80 });
+      ctx.page.minimize();
     },
     pose: (p, at) => {
       // Shrinks to a tiny Togepi, hops a little, then pops back with an overshoot
@@ -252,7 +267,10 @@ const moves: Record<string, MoveDef> = {
   splash: {
     name: "Splash",
     dur: MOVE_MS,
-    start: (ctx, c) => ctx.spawn(SHAPES.sweat(), ctx.point(c, 300, 60), 8, 18, { dur: 1300, delay: 500 }),
+    start: (ctx, c) => {
+      ctx.spawn(SHAPES.sweat(), ctx.point(c, 300, 60), 8, 18, { dur: 1300, delay: 500 });
+      ctx.page.splash(900); // all that, for one drop
+    },
     pose: (p, at) => {
       const k = Math.min(1, at / 0.9);
       p.hop = Math.abs(Math.sin(k * Math.PI * 2)) * 8 * (1 - k);
@@ -272,6 +290,7 @@ const moves: Record<string, MoveDef> = {
         const a = (i / 8) * Math.PI * 2;
         ctx.spawn(SHAPES.sparkle(rand(10, 14)), at, Math.cos(a) * 34, Math.sin(a) * 34, { dur: 700, delay: 250 });
       }
+      ctx.page.blink(BLINK_OUT * 1000 - 100); // the screen loses it for a moment as it goes
     },
     tick: (ctx, c, at) => {
       const d = c.action!.data;
@@ -317,6 +336,7 @@ const moves: Record<string, MoveDef> = {
       for (let i = 0; i < 16; i++) {
         ctx.spawn(SHAPES.sweat(rand(7, 9)), { x: head.x + rand(-20, 20), y: head.y - 22 }, rand(-2, 2), rand(30, 42), { dur: 480, delay: RAIN_AT * 1000 + 300 + i * 85 });
       }
+      ctx.page.rain(RAIN_AT * 1000 + 200); // …and everywhere else
     },
     tick: (ctx, c, at) => {
       const d = c.action!.data;
@@ -373,6 +393,7 @@ const moves: Record<string, MoveDef> = {
           dur: rand(1300, 1800), delay: pop + rand(400, 800), sway: rand(-16, 16), rot: rand(-400, 400),
         });
       }
+      ctx.page.confetti(pop); // (all over the page)
     },
     pose: (p, at) => {
       if (at < POP_AT) {
@@ -403,6 +424,7 @@ const moves: Record<string, MoveDef> = {
       const d = c.action!.data;
       if (at >= TOUCHDOWN && !d.landed) {
         d.landed = 1;
+        ctx.page.bounce(0);
         ctx.spawn(SHAPES.dust(15), ctx.point(c, 120, 390), -14, -8, { dur: 500 });
         ctx.spawn(SHAPES.dust(15), ctx.point(c, 260, 390), 14, -8, { dur: 500 });
       }
@@ -443,6 +465,7 @@ const moves: Record<string, MoveDef> = {
         d.giggle = 1;
         const victim = ticklish(ctx, c);
         if (victim) ctx.useMove(victim, "giggle", "Puff-hee-hee! 🤭");
+        ctx.page.tickle();
       }
     },
     pose: (p, at, c, ctx) => {
@@ -468,11 +491,80 @@ const moves: Record<string, MoveDef> = {
         ctx.spawn(SHAPES.sparkle(rand(10, 15)), mid, Math.cos(a) * 70, Math.sin(a) * 60, { dur: 900, delay: 100 + (i % 2) * 120 });
       }
       ctx.flash(c);
+      ctx.page.gleam();
     },
     pose: (p, at) => {
       p.hop = Math.sin(Math.min(1, at / 1.6) * Math.PI) * 8;
       p.raiseL = p.raiseR = 68 * Math.min(1, at / 0.2);
       p.eye = "happy";
+    },
+  },
+  earthquake: {
+    name: "Earthquake",
+    dur: STOMP * 1000 + QUAKE_MS,
+    tick: (ctx, c, at) => {
+      const d = c.action!.data;
+      if (at >= STOMP && !d.stomped) {
+        // Stamps down, and the ground starts to shake
+        d.stomped = 1;
+        ctx.page.quake(QUAKE_MS);
+        ctx.spawn(SHAPES.dust(16), ctx.point(c, 120, 390), -18, -8, { dur: 550 });
+        ctx.spawn(SHAPES.dust(16), ctx.point(c, 260, 390), 18, -8, { dur: 550 });
+      }
+      if (at >= KNOCKED && !d.knocked) {
+        // …and Jigglypuff's knocked clean off her feet
+        d.knocked = 1;
+        const jp = ctx.world.jigglypuff;
+        const grounded = jp && (jp.perch || (jp.lift <= 0 && jp.lv <= 0)) && !jp.leapStart && !jp.crouchAt;
+        if (jp && grounded && !jp.action && !jp.held && jp.sleep < 0.5 && ctx.now >= jp.forcedSleepUntil) ctx.useMove(jp, "tumble", "Puff?! 😵");
+      }
+    },
+    pose: (p, at) => {
+      if (at < STOMP) {
+        // Up on one foot, arms high…
+        const k = at / STOMP;
+        p.hop = Math.sin(k * Math.PI) * 14;
+        p.liftR = 18 * Math.sin(k * Math.PI);
+        p.raiseL = p.raiseR = 65;
+      } else {
+        // …stamp! Then wobbling to keep its balance as the ground shakes
+        const k = Math.max(0, 1 - (at - STOMP) / (QUAKE_MS / 1000));
+        const land = Math.max(0, 1 - (at - STOMP) / 0.12);
+        p.sy *= 1 - 0.12 * land;
+        p.sx *= 1 + 0.08 * land;
+        p.rot = Math.sin(at * 38) * 5 * k;
+        p.raiseL = 40 + Math.sin(at * 26) * 22 * k;
+        p.raiseR = 40 - Math.sin(at * 26) * 22 * k;
+      }
+    },
+  },
+  gravity: {
+    name: "Gravity",
+    dur: GRAVITY_MS,
+    start: (ctx) => ctx.page.gravity(GRAVITY_MS - 200),
+    pose: (p, at) => {
+      const s = GRAVITY_MS / 1000;
+      if (at < 0.25 * s) {
+        // Pushes down with both arms, and everything comes down with it…
+        const k = smooth(at / (0.25 * s));
+        p.raiseL = p.raiseR = 70 - 100 * k;
+        p.sy *= 1 - 0.1 * k;
+        p.sx *= 1 + 0.06 * k;
+      } else if (at < 0.62 * s) {
+        // …heavy, squashed, holding it there…
+        p.raiseL = p.raiseR = -30;
+        p.sy *= 0.9;
+        p.sx *= 1.06;
+        p.eye = "closed";
+      } else {
+        // …then lets go, and it all floats back up
+        const k = smooth((at - 0.62 * s) / (0.3 * s));
+        p.raiseL = p.raiseR = -30 + 110 * k;
+        p.sy *= 0.9 + 0.1 * k;
+        p.sx *= 1.06 - 0.06 * k;
+        p.hop = Math.sin(k * Math.PI) * 10;
+        p.eye = "happy";
+      }
     },
   },
 };
