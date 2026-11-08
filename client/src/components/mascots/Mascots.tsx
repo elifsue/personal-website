@@ -47,6 +47,22 @@ const HINT_RECALL = "Come back! ✨";
 const INTRO_LINE_MS = 2000;
 const INTRO_SAY_MS = 2000; // how long each intro line stays up
 const SLEEP_AFTER_MS = 7000;
+/* The kickabout: how long they're left alone before they start one, how long before another (or after
+   one's cut short), and how far the pointer can wander before they stop to follow it */
+const PLAY_AFTER_MS = 3500;
+const PLAY_COOLDOWN_MS = 45000;
+const PLAY_RETRY_MS = 20000;
+const PLAY_QUIT_DIST = 120;
+const SERVE_WOBBLE_MS = 500;
+/** How fast the ball rolls home to its corner when a kickabout's cut short (px/s) */
+const HOME_SPEED = 420;
+/** A beat with the ball at its feet before the wind-up */
+const HOLD_MS = 350;
+const KICK_WIND_MS = 180;
+const KICK_FOLLOW_MS = 300;
+const TRAP_MS = 280;
+const HEADER_MS = 520;
+const CHEER_MS = 1400;
 /** How far (px) the cursor has to be from an eye for it to look all the way that way */
 const LOOK_REACH = 160;
 /** Where an eye's shine rests: this fraction of the way from the middle of the eye to its top */
@@ -574,6 +590,7 @@ export default function Mascots() {
     const onPointerUp = (e: PointerEvent) => {
       if (tap && e.pointerId === tap.id) {
         if (e.type === "pointerup" && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 12) {
+          endGame(performance.now(), false); // a tap sends Togepi off, so the kickabout's over
           tg.tx = clamp(e.clientX, ...floorBounds(tg));
           if (now < tg.forcedSleepUntil) jpChase = e.clientX;
         }
@@ -597,6 +614,7 @@ export default function Mascots() {
     window.addEventListener("pointercancel", onPointerUp);
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     const onResize = () => {
+      endGame(performance.now(), false, true); // the ball's put straight back in its corner
       perches.reset();
       resize();
       measureCeiling();
@@ -700,6 +718,8 @@ export default function Mascots() {
       hint.style.bottom = `${size + 16 + ballLift}px`;
       placeHint();
     };
+    /** Turned about its middle (its transform origin is at the bottom, for wobbling) */
+    const spun = (deg: number) => `translateY(-50%) rotate(${deg.toFixed(1)}deg) translateY(50%)`;
     /** Rolls along the ground to x (turning as it goes), growing or shrinking to size on the way */
     const rollBall = (x: number, size: number, ms: number, done: () => void) => {
       const fromX = ballAtX, fromSize = ballAtSize;
@@ -711,7 +731,9 @@ export default function Mascots() {
           { duration: ms, easing },
         );
         const turn = ((x - fromX) / (Math.PI * (fromSize + size) * 0.5)) * 360; // rolling right turns it clockwise
-        ballBody.animate([{ transform: `rotate(${(-turn).toFixed(0)}deg)` }, { transform: "rotate(0deg)" }], { duration: ms, easing });
+        // Whole turns, so it sets off and ends upright (turning about its middle, not where it touches the ground)
+        const start = 360 * Math.round(-turn / 360);
+        ballBody.animate([{ transform: spun(start) }, { transform: spun(0) }], { duration: ms, easing });
       }
       later(done, reduce ? 0 : ms);
     };
@@ -991,6 +1013,292 @@ export default function Mascots() {
       }
       setBall(x, ballAtSize);
     };
+    /* ── A kickabout: left alone for a bit, they borrow the Poké Ball from its corner and pass it back and
+       forth, until the one further from the corner chips it over the other's head back in. Anything the
+       visitor does (or the ball being picked up or clicked) ends it, and the ball rolls home ── */
+    /** Rolled (peak 0), or flown in an arc that tops out `peak` px up over x = `apex` */
+    type Shot = { from: number; to: number; dur: number; peak: number; apex: number; goal: boolean; receiver: CharacterState | null };
+    let game: {
+      phase: "gather" | "serve" | "fly" | "hold" | "cheer";
+      at: number;
+      /** Nearer the left / nearer the corner, and where they stand */
+      L: CharacterState;
+      R: CharacterState;
+      spots: readonly [number, number];
+      holder: CharacterState | null;
+      /** Passes left before the one on the left goes for goal, and how many there have been */
+      passes: number;
+      kicks: number;
+      shot: Shot | null;
+      /** Where the pointer was when it started: moving well away from there ends it */
+      mx0: number;
+      my0: number;
+    } | null = null;
+    /** When each last kicked (the moment of contact), stopped the ball, jumped for it and cheered */
+    const plays = new Map<CharacterState, { kick: number; trap: number; jump: number; cheer: number }>(
+      [tg, jp].map((c) => [c, { kick: -1e9, trap: -1e9, jump: -1e9, cheer: -1e9 }]),
+    );
+    let nextGameAt = 0;
+    const other = (c: CharacterState) => (c === tg ? jp : tg);
+    const ballMid = () => window.innerHeight - ground - ballLift - ballAtSize / 2;
+    /** Where the ball sits to be kicked: just in front of its feet, on the side facing the other one */
+    const footOf = (c: CharacterState) => c.x + Math.sign(other(c).x - c.x) * (c.W * 0.42 + ballAtSize / 2);
+    /** Turns the ball to how far it's gone (rolling right turns it clockwise) */
+    const turnBall = (dx: number, k = 1) => {
+      ballSpin += (dx / (Math.PI * ballAtSize)) * 360 * k;
+      ballBody.style.transform = spun(ballSpin);
+    };
+    /** Rights itself, so it opens the right way up next time */
+    const uprightBall = () => {
+      const a = ((ballSpin % 360) + 360) % 360;
+      ballSpin = 0;
+      ballBody.style.transform = "";
+      return a > 0.5 ? ballBody.animate([{ transform: spun(a) }, { transform: spun(a > 180 ? 360 : 0) }], { duration: 200, easing: "ease-out" }) : null;
+    };
+    /** Free to play: out on the ground, awake, idle, not being handled or doing anything else */
+    const canPlay = (c: CharacterState, t: number) => {
+      const r = rigOf(c);
+      return t >= r.appearAt + RELEASE_MS && r.recallAt === Infinity && !c.held && !c.perch && !aloft(c) && !c.action && !c.leapStart && !c.crouchAt
+        && !c.hovered && t >= c.forcedSleepUntil && c.sleep < 0.2;
+    };
+    const ballFree = () => ballState === "out" && !ballDrag?.started && !ballFly;
+    /** How high it jumps to head the ball */
+    const headerHop = (c: CharacterState) => Math.min(44, c.H * 0.45);
+    const shoot = (t: number, shot: Shot) => {
+      game!.shot = shot;
+      game!.holder = null;
+      game!.phase = "fly";
+      game!.at = t;
+      // Going for goal, the one in the way jumps to head it as it goes over
+      if (shot.goal) {
+        const f = clamp((game!.R.x - shot.from) / (shot.to - shot.from), 0, 1);
+        plays.get(game!.R)!.jump = Math.max(t, t + f * shot.dur * 1000 - HEADER_MS / 2);
+      }
+    };
+    /** Height of a flown shot at x: one half-parabola up to the apex, another down from it */
+    const arcAt = (s: Shot, x: number) => {
+      const end = x < s.apex === s.from < s.apex ? s.from : s.to;
+      const u = end === s.apex ? 0 : clamp((x - s.apex) / (end - s.apex), 0, 1);
+      return s.peak * (1 - u * u);
+    };
+    /** Height for an arc that tops out right over `over` and clears it by `clear` px (it can land just past
+        it, coming down steeply, so it's high enough to still clear its shoulder on the way down) */
+    const clearing = (over: CharacterState, clear: number) => Math.min(maxBallLift(), over.H + clear);
+    /** Left lying about (or still in the air) when a kickabout ends: it falls, then rolls home to its
+        corner. It's moved a frame at a time, so it can still be clicked or grabbed wherever it is */
+    let loose = false;
+    let looseVy = 0;
+    /** Over: the ball comes down and goes home. `instant` (the window's being resized) puts it straight back */
+    const endGame = (t: number, done: boolean, instant = false) => {
+      const g = game;
+      if (!g) return;
+      game = null;
+      nextGameAt = t + (done ? PLAY_COOLDOWN_MS : PLAY_RETRY_MS);
+      g.L.lastActive = g.R.lastActive = t;
+      // Stays where it is rather than going back to its spot, unless something's already sent it elsewhere
+      if (tg.tx === g.spots[0] || tg.tx === g.spots[1]) tg.tx = tg.x;
+      if (ballDrag?.started || ballFly) {
+        // Picked up: the throw has it now (spinning its own way, about its bottom)
+        ballSpin = 0;
+        ballBody.style.transform = "";
+        return;
+      }
+      if (instant) {
+        ballLift = 0;
+        setBall(ballAtX, ballAtSize);
+        uprightBall();
+        return;
+      }
+      loose = true;
+      looseVy = 0;
+    };
+    const looseTick = (dt: number) => {
+      if (ballDrag?.started || ballFly) {
+        loose = false;
+        ballSpin = 0;
+        ballBody.style.transform = "";
+        return;
+      }
+      if (ballLift > 0) {
+        looseVy -= GRAVITY * dt;
+        ballLift = Math.max(0, ballLift + looseVy * dt);
+        if (!ballLift) spawn(SHAPES.dust(rand(9, 12)), { x: ballAtX, y: window.innerHeight - ground }, 0, -8, { dur: 450 });
+        setBall(ballAtX, ballAtSize);
+        return;
+      }
+      const dist = dockX() - ballAtX;
+      if (ballState !== "out" || Math.abs(dist) <= 0.5) {
+        // Home (or being called back from where it is)
+        if (ballState === "out") setBall(dockX(), dockSize());
+        uprightBall();
+        loose = false;
+        return;
+      }
+      const step = Math.sign(dist) * Math.min(Math.abs(dist), Math.min(HOME_SPEED, 30 + Math.sqrt(2 * DECEL * Math.abs(dist))) * dt);
+      turnBall(step);
+      setBall(ballAtX + step, ballAtSize);
+    };
+    const playTick = (t: number, dt: number) => {
+      if (reduce) return;
+      if (loose) looseTick(dt);
+      if (!game) {
+        if (loose || t < nextGameAt || !ballFree() || Math.abs(ballAtX - dockX()) > 1 || jpChase !== null) return;
+        if (introUntil && !introOver && t < introUntil) return;
+        if (![tg, jp].every((c) => canPlay(c, t) && c.v === 0 && !rigOf(c).bubbleUntil && t - c.lastActive > PLAY_AFTER_MS)) return;
+        // Room to spread out a little: they stand a pass apart, around where they are now
+        const [L, R] = tg.x < jp.x ? [tg, jp] : [jp, tg];
+        const [lMin] = floorBounds(L), [, rMax] = floorBounds(R);
+        const gap = Math.min(clamp(window.innerWidth * 0.2, 170, 260), rMax - lMin);
+        if (gap < (L.W + R.W) / 2 + 70) return;
+        const mid = clamp((L.x + R.x) / 2, lMin + gap / 2, rMax - gap / 2);
+        game = { phase: "gather", at: t, L, R, spots: [mid - gap / 2, mid + gap / 2], holder: null, passes: Math.random() < 0.5 ? 3 : 5, kicks: 0, shot: null, mx0: mx, my0: my };
+        say(tg, "Let's play ball! ⚽", 1600);
+      }
+      const g = game;
+      // Anything else going on, and it's over
+      if (!ballFree() || ![g.L, g.R].every((c) => canPlay(c, t)) || jpChase !== null || (pointerSeen && Math.hypot(mx - g.mx0, my - g.my0) > PLAY_QUIT_DIST)) {
+        endGame(t, false);
+        return;
+      }
+      g.L.lastActive = g.R.lastActive = t; // too busy playing to nod off
+      g.L.tx = g.spots[0];
+      g.R.tx = g.spots[1];
+      const since = (t - g.at) / 1000;
+      if (g.phase === "gather") {
+        const there = (c: CharacterState, x: number) => c.v === 0 && Math.abs(c.x - x) <= c.def.walk.startDist + 2;
+        if (since > 0.4 && there(g.L, g.spots[0]) && there(g.R, g.spots[1])) {
+          g.phase = "serve";
+          g.at = t;
+          wobble(SERVE_WOBBLE_MS);
+        } else if (since > 6) endGame(t, false); // couldn't get there
+      } else if (g.phase === "serve") {
+        // Wobbles in its corner, then hops out over the nearer one to land at its feet
+        if (since * 1000 >= SERVE_WOBBLE_MS) {
+          const to = footOf(g.R);
+          shoot(t, { from: ballAtX, to, dur: clamp(0.55 + Math.abs(to - ballAtX) / 900, 0.6, 1.3), peak: clearing(g.R, 50), apex: g.R.x, goal: false, receiver: g.R });
+        }
+      } else if (g.phase === "fly" && g.shot) {
+        const s = g.shot;
+        const k = Math.min(1, since / s.dur);
+        let x: number;
+        if (s.peak) {
+          x = s.from + (s.to - s.from) * k;
+          ballLift = arcAt(s, x);
+        } else {
+          // Rolled along the ground, slowing to a stop right at their feet
+          x = s.from + (s.to - s.from) * (1 - (1 - k) * (1 - k));
+          ballLift = 0;
+        }
+        turnBall(x - ballAtX, s.peak ? 1.6 : 1);
+        setBall(x, ballAtSize);
+        if (k >= 1) {
+          ballLift = 0;
+          setBall(s.to, ballAtSize);
+          if (s.peak) spawn(SHAPES.dust(rand(9, 12)), { x: s.to, y: window.innerHeight - ground }, 0, -8, { dur: 450 });
+          if (s.goal) {
+            // In! It settles back in its corner, and the scorer celebrates
+            const settle = uprightBall();
+            if (settle) settle.onfinish = () => wobble(500);
+            else wobble(500);
+            for (const dx of [-1, 0, 1]) spawn(SHAPES.star(rand(9, 12)), { x: ballAtX, y: window.innerHeight - ground - ballAtSize }, dx * 18, -22 + Math.abs(dx) * 6, { dur: 900 });
+            plays.get(g.L)!.cheer = t;
+            say(g.L, g.L === tg ? "Goal! Toge-priii! ✨" : "Goal! Jiggly~! 🎵", 1800);
+            g.phase = "cheer";
+          } else {
+            plays.get(s.receiver!)!.trap = t;
+            g.holder = s.receiver;
+            g.phase = "hold";
+          }
+          g.at = t;
+        }
+      } else if (g.phase === "hold" && g.holder) {
+        const c = g.holder;
+        const m = plays.get(c)!;
+        if (m.kick < g.at) m.kick = g.at + HOLD_MS + KICK_WIND_MS; // a beat, a wind-up, then the kick
+        if (t >= m.kick) {
+          const from = ballAtX;
+          spawn(SHAPES.dust(rand(8, 11)), { x: from, y: window.innerHeight - ground }, -Math.sign(other(c).x - c.x) * 10, -8, { dur: 400 });
+          if (c === g.L && g.passes <= 0) {
+            // Last one: chipped over the other's head, back into the corner
+            const to = dockX();
+            // (high enough to clear it even at the top of its jump)
+            shoot(t, { from, to, dur: clamp(0.8 + Math.abs(to - from) / 800, 0.95, 1.6), peak: clearing(g.R, 34 + headerHop(g.R)), apex: g.R.x, goal: true, receiver: null });
+          } else {
+            const to = footOf(other(c));
+            const d = Math.abs(to - from);
+            const chip = g.kicks > 0 && Math.random() < 0.3; // now and then it's chipped instead of rolled
+            g.passes--;
+            g.kicks++;
+            shoot(t, chip
+              ? { from, to, dur: 0.6 + d / 900, peak: Math.min(maxBallLift(), rand(38, 60)), apex: (from + to) / 2, goal: false, receiver: other(c) }
+              : { from, to, dur: clamp(0.6 + d / 500, 0.8, 1.4), peak: 0, apex: 0, goal: false, receiver: other(c) });
+          }
+        }
+      } else if (g.phase === "cheer" && since * 1000 >= CHEER_MS) {
+        endGame(t, true);
+      }
+    };
+    /** Facing while playing: toward the other one (0 when not playing) */
+    const playFacing = (c: CharacterState) => (game && (c === game.L || c === game.R) ? Math.sign(other(c).x - c.x) : 0);
+    /** The kickabout's poses, on top of the usual ones: eyes on the ball, kicks, traps, a jump and a cheer.
+        The front foot is always footL: the artwork faces left, and it's mirrored when it faces right */
+    const playPose = (c: CharacterState, p: Pose, t: number) => {
+      if (!game || (c !== game.L && c !== game.R)) return;
+      const m = plays.get(c)!;
+      const dir = Math.sign(other(c).x - c.x) || 1;
+      p.look = { x: ballAtX, y: ballMid() };
+      const kick = t - m.kick;
+      if (kick > -KICK_WIND_MS && kick < KICK_FOLLOW_MS) {
+        let tilt: number, lift: number, lean: number, env: number;
+        if (kick < 0) {
+          // Draws the foot back
+          env = smooth((kick + KICK_WIND_MS) / KICK_WIND_MS);
+          tilt = -16 * env;
+          lift = 10 * env;
+          lean = -4 * env;
+        } else {
+          // …and swings it through, toe up
+          env = 1 - smooth(kick / KICK_FOLLOW_MS);
+          const strike = Math.min(1, kick / 70);
+          tilt = (-16 + 46 * strike) * env;
+          lift = (10 + 4 * strike) * env;
+          lean = (-4 + 10 * strike) * env;
+        }
+        p.tiltL += tilt;
+        p.liftL = Math.max(p.liftL, lift);
+        p.rot += lean * dir;
+        p.raiseL += 18 * env;
+        p.raiseR += 26 * env;
+      }
+      const trap = t - m.trap;
+      if (trap >= 0 && trap < TRAP_MS) {
+        const e = Math.sin((Math.PI * trap) / TRAP_MS);
+        p.liftL = Math.max(p.liftL, 8 * e);
+        p.tiltL += 12 * e;
+        p.sy *= 1 - 0.03 * e;
+      }
+      const jump = t - m.jump;
+      if (jump >= 0 && jump < HEADER_MS) {
+        const k = jump / HEADER_MS;
+        p.hop += Math.sin(Math.PI * k) * headerHop(c);
+        p.raiseL = p.raiseR = 70;
+        p.tiltL = p.tiltR = 14;
+        p.eye = "open";
+      }
+      const cheer = t - m.cheer;
+      if (cheer >= 0 && cheer < CHEER_MS) {
+        const s = cheer / 1000;
+        const h = Math.abs(Math.sin(s * Math.PI * 3.2));
+        p.hop += h * 12;
+        p.rot += Math.sin(s * 9) * 5;
+        p.raiseL = 75 + Math.sin(s * 14) * 18;
+        p.raiseR = 75 + Math.sin(s * 14 + Math.PI) * 18;
+        p.ears += Math.sin(s * 12) * 6;
+        p.eye = "happy";
+        p.blush = Math.max(p.blush, 0.8);
+      }
+    };
+
     window.addEventListener("pointermove", onBallDragMove, { passive: true });
     window.addEventListener("pointerup", onBallDragEnd);
     window.addEventListener("pointercancel", onBallDragEnd);
@@ -1246,7 +1554,9 @@ export default function Mascots() {
          with Togepi still coming, it hops over Togepi's head to the other side */
       let crowded = false;
       if (c === jp && t >= tg.forcedSleepUntil) jpChase = null;
-      if (c === jp && !busy && !forcedAsleep && jpChase !== null) {
+      if (c === jp && game) {
+        // Playing ball: the kickabout says where she stands
+      } else if (c === jp && !busy && !forcedAsleep && jpChase !== null) {
         /* While Togepi is sung to sleep, Jigglypuff follows the cursor herself. She stops beside Togepi
            rather than walking into it, and hops over it when the cursor is well past its far side */
         const side = Math.sign(jp.x - tg.x) || buddySide;
@@ -1407,6 +1717,7 @@ export default function Mascots() {
       const air = c.held || aloft(c);
       if (air && Math.abs(c.vx) > 80) c.wantFacing = Math.sign(c.vx);
       else if (Math.abs(c.v) > 6) c.wantFacing = Math.sign(c.v);
+      else if (playFacing(c)) c.wantFacing = playFacing(c);
       else if (!busy && !c.leapStart && c.sleep < 0.5 && Math.abs(mx - c.x) > c.W) c.wantFacing = Math.sign(mx - c.x);
       c.facing = c.wantFacing; // turns round instantly
 
@@ -1480,6 +1791,7 @@ export default function Mascots() {
         p.sy *= 1 - 0.1 * squash;
         p.sx *= 1 + 0.08 * squash;
       }
+      playPose(c, p, t);
 
       /* Flying out of the Poké Ball: an arc from the ball over to its spot, growing as it goes */
       const flight = Number.isNaN(r.fromX) ? 1 : Math.min(1, (t - r.appearAt) / RELEASE_MS);
@@ -1702,6 +2014,7 @@ export default function Mascots() {
       const dt = Math.min(0.05, (t - last) / 1000);
       last = t;
       scrollNow = window.scrollY;
+      playTick(t, dt);
       for (const r of ordered) move(r, t, dt);
       separate(t);
       for (const r of ordered) draw(r, t, dt);
