@@ -512,11 +512,12 @@ const moves: Record<string, MoveDef> = {
         ctx.spawn(SHAPES.dust(16), ctx.point(c, 260, 390), 18, -8, { dur: 550 });
       }
       if (at >= KNOCKED && !d.knocked) {
-        // …and Jigglypuff's knocked clean off her feet
+        // …and Jigglypuff's knocked clean off her feet. Even fast asleep (or napping with Rest): it wakes her
+        // right up (doing anything else, she keeps her balance)
         d.knocked = 1;
         const jp = ctx.world.jigglypuff;
         const grounded = jp && (jp.perch || (jp.lift <= 0 && jp.lv <= 0)) && !jp.leapStart && !jp.crouchAt;
-        if (jp && grounded && !jp.action && !jp.held && jp.sleep < 0.5 && ctx.now >= jp.forcedSleepUntil) ctx.useMove(jp, "tumble", "Puff?! 😵");
+        if (jp && grounded && !jp.held && (!jp.action || jp.action.key === "rest")) ctx.useMove(jp, "tumble", jp.sleep > 0.5 || jp.action ? "Puff?! I'm awake! 😵" : "Puff?! 😵");
       }
     },
     pose: (p, at) => {
